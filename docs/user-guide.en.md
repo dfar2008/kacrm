@@ -4,6 +4,8 @@
 
 This Markdown guide can be read directly on GitHub. It covers the same ten chapters as the Chinese guide. The [Chinese HTML print edition](user-guide.html) remains a layout snapshot for browser printing or PDF export; Markdown is the maintained format.
 
+This guide describes source-deployed installations. Model calls, external channels, skill writing, scheduled delivery, and approvals depend on configured services, tools, and permissions; illustrations and demo conversations do not establish that a deployment has passed acceptance checks.
+
 ## Contents
 
 - [Product Overview](#product-overview)

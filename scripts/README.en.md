@@ -26,7 +26,6 @@ See the [Deployment Guide](../docs/deployment.en.md) for installation and local 
 | `verify-sales-coach-rollout.sh` | Run Coach-card verification SQL. |
 | `verify-coach-cards.sql` | Check Coach cards and sales-methodology skill references. |
 | `measure-coach-feedback.sql` | Analyze Coach cards over a time window; the feedback JOIN is a template to complete manually. |
-| `verify_sandbox_isolation.sh` | Verify Hermes session sandbox isolation in Docker. |
 | `eval/runner.py` | Evaluate models against a user-supplied JSONL dataset. |
 | `eval/judge.py` | Score evaluation trajectories; run with `--help` for command-line options. |
 

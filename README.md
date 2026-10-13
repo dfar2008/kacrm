@@ -98,7 +98,7 @@ Follow [sections 2–4 of the Deployment Guide](docs/deployment.en.md#2-clone-an
 3. Apply the Hermes patches, run Alembic migrations, and initialize the database with the seed command.
 4. Install frontend dependencies and build the interface.
 
-The current database migration head is **0115**. The Deployment Guide includes complete commands, configuration examples, and verification steps. Legacy Docker Compose development examples are not the installation path for this version.
+The current database migration head is **0115**. The Deployment Guide includes complete commands, configuration examples, and verification steps. This version supports source deployment only; Docker deployment is not supported.
 
 ### 3. Start the web interface
 
@@ -166,7 +166,7 @@ kacrm/
 After installing development dependencies, applying patches, and configuring an isolated test environment:
 
 ```bash
-# Backend: exclude the existing dev_server collection issue and live model evaluations
+# Backend: exclude legacy dev-server wiring tests and live model evaluations
 PYTHONPATH="$PWD/hermes:$PWD" .venv/bin/python -m pytest tests/hermes_cloud/ \
   --import-mode=importlib --ignore=tests/hermes_cloud/test_dev_server.py \
   -m 'not llm_eval' -q
@@ -177,7 +177,7 @@ bun test
 npm run build
 ```
 
-Real PostgreSQL tests require a separate test database and `HERMES_TESTS_REAL_PG=1`. Some historical tests still need to be aligned with the current schema and removed features; these commands do not imply that the entire regression suite passes.
+Real PostgreSQL tests require a separate test database and `HERMES_TESTS_REAL_PG=1`. Some historical tests still need to be aligned with the current schema and removed features; these commands do not imply that the entire regression suite passes. `make test-backend`, `make test-frontend`, `make lint`, and `make build-frontend` provide the corresponding development checks. `make ci` runs tests, configuration checks, and the frontend build, and propagates failures.
 
 Capture Hermes extension changes in `hermes-patches/` so they can be replayed on fresh checkouts and future upgrades. See the [Script Reference](scripts/README.en.md) for script purposes and execution requirements.
 

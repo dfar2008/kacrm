@@ -6,6 +6,8 @@ Source updated: 2026-10-12. English edition: 2026-10-13. Adapted from the hermes
 
 Hermes Agent is pinned to **v0.21.6**, commit `818c13be1dc4fd28987e1e881a9408224afd4535`. The database migration head is **0115**. Deploy the pinned version with its seven patches rather than tracking upstream main. See the [v0.21.6 Upgrade Notes](2026-10-12-hermes-v0.21.6-upgrade.en.md) for historical changes and verification. Those test results belong to the source project's upgrade run and do not establish that every new deployment passes.
 
+This version supports source deployment only. Docker deployment is not supported.
+
 ## 1. Architecture and Requirements
 
 - React SPA: builds into `frontend/dist/`, served by FastAPI at `/app/`.
@@ -180,4 +182,4 @@ Treat code rollback and database recovery separately. Automatic script rollback 
 
 Before a Hermes upgrade, validate the candidate stable tag and replay all seven patches in order in an isolated checkout. Run `scripts/upgrade-acceptance.sh`, cloud regression tests, independent real-PostgreSQL tests, and affected upstream tests. Follow `hermes/tests/AGENTS.md` and use `scripts/run_tests.sh` for per-file upstream test isolation. When changing the pin, update patches, migrations, deployment version checks, and installation markers together. Do not use `git submodule update --remote` as the upgrade procedure.
 
-The historical upgrade notes identify real Feishu approval clicks and cross-client synchronization as unverified; include them in release acceptance. This guide supersedes older SQLite, standalone worker-cluster, WeChat Pay, RL, and auto_drive deployment procedures. Legacy Docker Compose examples remaining in the repository are not the deployment reference for this version.
+The historical upgrade notes identify real Feishu approval clicks and cross-client synchronization as unverified; include them in release acceptance. This guide supersedes older SQLite, standalone worker-cluster, WeChat Pay, RL, and auto_drive deployment procedures.

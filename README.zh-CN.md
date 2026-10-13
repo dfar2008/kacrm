@@ -98,7 +98,7 @@ cd kacrm
 3. 应用 Hermes 补丁，执行 Alembic 迁移与初始化 seed。
 4. 安装前端依赖并构建界面。
 
-当前数据库迁移 head 为 **0115**。部署指南包含完整命令、配置示例和验证步骤；仓库中的旧 Docker Compose 开发示例不作为当前版本的安装入口。
+当前数据库迁移 head 为 **0115**。部署指南包含完整命令、配置示例和验证步骤；当前版本只支持源码部署，不支持 Docker 部署。
 
 ### 3. 启动 Web 界面
 
@@ -166,7 +166,7 @@ kacrm/
 安装开发依赖、应用补丁并配置独立测试环境后，可运行：
 
 ```bash
-# 服务端测试：排除现有 dev_server 收集问题及真实模型评测
+# 服务端测试：排除旧开发服务器接线测试及真实模型评测
 PYTHONPATH="$PWD/hermes:$PWD" .venv/bin/python -m pytest tests/hermes_cloud/ \
   --import-mode=importlib --ignore=tests/hermes_cloud/test_dev_server.py \
   -m 'not llm_eval' -q
@@ -177,7 +177,7 @@ bun test
 npm run build
 ```
 
-真实 PostgreSQL 测试须使用独立测试库并设置 `HERMES_TESTS_REAL_PG=1`。仓库仍有部分历史测试需要与当前 schema 和已移除功能同步，测试命令不代表全套回归已通过。
+真实 PostgreSQL 测试须使用独立测试库并设置 `HERMES_TESTS_REAL_PG=1`。仓库仍有部分历史测试需要与当前 schema 和已移除功能同步，测试命令不代表全套回归已通过。可使用 `make test-backend`、`make test-frontend`、`make lint` 和 `make build-frontend` 执行对应检查；`make ci` 串联测试、配置检查和前端构建，并保留失败退出状态。
 
 修改 Hermes 扩展时，将对应改动同步到 `hermes-patches/`，使新检出和后续升级能够重放。脚本的用途与执行条件见 [脚本说明](scripts/README.md)。
 

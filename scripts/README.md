@@ -27,7 +27,6 @@
 | `verify-sales-coach-rollout.sh` | 运行 Coach 卡片验证 SQL |
 | `verify-coach-cards.sql` | 检查 Coach 卡片及方法论技能引用 |
 | `measure-coach-feedback.sql` | 按时间窗口分析 Coach 卡片；反馈 JOIN 为人工填写的模板 |
-| `verify_sandbox_isolation.sh` | Docker 环境下验证 Hermes 会话沙箱隔离 |
 | `eval/runner.py` | 使用用户提供的 JSONL 测试集执行模型评测 |
 | `eval/judge.py` | 对评测轨迹评分；用法见 `eval/README.md` |
 

@@ -6,6 +6,8 @@
 
 当前 Hermes Agent 为 **v0.21.6**，固定提交 `818c13be1dc4fd28987e1e881a9408224afd4535`；数据库迁移 head 为 **0115**。部署使用仓库固定版本与配套 7 份补丁，不自动追踪上游 main。变更与历史验收见 [v0.21.6 升级记录](2026-10-12-hermes-v0.21.6-upgrade.md)。该记录中的通过数属于来源项目当时的验证，不代表每次新部署自动通过。
 
+当前版本只支持源码部署，不支持 Docker 部署。
+
 ## 1. 架构和前置条件
 
 - React SPA：构建至 `frontend/dist/`，FastAPI 提供 `/app/`。
@@ -180,4 +182,4 @@ bash scripts/deploy-to-server.sh --apply
 
 Hermes 升级先在独立检出验证候选正式 tag 和 7 份补丁顺序重放，再运行 `scripts/upgrade-acceptance.sh`、云端回归、独立真实 PG 回归和受影响的上游测试；上游测试按 `hermes/tests/AGENTS.md` 使用 `scripts/run_tests.sh` 的逐文件隔离 runner。更换 pin 时同步补丁、迁移、部署脚本的版本校验和安装标记，不直接运行 `git submodule update --remote`。
 
-升级记录明确：当时真实飞书审批点击和跨端同步尚未实测，应纳入上线验收。本文移除了旧版 SQLite/独立 worker 集群、微信支付、RL 和 auto_drive 部署步骤；当前仓库残留的 Docker Compose 开发示例不作为本版本的部署依据。
+升级记录明确：当时真实飞书审批点击和跨端同步尚未实测，应纳入上线验收。本文移除了旧版 SQLite/独立 worker 集群、微信支付、RL 和 auto_drive 部署步骤。
