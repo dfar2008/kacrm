@@ -10,7 +10,7 @@
 
 KaCRM is a conversational AI CRM powered by [Hermes Agent](https://github.com/NousResearch/hermes-agent). Manage customers and sales processes through configurable business views, use natural language to find information and work with CRM tools, and govern operations with permissions, approvals, and audit trails.
 
-[User Guide](docs/user-guide.en.md) · [Deployment Guide](docs/deployment.md) · [Hermes Upgrade Notes](docs/2026-10-12-hermes-v0.21.6-upgrade.md) · [Script Reference](scripts/README.md) · [Report an Issue](https://github.com/dfar2008/kacrm/issues)
+[User Guide](docs/user-guide.en.md) · [Deployment Guide](docs/deployment.en.md) · [Hermes Upgrade Notes](docs/2026-10-12-hermes-v0.21.6-upgrade.en.md) · [Script Reference](scripts/README.en.md) · [Report an Issue](https://github.com/dfar2008/kacrm/issues)
 
 ![KaCRM business dashboard with an AI assistant](assets/readme/en/dashboard.png)
 
@@ -18,7 +18,7 @@ KaCRM is a conversational AI CRM powered by [Hermes Agent](https://github.com/No
 
 ## Product Tour
 
-These English illustrations were localized from existing screenshots with image-editing tools; they show earlier interface examples rather than captures of the current live English UI. Model names, screen details, and available features depend on the current version and configuration. The user guide is available in English and Chinese. Deployment and upgrade documentation are currently in Chinese; the application supports both languages.
+These English illustrations were localized from existing screenshots with image-editing tools; they show earlier interface examples rather than captures of the current live English UI. Model names, screen details, and available features depend on the current version and configuration. The user guide, deployment guide, upgrade notes, and script reference are available in English and Chinese; the application supports both languages.
 
 ### Shape your customer records around your business
 
@@ -91,7 +91,7 @@ Hermes Agent is pinned to **v0.21.6**, commit `818c13be1dc4fd28987e1e881a9408224
 
 ### 2. Initialize the environment
 
-Follow [sections 2–4 of the Deployment Guide](docs/deployment.md#2-获取源码安装依赖):
+Follow [sections 2–4 of the Deployment Guide](docs/deployment.en.md#2-clone-and-install-dependencies):
 
 1. Create a Python virtual environment and install the main project, Hermes, and agent runtime dependencies.
 2. Copy `.env.example` to `.env` and configure the database, administrator account, session secret, and profile directories.
@@ -115,7 +115,7 @@ export PYTHONPATH="$PWD:$PWD/hermes"
 
 Open [http://127.0.0.1:8765/app/](http://127.0.0.1:8765/app/) and sign in with the administrator account configured during initialization.
 
-This command starts the web/API service. For background jobs and scheduled workflows, configure Redis and PgBouncer as described in the [Deployment Guide](docs/deployment.md#5-启动和验收), then start the full supervisor:
+This command starts the web/API service. For background jobs and scheduled workflows, configure Redis and PgBouncer as described in the [Deployment Guide](docs/deployment.en.md#5-start-and-verify), then start the full supervisor:
 
 ```bash
 bash scripts/run_cloud_supervised.sh
@@ -128,7 +128,7 @@ bash scripts/run_cloud_supervised.sh
 3. Create a test CRM record and check reading, editing, and related information.
 4. Configure roles, departments, approvals, messaging channels, and scheduled tasks for your team.
 
-See the [Deployment Guide](docs/deployment.md) for production deployment, health checks, backups, rollback, and upgrade validation.
+See the [Deployment Guide](docs/deployment.en.md) for production deployment, health checks, backups, rollback, and upgrade validation.
 
 ## Product Architecture
 
@@ -179,7 +179,7 @@ npm run build
 
 Real PostgreSQL tests require a separate test database and `HERMES_TESTS_REAL_PG=1`. Some historical tests still need to be aligned with the current schema and removed features; these commands do not imply that the entire regression suite passes.
 
-Capture Hermes extension changes in `hermes-patches/` so they can be replayed on fresh checkouts and future upgrades. See the [Script Reference](scripts/README.md) for script purposes and execution requirements.
+Capture Hermes extension changes in `hermes-patches/` so they can be replayed on fresh checkouts and future upgrades. See the [Script Reference](scripts/README.en.md) for script purposes and execution requirements.
 
 ## Contributing
 

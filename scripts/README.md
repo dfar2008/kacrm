@@ -1,5 +1,7 @@
 # KaCRM 脚本
 
+[English](README.en.md) · **简体中文**
+
 当前部署和本地启动步骤见 `docs/deployment.md`，数据库初始化使用
 `hermes.crm.seed.seed()`。脚本不会因为放在此目录中就自动执行。
 

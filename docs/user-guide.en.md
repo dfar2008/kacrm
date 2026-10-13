@@ -17,7 +17,7 @@ This Markdown guide can be read directly on GitHub. It covers the same ten chapt
 - [Personal Settings](#personal-settings)
 - [Frequently Asked Questions and Support](#frequently-asked-questions-and-support)
 
-This guide was adapted from the existing product manual. All illustrations in this English guide use English text and are stored separately from the Chinese guide's images. They were localized from historical screenshots with image-editing tools and are not live captures of the current English UI. Model names, interface details, and available capabilities depend on the version and configuration. See the [Deployment Guide (Chinese)](deployment.md) for installation and upgrades. The interface-tour video is not bundled with this repository.
+This guide was adapted from the existing product manual. All illustrations in this English guide use English text and are stored separately from the Chinese guide's images. They were localized from historical screenshots with image-editing tools and are not live captures of the current English UI. Model names, interface details, and available capabilities depend on the version and configuration. See the [Deployment Guide](deployment.en.md) for installation and upgrades. The interface-tour video is not bundled with this repository.
 
 ## Product Overview
 
