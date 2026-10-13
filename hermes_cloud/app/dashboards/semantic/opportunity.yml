@@ -1,0 +1,38 @@
+# 商机 / Opportunity — backed by potentials table.
+entity: opportunity
+source_view: v_dashboard_opportunities
+module_table: potentials
+
+row_filter:
+  self: "owner_user_id = :caller_id"
+  team: "owner_user_id IN (SELECT id FROM v_team_members(:caller_id))"
+  org:  "1=1"
+
+dimensions:
+  - {name: name, type: string}
+  - {name: status, type: string}
+  - {name: milestone, type: string}
+  - {name: owner_user_id, type: ref, references: user}
+  - {name: department_id, type: ref, references: department}
+  - {name: accounts_id, type: ref, references: customer}
+  - {name: closingdate, type: time, granularities: [day, week, month, quarter, year]}
+  - {name: expected_close_date, type: time, granularities: [day, week, month, quarter]}
+  - {name: created_at, type: time, granularities: [day, week, month, quarter, year]}
+
+measures:
+  - {name: count, type: count}
+  - {name: total_amount, type: sum, sql: amount, requires_grant: see_revenue}
+  - {name: avg_amount, type: avg, sql: amount, requires_grant: see_revenue}
+  - {name: won_count, type: count, where: "actual_close_date IS NOT NULL AND status = 'won'"}
+  - {name: lost_count, type: count, where: "status = 'lost'"}
+  - {name: stuck_count, type: count, where: "actual_close_date IS NULL AND expected_close_date < now()::date"}
+  - {name: cycle_days_p50, type: percentile, sql: "EXTRACT(day FROM actual_close_date - created_at)", percentile: 0.5}
+
+detail_columns:
+  # ``status`` is a legacy alias for ``milestone`` (see runtime_schema
+  # _NORMALIZATION) — the dashboard view exposes both names but they
+  # carry identical values. Showing both in drill / CSV produces a
+  # duplicate column; keep only ``milestone`` (the canonical real
+  # column) so users don't see two stage columns side-by-side.
+  default: [id, name, milestone, owner_user_id, expected_close_date, created_at]
+  optional: [amount, accounts_id, contacts_id, closingdate, actual_close_date, lost_reason, department_id]

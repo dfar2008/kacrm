@@ -1,0 +1,193 @@
+diff --git a/hermes_state.py b/hermes_state.py
+index 7e6483dd02..ffe0cce975 100644
+--- a/hermes_state.py
++++ b/hermes_state.py
+@@ -458,7 +458,67 @@ def _foreign_state_db_holders(db_path: Path) -> List[Tuple[int, str]]:
+ # one-shots, recovery flows, and read-only cross-profile opens use SessionDB() directly with their own close().
+ 
+ 
+-class SessionDB(
++
++# ---------------------------------------------------------------------------
++# Charter §一定律 1 + 原语 ① — agent message → cloud Interaction Log tap.
++# ---------------------------------------------------------------------------
++# When ``HERMES_CLOUD_AGENT_EVENT_URL`` (set by hermes_cloud's ProfileManager
++# when launching this subprocess), every successful append_message also fires
++# off a fire-and-forget POST to cloud's /internal/agent/event so the message
++# lands in the canonical ``interactions`` table. State.db keeps the local copy
++# the agent loop's compaction logic still reads from, but cloud-side endpoints
++# (sessions/messages/search/analytics) read PG exclusively.
++#
++# See docs/2026-04-25-agent-message-as-event.md (in hermes-cloud) for the
++# full schema and migration plan. The regex pattern this module's text
++# is matched against on the cloud side stays in lock-step with
++# hermes.action_gateway.text_commands.parse_command — keep them in sync.
++
++_CLOUD_EVENT_ENV = "HERMES_CLOUD_AGENT_EVENT_URL"
++_INTERNAL_KEY_ENV = "HERMES_CLOUD_INTERNAL_KEY"
++_PROFILE_ID_ENV = "HERMES_CLOUD_PROFILE_ID"
++_AGENT_NAME_ENV = "HERMES_AGENT_NAME"
++
++
++def _post_agent_event_to_cloud(payload: Dict[str, Any]) -> None:
++    """POST one agent.message payload to hermes_cloud. Fire-and-forget.
++
++    Failures are logged at debug level — sqlite still has the row, so a
++    cloud blip doesn't lose data. The cloud endpoint is idempotent on
++    (profile_id, session_id, message_id), so a transient failure followed
++    by a retry won't double-insert.
++    """
++    url = os.environ.get(_CLOUD_EVENT_ENV, "").strip()
++    key = os.environ.get(_INTERNAL_KEY_ENV, "").strip()
++    if not url or not key:
++        return  # not running under hermes-cloud — local CLI / test path
++    try:
++        import urllib.request
++        import urllib.error
++        req = urllib.request.Request(
++            url,
++            data=json.dumps(payload).encode("utf-8"),
++            headers={
++                "Content-Type": "application/json",
++                "X-Internal-Key": key,
++            },
++            method="POST",
++        )
++        # Short timeout: agent loop is hot path. If cloud is slow, sqlite
++        # already has the row; better to drop the cloud copy than to stall.
++        with urllib.request.urlopen(req, timeout=2.5) as resp:
++            if resp.status >= 400:
++                logging.getLogger(__name__).debug(
++                    "agent_event_post non-2xx: %s", resp.status,
++                )
++    except Exception as exc:
++        logging.getLogger(__name__).debug(
++            "agent_event_post failed: %s", exc,
++        )
++
++
++
++class _SqliteSessionDB(
+     SessionSessionsMixin, SessionFtsSetupMixin, SessionSearchMixin, SessionSchemaMixin,
+     SessionPortabilityMixin, SessionTelegramTopicsMixin, SessionCompressionMixin,
+     SessionGatewayMixin, SessionMaintenanceMixin, SessionUsageMixin, SessionTitlesMixin,
+@@ -1717,3 +1777,14 @@ class AsyncSessionDB:
+         async def _offloaded(*args, **kwargs):
+             return await asyncio.to_thread(attr, *args, **kwargs)
+         return _offloaded
++
++
++# KaCRM: cloud callers import the PG-backed store through the same public name.
++_USE_PG_SESSION_DB = False
++SessionDB = _SqliteSessionDB
++if os.environ.get("HERMES_USE_CLOUD_DB", "").strip().lower() in ("1", "true", "yes", "on"):
++    try:
++        from hermes_cloud.app.agent_session_pg import PgSessionDB as SessionDB
++        _USE_PG_SESSION_DB = True
++    except Exception as _exc:
++        _SESSION_DB_PG_IMPORT_ERROR = _exc
+diff --git a/hermes_state_messages.py b/hermes_state_messages.py
+index 3abd3ac1df..89ed672838 100644
+--- a/hermes_state_messages.py
++++ b/hermes_state_messages.py
+@@ -395,7 +395,7 @@ class SessionMessagesMixin:
+         api_content: Optional[str] = None, display_kind: Optional[str] = None,
+         display_metadata: Optional[Dict[str, Any]] = None, compression_lock_holder: Optional[str] = None,
+         turn_lease_holder: Optional[str] = None, turn_lease_ttl_seconds: float = 300.0,
+-        message_uid: Optional[str] = None) -> int:
++        message_uid: Optional[str] = None, **kwargs: Any) -> int:
+         """Append one message; returns the row id and bumps the session counters. ``platform_message_id``:
+         the platform's own id. ``api_content``: byte-fidelity sidecar, the exact string sent to the API when
+         it differed from ``content``, stored as sent except lone surrogates. ``message_uid``: the id a caller
+@@ -418,7 +418,59 @@ class SessionMessagesMixin:
+             return msg_id
+         # THE critical write (failure aborts the turn): long patience so a sibling legitimately
+         # holding the lock for seconds (VACUUM, checkpoint) can't kill it.
+-        return self._execute_write(_do, patience_s=self._TRANSCRIPT_WRITE_PATIENCE_S)
++        msg_id = self._execute_write(_do, patience_s=self._TRANSCRIPT_WRITE_PATIENCE_S)
++        import hermes_state as _state
++        # Charter §一定律 1: tap the message into hermes_cloud's Interaction
++        # Log so it lands in the canonical PG store. No-op when the cloud
++        # env vars aren't set (CLI / test environments). Fire-and-forget;
++        # sqlite already has the row, so a cloud blip can't lose it.
++        try:
++            payload = {
++                "profile_id": _state.os.environ.get(_state._PROFILE_ID_ENV, "").strip()
++                              or self._derive_profile_id_from_path(),
++                "agent_name": _state.os.environ.get(_state._AGENT_NAME_ENV, "hermes").strip()
++                              or "hermes",
++                "session_id": str(session_id),
++                "message_id": str(msg_id),
++                "role": role,
++                "text": content or "",
++                "tool_calls": tool_calls if tool_calls else None,
++                "tool_call_id": tool_call_id,
++                "tool_name": tool_name,
++                "reasoning": reasoning,
++                "reasoning_details": reasoning_details,
++                "finish_reason": finish_reason,
++                "tokens": ({"input": token_count}
++                           if isinstance(token_count, int) else None),
++                "occurred_at": time.time(),
++            }
++            # Strip None values to keep the payload lean — cloud-side
++            # endpoint only requires the 6 mandatory fields.
++            payload = {k: v for k, v in payload.items() if v is not None}
++            _state._post_agent_event_to_cloud(payload)
++        except Exception:
++            logging.getLogger(__name__).debug(
++                "agent_event_tap unexpected error", exc_info=True,
++            )
++        return msg_id
++
++    def _derive_profile_id_from_path(self) -> str:
++        """Best-effort: pull profile_id out of the db path
++        (~/.hermes/profiles/<pid>/state.db). Falls back to "0" so the
++        cloud endpoint's ``profile_id required`` validation doesn't 400
++        when the env var was never set (test/legacy paths).
++        """
++        try:
++            parts = self.db_path.parts
++            if "profiles" in parts:
++                idx = parts.index("profiles")
++                if idx + 1 < len(parts):
++                    return str(parts[idx + 1])
++        except Exception:
++            pass
++        return "0"
++
++
+ 
+     def append_delegation_delivery(self, session_id: str, content: str, metadata: Dict[str, Any]) -> int:
+         """Record a detached API result once, between client turns, including replay after rotation.
+diff --git a/hermes_state_repair.py b/hermes_state_repair.py
+index 81e1609543..87e3484c1e 100644
+--- a/hermes_state_repair.py
++++ b/hermes_state_repair.py
+@@ -763,7 +763,7 @@ def _db_opens_cleanly(db_path: Path) -> Optional[str]:
+ 
+     See #50502.
+     """
+-    from hermes_state import SessionDB, load_fts5_cjk_extension
++    from hermes_state import _SqliteSessionDB, load_fts5_cjk_extension
+     # ── Strategy 0.5: rebuild stale B-tree indexes (#63386) ── PRAGMA integrity_check can report "wrong #
+     # of entries in index" when a B-tree index (e.g. idx_sessions_handoff_state) falls out of sync with its
+     # base table. REINDEX rewrites the index b-tree from the canonical table rows using the existing index
+@@ -790,7 +790,7 @@ def _db_opens_cleanly(db_path: Path) -> Optional[str]:
+                     # Builds without fts5/trigram raise "no such module|tokenizer"; calling that corruption would
+                     # send the DB into repair, whose final fallback deletes messages_fts%. "no such table/column" =
+                     # not built yet.
+-                    benign = SessionDB._is_fts5_unavailable_error(exc) or _schema_not_built(exc)
++                    benign = _SqliteSessionDB._is_fts5_unavailable_error(exc) or _schema_not_built(exc)
+                     if not (isinstance(exc, sqlite3.OperationalError) and benign):
+                         # This is the corruption class #66724 actually wants caught: partial shadow-table
+                         # damage where MATCH / snippet / rank queries raise DatabaseError("database disk
+@@ -813,7 +813,7 @@ def _db_opens_cleanly(db_path: Path) -> Optional[str]:
+                     try:
+                         conn.execute(f"INSERT INTO {fts_table}({fts_table}) VALUES('flush')")
+                     except sqlite3.OperationalError as exc:
+-                        if not (SessionDB._is_fts5_unavailable_error(exc) or _schema_not_built(exc)):
++                        if not (_SqliteSessionDB._is_fts5_unavailable_error(exc) or _schema_not_built(exc)):
+                             raise
+             except sqlite3.DatabaseError as exc:
+                 # IntegrityError is a DatabaseError sibling of OperationalError, not a child: catching only the

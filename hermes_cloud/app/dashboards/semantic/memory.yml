@@ -1,0 +1,23 @@
+# Memory — episodic + semantic memory entries (memories table from
+# 0002_pgvector). owner is user_id (no owner_by here).
+entity: memory
+source_view: v_dashboard_memories
+
+row_filter:
+  self: "owner_user_id = :caller_id"
+  team: "owner_user_id IN (SELECT id FROM v_team_members(:caller_id))"
+  org:  "1=1"
+
+dimensions:
+  - {name: kind, type: string}
+  - {name: scope, type: string}
+  - {name: owner_user_id, type: ref, references: user}
+  - {name: created_at, type: time, granularities: [day, week, month]}
+
+measures:
+  - {name: count, type: count}
+  - {name: avg_confidence, type: avg, sql: confidence}
+
+detail_columns:
+  default: [id, kind, scope, title, owner_user_id, created_at]
+  optional: [confidence, content]

@@ -1,0 +1,29 @@
+# Task — kacrm tasks table.
+entity: task
+source_view: v_dashboard_tasks
+module_table: tasks
+
+row_filter:
+  self: "owner_user_id = :caller_id"
+  team: "owner_user_id IN (SELECT id FROM v_team_members(:caller_id))"
+  org:  "1=1"
+
+dimensions:
+  - {name: status, type: string}
+  - {name: priority, type: string}
+  - {name: owner_user_id, type: ref, references: user}
+  - {name: department_id, type: ref, references: department}
+  - {name: accounts_id, type: ref, references: customer}
+  - {name: startdate, type: time, granularities: [day, week, month]}
+  - {name: enddate, type: time, granularities: [day, week, month]}
+  - {name: created_at, type: time, granularities: [day, week, month]}
+  - {name: updated_at, type: time, granularities: [day, week, month]}
+
+measures:
+  - {name: count, type: count}
+  - {name: done_count, type: count, where: "status = 'done'"}
+  - {name: overdue_count, type: count, where: "enddate < now()::date AND status != 'done'"}
+
+detail_columns:
+  default: [id, name, status, priority, owner_user_id, startdate, enddate]
+  optional: [accounts_id, contacts_id, department_id, description]

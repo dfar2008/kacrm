@@ -1,0 +1,28 @@
+# 报价 / Quote — backed by quotes table.
+# View `v_dashboard_quotes` normalizes quotes_id -> id, quotes_name -> name,
+# owner_by -> owner_user_id, and extracts JSONB final_amount -> amount.
+entity: quote
+source_view: v_dashboard_quotes
+
+row_filter:
+  self: "owner_user_id = :caller_id"
+  team: "owner_user_id IN (SELECT id FROM v_team_members(:caller_id))"
+  org:  "1=1"
+
+dimensions:
+  - {name: status, type: string}
+  - {name: owner_user_id, type: ref, references: user}
+  - {name: department_id, type: ref, references: department}
+  - {name: accounts_id, type: ref, references: customer}
+  - {name: quotedate, type: time, granularities: [day, week, month, quarter, year]}
+  - {name: created_at, type: time, granularities: [day, week, month, quarter, year]}
+  - {name: validity_end, type: time, granularities: [day, week, month, quarter]}
+
+measures:
+  - {name: count, type: count}
+  - {name: total_amount, type: sum, sql: amount, requires_grant: see_revenue}
+  - {name: avg_amount, type: avg, sql: amount, requires_grant: see_revenue}
+
+detail_columns:
+  default: [id, name, status, amount, accounts_id, owner_user_id, quotedate]
+  optional: [department_id, validity_end, created_at]

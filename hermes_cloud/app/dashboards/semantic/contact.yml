@@ -1,0 +1,24 @@
+# 联系人 / Contact
+entity: contact
+source_view: v_dashboard_contacts
+module_table: contacts
+
+row_filter:
+  self: "owner_user_id = :caller_id"
+  team: "owner_user_id IN (SELECT id FROM v_team_members(:caller_id))"
+  org:  "1=1"
+
+dimensions:
+  - {name: gender, type: string}
+  - {name: owner_user_id, type: ref, references: user}
+  - {name: department_id, type: ref, references: department}
+  - {name: accounts_id, type: ref, references: customer}
+  - {name: created_at, type: time, granularities: [day, week, month]}
+
+measures:
+  - {name: count, type: count}
+  - {name: main_contact_count, type: count, where: "is_main = true"}
+
+detail_columns:
+  default: [id, name, owner_user_id, accounts_id, mobile, email, created_at]
+  optional: [department_id, gender, phone, is_main]

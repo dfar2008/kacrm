@@ -1,0 +1,30 @@
+# AI Action — derived from interactions where kind starts with 'ai_'.
+# View v_dashboard_ai_actions filters and projects:
+#   actor_user_id = (actors->0->>'id')::bigint
+#   action_type   = content->>'action_type' (or kind if absent)
+#   accepted      = (content->>'accepted')::boolean   (NULL if not present)
+#   recalled      = (content->>'recalled')::boolean
+entity: ai_action
+source_view: v_dashboard_ai_actions
+
+row_filter:
+  self: "actor_user_id = :caller_id"
+  team: "actor_user_id IN (SELECT id FROM v_team_members(:caller_id))"
+  org:  "1=1"
+
+dimensions:
+  - {name: action_type, type: string}
+  - {name: actor_user_id, type: ref, references: user}
+  - {name: occurred_at, type: time, granularities: [day, week, month, quarter]}
+  - {name: accepted, type: bool}
+  - {name: recalled, type: bool}
+
+measures:
+  - {name: count, type: count}
+  - {name: accepted_count, type: count, where: "accepted = true"}
+  - {name: recalled_count, type: count, where: "recalled = true"}
+  - {name: by_member, type: count, requires_grant: see_team_member_performance}
+
+detail_columns:
+  default: [id, action_type, actor_user_id, accepted, recalled, occurred_at]
+  optional: []

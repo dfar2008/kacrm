@@ -1,0 +1,862 @@
+diff --git a/agent/chat_completion_helpers.py b/agent/chat_completion_helpers.py
+index c68d7bf664..d5f4687c6b 100644
+--- a/agent/chat_completion_helpers.py
++++ b/agent/chat_completion_helpers.py
+@@ -1674,6 +1674,8 @@ def build_assistant_message(agent, assistant_message, finish_reason: str) -> dic
+         "content": _assistant_content_for_storage(agent, assistant_message), "reasoning": reasoning_text,
+         "finish_reason": finish_reason})
+ 
++    msg["_gen_ms"] = getattr(agent, "_last_api_duration_ms", None)
++
+     raw_reasoning_content = getattr(assistant_message, "reasoning_content", None)
+     if raw_reasoning_content is None:
+         model_extra = getattr(assistant_message, "model_extra", None) or {}
+@@ -1696,16 +1698,9 @@ def build_assistant_message(agent, assistant_message, finish_reason: str) -> dic
+         # Promote ONLY when nothing set the field: SDK reasoning_content and the
+         # tool-call pad win, and reasoning-less turns leave the field absent so
+         # the replay-time leak guard and promotion tiers still apply.
+-        # Additive fallback (refs #16844, #16884). Streaming-only providers (glm, MiniMax, gpt-5.x via aigw,
+-        # Anthropic via openai-compat shims) accumulate reasoning through ``delta.reasoning_content`` chunks
+-        # but never land it on the message object as a top-level attribute, so neither branch above fires
+-        # and the chain-of-thought is stored only under the internal ``reasoning`` key. When the user later
+-        # replays that history through a DeepSeek-v4 / Kimi thinking model, the missing
+-        # ``reasoning_content`` causes HTTP 400 ("The reasoning_content in the thinking mode must be passed
+-        # back to the API."). Promote the already-sanitized streamed ``reasoning_text`` to
+-        # ``reasoning_content`` at write time, but ONLY when no prior branch already set it AND we actually
+-        # captured reasoning text. This preserves every existing behavior: - SDK-exposed
+-        # ``reasoning_content`` (OpenAI/Moonshot/DeepSeek SDK) still wins.
++        # Streaming-only providers may expose reasoning only via deltas. Promote it
++        # at write time so replay through DeepSeek/Kimi keeps its required carrier;
++        # SDK reasoning_content and the tool-call padding above still win.
+         msg["reasoning_content"] = reasoning_text
+ 
+     if getattr(assistant_message, "reasoning_details", None):
+@@ -2156,6 +2151,8 @@ def _iteration_summary_api_messages(agent, messages: list) -> list:
+     for msg in messages:
+         api_msg = msg.copy()
+         agent._copy_reasoning_content_for_api(msg, api_msg)
++        api_msg.pop("_gen_ms", None)
++        api_msg.pop("duration_ms", None)
+         for key in _SUMMARY_FOREIGN_MESSAGE_KEYS:
+             api_msg.pop(key, None)
+         # Mirror of the transport's role-qualified strip: ``name`` is
+diff --git a/agent/conversation_loop.py b/agent/conversation_loop.py
+index 77426b92da..cdf1fa4bf8 100644
+--- a/agent/conversation_loop.py
++++ b/agent/conversation_loop.py
+@@ -1015,6 +1015,40 @@ def _canonicalize_tool_call_arguments(arg_str: str) -> str:
+     return canonical
+ 
+ 
++def _update_prefix_probe(agent: Any, api_messages: list, tools_for_api=None) -> None:
++    """Track request-prefix byte stability across API calls (observability).
++
++    Implicit prefix caches (LongCat/DeepSeek-style) only hit when the
++    request's leading bytes match a previous request — but LongCat reports
++    ``cached_tokens=0`` even on a verified hit (measured 2026-07-07: repeat
++    36k prompt TTFT 13.5s→2.4s, cached_tokens still 0), so provider usage
++    can't observe cache health. Fingerprint the prefix server-side instead:
++    hash(system message + tools). ``prefix=stable`` on call #2+ means the
++    cache CAN hit; ``prefix=changed`` mid-session is a byte-stability bug
++    (something volatile leaked into the prefix). Sets
++    ``agent._prefix_probe_state`` ∈ {first, stable, changed, ?}.
++    """
++    try:
++        import hashlib as _hashlib
++        sys_msg = next(
++            (m for m in api_messages if m.get("role") == "system"), None
++        )
++        prefix_src = json.dumps(
++            [sys_msg, agent.tools if tools_for_api is None else tools_for_api], ensure_ascii=False,
++            sort_keys=False, default=str,
++        )
++        prefix_hash = _hashlib.sha1(prefix_src.encode()).hexdigest()[:10]
++        prev_hash = getattr(agent, "_prefix_probe_hash", None)
++        agent._prefix_probe_state = (
++            "first" if prev_hash is None
++            else ("stable" if prev_hash == prefix_hash else "changed")
++        )
++        agent._prefix_probe_hash = prefix_hash
++    except Exception:
++        agent._prefix_probe_state = "?"
++
++
++
+ def _clone_message_for_send(msg):
+     """Structural clone (dicts/lists recursively, immutable leaves shared) of a history
+     message for the per-call API copy, so send-path rewrites never reach the persisted
+diff --git a/agent/message_metadata.py b/agent/message_metadata.py
+index dac5e52238..4e293af5ce 100644
+--- a/agent/message_metadata.py
++++ b/agent/message_metadata.py
+@@ -44,6 +44,7 @@ PERSISTENCE_ONLY_MESSAGE_FIELDS = frozenset(
+     # to sweep underscore keys, but turn_context.py pops this set from every outgoing copy and a strict
+     # backend 400s on any key it does not know.
+     {"timestamp", "display_kind", "display_metadata", "_row_id", "_submit_row_session_id",
++     "_gen_ms", "duration_ms",
+      MERGED_TURN_PREFIX, MESSAGE_UID, ABSORBED_MESSAGE_UIDS, TOOL_CALL_UIDS, TOOL_CALL_UID,
+      # The alternation repair's row counts: an in-place compaction reads them off the live dict.
+      MERGED_DURABLE_ROWS, UNNAMED_DURABLE_ROWS, RETIRED_DURABLE_ROWS}
+diff --git a/agent/prompt_builder.py b/agent/prompt_builder.py
+index 3a7c48b709..d1cb02fc72 100644
+--- a/agent/prompt_builder.py
++++ b/agent/prompt_builder.py
+@@ -1208,7 +1208,7 @@ _SKILLS_PROMPT_CACHE: OrderedDict[tuple, str] = OrderedDict()
+ _SKILLS_PROMPT_CACHE_LOCK = threading.Lock()
+ # v2 added org provenance fields (org_id/org_author); v4 adds ``rel`` (SKILL.md path relative to its root) for
+ # duplicate-name resolution. Older snapshots are rebuilt.
+-_SKILLS_SNAPSHOT_VERSION = 4
++_SKILLS_SNAPSHOT_VERSION = 5
+ 
+ 
+ def _skills_prompt_snapshot_path() -> Path:
+@@ -1226,6 +1226,34 @@ def clear_skills_system_prompt_cache(*, clear_snapshot: bool = False) -> None:
+         logger.debug("Could not remove skills prompt snapshot: %s", e)
+ 
+ 
++SYSTEM_NOT_YOUR_TASK_GUIDANCE = (
++    "The application and codebase you run inside are infrastructure you operate "
++    "on — debugging, fixing, or modifying that system is NOT your job and almost "
++    "never the right way to satisfy a user's request. When an operation fails (a "
++    "tool returns an error, a record or field can't be created, an action is "
++    "rejected), do NOT pivot into reading source code, running code, or patching "
++    "the system to force it through. Instead: (1) report the failure to the user "
++    "in plain terms, (2) try a workaround in the user's own domain (a different "
++    "field type, a simpler structure, or asking the user for the missing "
++    "information), and (3) if it is a genuine system limitation, say so plainly "
++    "and stop. Reading source code is only ever to look up a documented usage you "
++    "will EXPLAIN to the user — never to diagnose or repair your own failed "
++    "operation."
++)
++
++SYSTEM_FOLLOW_THROUGH_GUIDANCE = (
++    "Deliver what you announce in the SAME message. If you say you will ask "
++    "the user something, propose fields, or list options, the actual "
++    "questions/items MUST follow immediately in that same reply. NEVER end a "
++    "message on a dangling promise — e.g. writing \"先问你几个问题：\" or "
++    "\"建议如下：\" and then stopping with nothing after the colon. Do not "
++    "split the lead-in and its content across turns. If you are presenting a "
++    "small set of mutually-exclusive choices, call the clarify tool instead of "
++    "writing the options as prose. If you notice you just ended on a colon "
++    "with nothing after it, keep going and write the list before you stop."
++)
++
++
+ def _build_skills_manifest(skills_dir: Path) -> dict[str, list[int]]:
+     """File-signature manifest of every SKILL.md and DESCRIPTION.md."""
+     manifest: dict[str, list[int]] = {}
+@@ -1233,7 +1261,7 @@ def _build_skills_manifest(skills_dir: Path) -> dict[str, list[int]]:
+     prefix_len = len(os.path.join(skills_dir_str, ""))
+     for root, dirs, files in os.walk(skills_dir_str, followlinks=True):
+         has_skill_md = "SKILL.md" in files
+-        dirs[:] = [d for d in dirs if d not in EXCLUDED_SKILL_DIRS and not (has_skill_md and d in SKILL_SUPPORT_DIRS)]
++        dirs[:] = [d for d in dirs if d not in EXCLUDED_SKILL_DIRS and ".bak" not in d and not (has_skill_md and d in SKILL_SUPPORT_DIRS)]
+         for filename in ("SKILL.md", "DESCRIPTION.md"):
+             path = os.path.join(root, filename)
+             try:
+@@ -1245,6 +1273,43 @@ def _build_skills_manifest(skills_dir: Path) -> dict[str, list[int]]:
+     return manifest
+ 
+ 
++def _build_all_skills_fingerprint(all_dirs: list[Path]) -> str:
++    """Stable SHA-256 over mtime+size of every SKILL.md/DESCRIPTION.md across
++    every skills directory (local + external).
++
++    Used as part of the in-process LRU cache key so that any change to a
++    skill file (write/delete/add) invalidates the cached prompt — without
++    this, `build_skills_system_prompt` was returning stale prompts even
++    after files on disk changed (the LRU layer never consulted the disk
++    snapshot's manifest).
++    """
++    import hashlib
++
++    h = hashlib.sha256()
++    for skills_dir in all_dirs:
++        if not skills_dir.is_dir():
++            continue
++        # Include the dir itself in the hash so reordering or directory
++        # disappearance is reflected.
++        h.update(b"DIR\x00")
++        h.update(str(skills_dir.resolve()).encode("utf-8"))
++        h.update(b"\n")
++        for filename in ("SKILL.md", "DESCRIPTION.md"):
++            for path in iter_skill_index_files(skills_dir, filename):
++                try:
++                    st = path.stat()
++                except OSError:
++                    continue
++                h.update(str(path).encode("utf-8"))
++                h.update(b"\x00")
++                h.update(str(st.st_mtime_ns).encode("ascii"))
++                h.update(b"\x00")
++                h.update(str(st.st_size).encode("ascii"))
++                h.update(b"\n")
++    return h.hexdigest()
++
++
++
+ def _load_skills_snapshot(skills_dir: Path) -> Optional[dict]:
+     """The disk snapshot if it exists, is current-version, and its manifest still matches."""
+     try:
+@@ -1451,21 +1516,39 @@ def _render_skills_index(
+         hidden_note += (f"\n(A copy of {', '.join(unloadable)} is not listed: it shares both its name and its path "
+                         "with a different skill in the same skills directory tier (e.g. another external_dirs entry), "
+                         "so skill_view cannot load it — rename one.)")
+-    # Don't name web_search when the session has no web tools (dangling reference).
+-    _basic_tools = "terminal" if available_tools is not None and "web_search" not in available_tools else "web_search or terminal"
+-    index_lines = []
+-    for category in sorted(skills_by_category):
+-        entries = skills_by_category[category]
+-        if category in demoted:
+-            index_lines.append(f"  {category} [names only]: {', '.join(sorted({n for n, _ in entries}))}")
+-            continue
+-        cat_desc = category_descriptions.get(category, "")
+-        index_lines.append(f"  {category}: {cat_desc}" if cat_desc else f"  {category}:")
+-        seen = set()
+-        for name, desc in sorted(entries, key=lambda x: x[0]):  # stable: first entry per name wins
+-            if name not in seen:
+-                seen.add(name)
+-                index_lines.append(f"    - {name}: {desc}" if desc else f"    - {name}")
++    def render_index(demoted_set):
++        lines = []
++        for category in sorted(skills_by_category):
++            entries = skills_by_category[category]
++            if category in demoted_set:
++                lines.append(f"  {category} [names only]: {', '.join(sorted({n for n, _ in entries}))}")
++                continue
++            cat_desc = category_descriptions.get(category, "")
++            lines.append(f"  {category}: {cat_desc}" if cat_desc else f"  {category}:")
++            seen = set()
++            for name, desc in sorted(entries, key=lambda x: x[0]):  # stable: first entry per name wins
++                if name not in seen:
++                    seen.add(name)
++                    lines.append(f"    - {name}: {desc}" if desc else f"    - {name}")
++        return lines
++    index_lines = render_index(demoted)
++    budget = int(os.environ.get("HERMES_SKILLS_INDEX_BUDGET_CHARS", "24576") or 0)
++    budget_demoted = set(demoted)
++    if budget > 0 and sum(len(line) + 1 for line in index_lines) > budget:
++        categories = sorted(
++            (cat for cat in skills_by_category if cat not in demoted),
++            key=lambda cat: (-sum(len(f"    - {n}: {d}") + 1 for n, d in skills_by_category[cat]), cat),
++        )
++        for category in categories:
++            budget_demoted.add(category)
++            index_lines = render_index(budget_demoted)
++            if sum(len(line) + 1 for line in index_lines) <= budget:
++                break
++        if budget_demoted != set(demoted):
++            logger.info("skills index over budget (%dB cap): demoted %d categories to names-only",
++                        budget, len(budget_demoted) - len(demoted))
++            if not demoted:
++                hidden_note += "\n(Categories marked [names only] still load normally with skill_view(name).)"
+     from agent.oneshot_footprint import ONESHOT_SKILLS_LOAD_GUIDANCE, is_single_query_session
+     if is_single_query_session():
+         return (
+@@ -1475,23 +1558,23 @@ def _render_skills_index(
+         )
+     return (
+         "## Skills\n"
+-        "Before replying, scan the skills below. If a skill matches or is even partially relevant to your "
+-        "task, you MUST load it with skill_view(name) and follow its instructions. Err on the side of "
+-        "loading — it is always better to have context you don't need than to miss critical steps, pitfalls, "
+-        "or established workflows. Skills contain specialized knowledge — API endpoints, tool-specific "
+-        "commands, and proven workflows that outperform general-purpose approaches. Load the skill "
+-        f"even if you think you could handle the task with basic tools like {_basic_tools}. "
+-        "Skills also encode the user's preferred approach, conventions, and quality standards for tasks like "
+-        "code review, planning, and testing — load them even for tasks you already know how to do, because "
+-        "the skill defines how it should be done here.\n"
+-        "If a skill has issues, fix it with skill_manage(action='patch').\n"
+-        "After difficult/iterative tasks, offer to save as a skill. If a skill you loaded was missing steps, "
+-        "had wrong commands, or needed pitfalls you discovered, update it before finishing.\n"
++        "Scan the skills below. If one clearly matches the task, load it with "
++        "skill_view(name) and follow its instructions — skills encode proven "
++        "workflows, API specifics, and the user's preferred conventions, so a "
++        "clear match beats improvising with basic tools. Load AT MOST ONE "
++        "skill per turn: pick the single best match. If you already loaded a "
++        "skill earlier in this session, do not re-load it — reuse what you "
++        "read. Only consult a second skill when the one you loaded explicitly "
++        "refers you to it.\n"
++        "If a profile-owned skill you used is outdated or wrong, patch it with "
++        "skill_manage(action='patch'). Bundled skills are read-only — do NOT "
++        "attempt to patch them; just note the issue in your reply.\n"
++        "After difficult/iterative tasks, offer to save the approach as a skill.\n"
+         "\n"
+         "<available_skills>\n"
+         + "\n".join(index_lines) + "\n"
+         "</available_skills>\n\n"
+-        "Only proceed without loading a skill if genuinely none are relevant to the task."
++        "If no skill clearly matches, proceed without loading one."
+         + hidden_note
+     )
+ 
+@@ -1517,6 +1600,8 @@ def _build_skills_system_prompt_inner(
+         tuple(sorted(str(ts) for ts in (available_toolsets or set()))),
+         _platform_hint, tuple(sorted(disabled)), tuple(sorted(compact_categories or ())),
+         _oneshot_prompt_variant(), tuple(plugin_rows),
++        _build_all_skills_fingerprint([skills_dir, *(d for _, d in extra_roots)]),
++        os.environ.get("HERMES_SKILLS_INDEX_BUDGET_CHARS", "24576"),
+     )
+     snapshot = _load_skills_snapshot(skills_dir)
+     app_gated = snapshot is not None and any(
+diff --git a/agent/session_persistence.py b/agent/session_persistence.py
+index 8c0f6e7978..a8a092a8d8 100644
+--- a/agent/session_persistence.py
++++ b/agent/session_persistence.py
+@@ -221,6 +221,15 @@ def _db_flush_row(agent, msg: Dict, is_current_turn_user: bool) -> Dict[str, Any
+         and sanitize_context(content).strip() != content.strip()
+     ):
+         api_content = content
++    duration_ms = msg.get("duration_ms")
++    if duration_ms is None and role == "assistant":
++        duration_ms = msg.get("_gen_ms")
++        if duration_ms is None:
++            duration_ms = getattr(agent, "_last_api_duration_ms", None)
++    elif duration_ms is None and role == "tool":
++        durations = getattr(agent, "_tool_durations", None)
++        duration = durations.get(msg.get("tool_call_id")) if isinstance(durations, dict) else None
++        duration_ms = int(duration * 1000) if duration is not None else None
+     # Key order is the divert-JSONL wire order (divert_session_transcript_jsonl).
+     row = {
+         "role": role, "content": _durable_content(content),
+@@ -234,7 +243,7 @@ def _db_flush_row(agent, msg: Dict, is_current_turn_user: bool) -> Dict[str, Any
+         "display_kind": _summary_display_kind(msg), "display_metadata": msg.get("display_metadata"),
+         # Load-bearing for restart drain-window recovery dedup.
+         "platform_message_id": msg.get("platform_message_id") or msg.get("message_id"),
+-        "observed": bool(msg.get("observed")),
++        "observed": bool(msg.get("observed")), "duration_ms": duration_ms,
+     }
+     if isinstance(msg.get("_row_id"), int):
+         row["_row_id"] = msg["_row_id"]
+@@ -405,7 +414,7 @@ def _db_flush_failed(agent, e: Exception, batch_rows: List[Dict[str, Any]], adop
+         if adoption_budget > 0 and _db_flush_adopt_compression_tip(agent):
+             return "adopted"
+         agent._compression_adoption_failed = True  # lets the turn explanation name rotation, not full-disk advice
+-    logger.warning("Session DB append_message failed: %s", e)
++    logger.error("SessionDB flush FAILED — messages NOT persisted (%s: %s)", type(e).__name__, e)
+     return None
+ 
+ 
+diff --git a/agent/skill_utils.py b/agent/skill_utils.py
+index 8f8b115bc0..1cd3436496 100644
+--- a/agent/skill_utils.py
++++ b/agent/skill_utils.py
+@@ -34,7 +34,7 @@ def is_excluded_skill_path(path, *, root: Optional[Path] = None) -> bool:
+     """True if *path* should be skipped by skill scanners (VCS/dependency/cache
+     dirs + support packages). Apply to every SKILL.md from a direct ``rglob``."""
+     parts = PurePath(str(path)).parts
+-    return any(part in EXCLUDED_SKILL_DIRS for part in parts) or is_skill_support_path(path, root=root)
++    return any(".bak" in part or part in EXCLUDED_SKILL_DIRS for part in parts) or is_skill_support_path(path, root=root)
+ 
+ 
+ def is_skill_support_path(path, *, root: Optional[Path] = None) -> bool:
+@@ -829,14 +829,15 @@ def _normalize_skill_description(frontmatter: Dict[str, Any]) -> str:
+ 
+ 
+ def extract_skill_description(frontmatter: Dict[str, Any]) -> str:
+-    """Extract a system-prompt-length description from parsed frontmatter."""
++    """Keep description and trigger conditions in the discoverable skill index."""
+     desc = _normalize_skill_description(frontmatter)
+-    return desc[:SKILL_PROMPT_DESC_LIMIT - 3] + "..." if len(desc) > SKILL_PROMPT_DESC_LIMIT else desc
++    raw = frontmatter.get("when_to_use", "")
++    when = str(raw).strip().strip("'\"") if raw else ""
++    return f"{desc}\n  When to use:\n{when}" if desc and when else desc or when
+ 
+ 
+ def is_skill_description_truncated_for_prompt(frontmatter: Dict[str, Any]) -> bool:
+-    """True when the description will be truncated in the system prompt skill index."""
+-    return len(_normalize_skill_description(frontmatter)) > SKILL_PROMPT_DESC_LIMIT
++    return False
+ 
+ 
+ def iter_skill_index_files(skills_dir: Path, filename: str):
+@@ -845,7 +846,7 @@ def iter_skill_index_files(skills_dir: Path, filename: str):
+     matches: list[str] = []
+     for root, dirs, files in os.walk(str(skills_dir), followlinks=True):
+         has_skill_md = "SKILL.md" in files
+-        dirs[:] = [d for d in dirs if d not in EXCLUDED_SKILL_DIRS and not (has_skill_md and d in SKILL_SUPPORT_DIRS)]
++        dirs[:] = [d for d in dirs if d not in EXCLUDED_SKILL_DIRS and ".bak" not in d and not (has_skill_md and d in SKILL_SUPPORT_DIRS)]
+         if filename in files:
+             matches.append(os.path.join(root, filename))
+     yield from map(Path, sorted(matches))
+diff --git a/agent/system_prompt.py b/agent/system_prompt.py
+index fb2942e429..68c46d9d58 100644
+--- a/agent/system_prompt.py
++++ b/agent/system_prompt.py
+@@ -21,6 +21,7 @@ from agent.delegation_context import owned_kanban_task
+ from agent.prompt_builder import (
+     ASYNC_HANDOFF_GUIDANCE, DEFAULT_AGENT_IDENTITY, EXECUTION_GUIDANCE_MODELS, GOOGLE_MODEL_OPERATIONAL_GUIDANCE,
+     HERMES_AGENT_HELP_GUIDANCE, HERMES_AGENT_HELP_GUIDANCE_NO_SKILLS, KANBAN_GUIDANCE,
++    SYSTEM_NOT_YOUR_TASK_GUIDANCE, SYSTEM_FOLLOW_THROUGH_GUIDANCE,
+     PARALLEL_TOOL_CALL_GUIDANCE, PLATFORM_HINTS, SESSION_SEARCH_GUIDANCE,
+     SKILLS_GUIDANCE, STEER_CHANNEL_NOTE, TASK_COMPLETION_GUIDANCE, TELEGRAM_RICH_MESSAGES_HINT,
+     TOOL_USE_ENFORCEMENT_GUIDANCE, TOOL_USE_ENFORCEMENT_MODELS, drain_truncation_warnings,
+@@ -749,6 +750,7 @@ def build_system_prompt_parts(agent: Any, system_message: Optional[str] = None)
+     # index is built; this slot holds its position.
+     _help_guidance_slot = len(stable_parts)
+     stable_parts.append(HERMES_AGENT_HELP_GUIDANCE_NO_SKILLS)
++    stable_parts.extend((SYSTEM_NOT_YOUR_TASK_GUIDANCE, SYSTEM_FOLLOW_THROUGH_GUIDANCE))
+     stable_parts.extend(_guidance_parts(agent))
+     skills_prompt = _skills_prompt(agent)
+     # Skill-pointer variant requires BOTH skill_view AND the hermes-agent skill
+diff --git a/agent/tool_executor.py b/agent/tool_executor.py
+index 1324a5272b..b6af6f6a2d 100644
+--- a/agent/tool_executor.py
++++ b/agent/tool_executor.py
+@@ -30,6 +30,9 @@ from agent.display import (
+     redact_tool_args_for_display as _redact_tool_args_for_display,
+     _detect_tool_failure,
+ )
++from agent.tool_executor_cloud import (
++    _secret_file_read_block, _record_tool_duration, _invoke_tool_complete_callback,
++)
+ from agent.compression_marker import _COMPRESSION_MARKER_PREFIX
+ from agent.interrupt_control import _REASON_USER_INTERRUPT, interrupt_skip_wording
+ from agent.message_sanitization import coalesce_tool_call_id
+@@ -712,6 +715,16 @@ def _dispatch_authorized_once(
+         resolve = lambda: _pre_tool_block(agent, ref)  # noqa: E731
+         block_message, ref.args = resolve() if authorization_gate is None else authorization_gate.run(resolve)
+         state.args = ref.args
++    # surface ACL hard-check: shared by sequential and concurrent dispatch.
++    if block_message is None:
++        from tools.surface_acl import is_tool_allowed
++        if not is_tool_allowed(ref.name):
++            block_error_type = "surface_acl_block"
++            block_message = f"Tool {ref.name!r} is denied by the current surface ACL."
++    if block_message is None:
++        block_message = _secret_file_read_block(ref.name, ref.args)
++        if block_message:
++            block_error_type = "secret_file_guard"
+     block_body = None if block_message is None else {"error": block_message}
+ 
+     # Checked once, after plugin modify hooks (which may replace arguments) and
+@@ -1050,7 +1063,11 @@ def _emit_tool_complete_and_risk(agent, ref: _ToolCallRef, result, risk_metadata
+         except Exception as cb_err:
+             logging.debug("Tool complete callback error: %s", cb_err)
+         else:
+-            _safe_callback(agent.tool_complete_callback, "Tool complete", ref.call_id, ref.name, display_args, result)
++            try:
++                duration = getattr(agent, "_tool_durations", {}).get(ref.call_id)
++                _invoke_tool_complete_callback(agent.tool_complete_callback, ref.call_id, ref.name, display_args, result, duration)
++            except Exception as cb_err:
++                logging.debug("Tool complete callback error: %s", cb_err)
+     if risk_metadata is not None and risk_metadata.get("risk") != "low":
+         _safe_callback(
+             agent.tool_progress_callback, "Tool output risk",
+@@ -1150,6 +1167,9 @@ def _commit_tool_result(
+                 tool_message["display_metadata"] = metadata
+         except Exception as callback_error:
+             logging.debug("Tool result metadata callback error: %s", callback_error)
++    if not blocked:
++        _record_tool_duration(agent, tool_call_id, tool_duration)
++        tool_message["duration_ms"] = int(tool_duration * 1000)
+     messages.append(tool_message)
+     if not _flush_session_db_after_tool_progress(agent, messages, stage=f"tool result {function_name}"):
+         return None
+diff --git a/agent/turn_context.py b/agent/turn_context.py
+index 22ffa32c20..f5d22d4b84 100644
+--- a/agent/turn_context.py
++++ b/agent/turn_context.py
+@@ -593,6 +593,8 @@ def _bind_turn_identity(
+ # Per-turn agent state reset at turn start (retry counters, guardrail halt, file-mutation
+ # verifier). ``_turns_since_memory`` / ``_iters_since_skill`` are deliberately NOT reset.
+ _PER_TURN_RESET_STATE: Tuple[Tuple[str, Any], ...] = (
++    ("_last_api_duration_ms", None), ("_tool_durations", None),
++    ("_dangling_stop_retries", 0),
+     ("_invalid_tool_retries", 0), ("_invalid_json_retries", 0), ("_empty_content_retries", 0),
+     ("_incomplete_scratchpad_retries", 0), ("_codex_incomplete_retries", 0),
+     # Consecutive Codex reasoning-only (no answer, no tool call) responses, kept apart from
+@@ -741,6 +743,9 @@ def _hydrate_from_history(agent: Any, conversation_history: Optional[List[Any]])
+             agent._user_turn_count = prior_user_turns
+             if agent._memory_nudge_interval > 0 and agent._turns_since_memory == 0:
+                 agent._turns_since_memory = prior_user_turns % agent._memory_nudge_interval
++            if agent._skill_nudge_interval > 0 and agent._iters_since_skill == 0:
++                prior_iters = sum(m.get("role") == "assistant" for m in conversation_history)
++                agent._iters_since_skill = prior_iters % agent._skill_nudge_interval
+ 
+ 
+ def _tick_memory_nudge(agent: Any) -> bool:
+@@ -1309,6 +1314,8 @@ def build_api_messages(
+         # Strip length-continuation marks; some transports keep underscore keys.
+         api_msg.pop("_length_continuation_fragment", None)
+         api_msg.pop("_length_continuation_nudge", None)
++        api_msg.pop("_gen_ms", None)
++        api_msg.pop("duration_ms", None)
+         # Strip Codex Responses fields (call_id, response_item_id): strict providers
+         # reject unknown fields. New dicts keep the internal list intact for Codex.
+         if agent._should_sanitize_tool_calls():
+diff --git a/agent/turn_final_response.py b/agent/turn_final_response.py
+index b64ec35be2..2a570192b8 100644
+--- a/agent/turn_final_response.py
++++ b/agent/turn_final_response.py
+@@ -371,6 +371,13 @@ def finish_text_response(
+         )
+ 
+     _turn_exit_reason = f"text_response(finish_reason={finish_reason})"
++    if final_response.rstrip().endswith(("：", ":", "——")) and not getattr(agent, "_interrupt_requested", False):
++        reasoning = str(final_msg.get("reasoning_content") or final_msg.get("reasoning") or "")
++        logger.warning(
++            "Dangling-stop suspect: reason=%s response_len=%d reasoning_chars=%d session=%s "
++            "| final_tail=%r | reasoning_tail=%r", _turn_exit_reason, len(final_response),
++            len(reasoning), agent.session_id or "none", final_response[-160:], reasoning[-400:],
++        )
+     if not agent.quiet_mode:
+         agent._safe_print(f"🎉 Conversation completed after {api_call_count} OpenAI-compatible API call(s)")
+     return _verdict("break")
+diff --git a/agent/turn_request_assembly.py b/agent/turn_request_assembly.py
+index be7436e72f..36773ccfc1 100644
+--- a/agent/turn_request_assembly.py
++++ b/agent/turn_request_assembly.py
+@@ -266,6 +266,8 @@ def assemble_api_request(
+     request_pressure_tokens = _midturn_request_pressure_tokens(
+         agent, api_messages, effective_system or "", approx_tokens
+     )
++    from agent.conversation_loop import _update_prefix_probe
++    _update_prefix_probe(agent, api_messages, tools_for_api)
+     # Usage-anchored override: real prompt_tokens (incl. system + tool schemas) +
+     # delta estimate replaces the whole-history heuristic when the anchor is fresh.
+     _anchored_pressure = anchored_context_tokens(messages, getattr(agent, "_usage_anchor", None))
+diff --git a/agent/turn_response_check.py b/agent/turn_response_check.py
+index c79fe2b468..dcb13f857c 100644
+--- a/agent/turn_response_check.py
++++ b/agent/turn_response_check.py
+@@ -117,6 +117,7 @@ def check_api_response(
+         )
+ 
+     api_duration = time.time() - api_start_time
++    agent._last_api_duration_ms = int(api_duration * 1000)
+ 
+     # Silent stop: the response box / tool messages that follow are more informative.
+     thinking_spinner = stop_thinking_spinner(agent, thinking_spinner)
+@@ -215,6 +216,12 @@ def check_api_response(
+ 
+     relay_llm.complete_logical_call(api_request_id, outcome="success")
+     agent._touch_activity(f"API call #{api_call_count} completed")
++    # A dangling clean stop is a completed, billable provider response. Fold its
++    # usage and close its logical call before appending the continuation trail,
++    # so the usage anchor still describes the request the provider actually saw.
++    if finish_reason == "stop":
++        from agent.turn_truncation import continue_dangling_stop
++        continue_dangling_stop(agent, response, finish_reason, _retry, messages, truncated_response_parts)
+     return _verdict("break")
+ 
+ 
+diff --git a/agent/turn_truncation.py b/agent/turn_truncation.py
+index e5e3e8ad39..641d0d393c 100644
+--- a/agent/turn_truncation.py
++++ b/agent/turn_truncation.py
+@@ -768,3 +768,36 @@ def handle_content_policy_refusal(
+         messages, api_call_count, final_response=_refusal_response,
+         error_detail=_refusal_text or "model declined (content_filter)",
+     ), active_system_prompt)
++
++
++def continue_dangling_stop(agent, response, finish_reason, retry, messages, parts) -> bool:
++    """Recover an unfinished lead-in twice; use upstream's continuation trail cleanup."""
++    if (agent.api_mode not in {"chat_completions", "bedrock_converse", "anthropic_messages"}
++            or getattr(agent, "_dangling_stop_retries", 0) >= 2
++            or getattr(agent, "_interrupt_requested", False)):
++        return False
++    transport = agent._get_transport()
++    normalized = (transport.normalize_response(response, strip_tool_prefix=agent._is_anthropic_oauth)
++                  if agent.api_mode == "anthropic_messages" else transport.normalize_response(response))
++    content = getattr(normalized, "content", None)
++    if not isinstance(content, str) or getattr(normalized, "tool_calls", None):
++        return False
++    text = agent._strip_think_blocks(content).rstrip()
++    if not text or not text.endswith(("：", ":", "——", "—")):
++        return False
++    agent._dangling_stop_retries = getattr(agent, "_dangling_stop_retries", 0) + 1
++    agent._vprint(f"{agent.log_prefix}↻ Dangling-stop — requesting continuation "
++                  f"({agent._dangling_stop_retries}/2)...", force=True, diagnostic=True)
++    interim = agent._build_assistant_message(normalized, finish_reason)
++    interim["_length_continuation_fragment"] = True
++    append_message(messages, interim)
++    parts.append((content, False))
++    append_message(messages, {
++        "role": "user", "_length_continuation_nudge": True,
++        "content": "你上一条以冒号结尾就停下了，但你承诺要给的清单/问题/内容还没写出来。"
++                   "请直接接着写完——在这一条回复里把完整内容给全，不要再以冒号结尾停下，"
++                   "也不要重复前面已经说过的部分，直接从该写的内容开始。",
++    })
++    agent._session_messages = messages
++    retry.restart_with_length_continuation = True
++    return True
+diff --git a/agent/turn_usage.py b/agent/turn_usage.py
+index 7c4fb537e5..9c970a0163 100644
+--- a/agent/turn_usage.py
++++ b/agent/turn_usage.py
+@@ -202,6 +202,9 @@ def record_response_usage(
+     _upstream = getattr(response, "provider", None)
+     if isinstance(_upstream, str) and _upstream:
+         _ident += f" upstream={_upstream}"
++    _ident += f" prefix={getattr(agent, '_prefix_probe_state', '?')}"
++    if canonical_usage.reasoning_tokens:
++        _ident += f" reasoning={canonical_usage.reasoning_tokens}"
+     logger.info(
+         "API call #%d: model=%s provider=%s in=%d out=%d total=%d latency=%.1fs%s%s",
+         agent.session_api_calls, agent.model, agent.provider or "unknown",
+diff --git a/hermes_cli/config_defaults.py b/hermes_cli/config_defaults.py
+index afa89f42ae..12196f6409 100644
+--- a/hermes_cli/config_defaults.py
++++ b/hermes_cli/config_defaults.py
+@@ -1697,7 +1697,7 @@ DEFAULT_CONFIG = {
+         # /clear, /new, /reset, /undo confirm before discarding state (Approve Once / Always Approve
+         # / Cancel via tools.slash_confirm; native buttons on Telegram/ Discord/Slack). "Always
+         # Approve" → false. HERMES_TUI_NO_CONFIRM=1 skips the TUI modal.
+-        "destructive_slash_confirm": True,
++        "destructive_slash_confirm": False,
+     },
+     # Permanently allowed dangerous command patterns (added via "always" approval).
+     "command_allowlist": [],
+diff --git a/hermes_cli/tools_config.py b/hermes_cli/tools_config.py
+index 9debf36153..fbc10a2b70 100644
+--- a/hermes_cli/tools_config.py
++++ b/hermes_cli/tools_config.py
+@@ -156,14 +156,18 @@ def _get_effective_configurable_toolsets():
+ 
+ 
+ def _get_plugin_toolset_keys() -> set:
+-    """Return the set of toolset keys provided by plugins."""
++    """Non-blocking plugin keys plus cloud native registry toolsets."""
++    keys = set()
+     try:
+-        # Non-blocking on CLI startup: while background discovery is still importing, serve last
+-        # launch's persisted key set instead of joining the discovery thread.
+         from hermes_cli.plugins import get_plugin_toolset_keys_nowait
+-        return get_plugin_toolset_keys_nowait()
++        keys.update(get_plugin_toolset_keys_nowait())
+     except Exception:
+-        return set()
++        pass
++    from tools.registry import registry
++    from toolsets import TOOLSETS
++    keys.update(ts for ts in registry.get_registered_toolset_names()
++                if ts and ts not in TOOLSETS and not ts.startswith("browser"))
++    return keys
+ 
+ 
+ def _checklist_toolset_keys(platform: str) -> Set[str]:
+diff --git a/tools/clarify_tool.py b/tools/clarify_tool.py
+index 7d0b98feab..c9be5c4418 100644
+--- a/tools/clarify_tool.py
++++ b/tools/clarify_tool.py
+@@ -3,6 +3,7 @@ Schema, validation and a thin dispatcher; the UI lives in a platform-provided
+ callback (cli.py, gateway/run.py, tui_gateway)."""
+ 
+ import json
++import re
+ from typing import Callable, Dict, List, Optional
+ 
+ MAX_CHOICES = 4  # the UI always appends an "Other (type your answer)" row
+@@ -16,6 +17,34 @@ _UNAVAILABLE = "Clarify tool is not available in this execution context."
+ _SHAPE = "Pass questions=[{question, choices?, multi_select?}]; a single question is a one-entry array."
+ 
+ 
++_SCHEMA_TAG_RE = re.compile(r"</?(?:value|type|choices?|description|label|title|question|properties|items)\s*/?>", re.IGNORECASE)
++
++
++def _strip_schema_tags(s) -> str:
++    return _SCHEMA_TAG_RE.sub("", s).strip() if isinstance(s, str) else ""
++
++
++def _looks_like_label(s: str) -> bool:
++    s = s.strip()
++    return bool(s) and (len(s) > 16 or any(ord(c) > 127 or c.isspace() for c in s))
++
++
++def _flatten_choice(c) -> str:
++    if isinstance(c, str):
++        return _strip_schema_tags(c)
++    if isinstance(c, dict):
++        for key in ("label", "text", "title", "name", "description"):
++            if isinstance(c.get(key), str) and c[key].strip():
++                return _strip_schema_tags(c[key])
++        for key, value in c.items():
++            for candidate in (_flatten_choice(value), _strip_schema_tags(key)):
++                if _looks_like_label(candidate):
++                    return candidate
++    if isinstance(c, (list, tuple)):
++        return " ".join(filter(None, (_flatten_choice(x) for x in c)))
++    return ""
++
++
+ def mark_recommended(choices: List[str]) -> List[str]:
+     """Suffix the first choice (schema says best-first) with RECOMMENDED_LABEL; idempotent,
+     and a lone choice is left untouched (nothing to prefer it over)."""
+@@ -59,13 +88,14 @@ def _normalize_questions(questions) -> tuple:
+     for index, item in enumerate(questions):
+         if not isinstance(item, dict):
+             return None, f"questions[{index}] must be an object. {_SHAPE}"
+-        text = str(item.get("question") or "").strip()
++        text = _strip_schema_tags(str(item.get("question") or ""))
+         if not text:
+             return None, f"questions[{index}].question must be non-empty text."
+         choices = item.get("choices")
+         if choices is not None:
+-            if not isinstance(choices, list) or not all(isinstance(c, str) for c in choices):
++            if not isinstance(choices, list):
+                 return None, f"questions[{index}].choices must be a list of strings."
++            choices = [_flatten_choice(c) for c in choices]
+             for pos, choice in enumerate(choices):
+                 if len(choice.strip()) > MAX_CHOICE_CHARS:
+                     return None, (f"questions[{index}].choices[{pos}] is {len(choice.strip())} characters; the limit is "
+@@ -166,7 +196,13 @@ CLARIFY_SCHEMA = {
+                 "description": (
+                     "The question(s). Each: question text (options excluded), "
+                     "optional choices (recommended first; omit for free-text), "
+-                    "optional multi_select. Responses come back in question "
++                    "optional multi_select. Make each question SELF-CONTAINED: "
++                    "bridge from what the user just said and include any context "
++                    "needed to understand it. On some channels (e.g. Feishu) this "
++                    "renders as a standalone card that appears BEFORE the rest of "
++                    "your reply text, so the user may see ONLY this question with "
++                    "no surrounding framing — it must stand on its own and not "
++                    "feel abrupt. Responses come back in question "
+                     "order with the question text echoed."
+                 ),
+                 "items": {
+diff --git a/tools/skill_manager_guards.py b/tools/skill_manager_guards.py
+index 914c321db2..ffa581a2e3 100644
+--- a/tools/skill_manager_guards.py
++++ b/tools/skill_manager_guards.py
+@@ -168,17 +168,18 @@ def _background_review_delete_guard(name: str, skill_dir: Path) -> Optional[Dict
+     if not _is_background_review():
+         return None
+     refuse = "Refusing background curator delete for"
++    no_retry = " Do NOT retry or try other skill_manage actions on it — continue your task and simply mention the issue in your reply."
+     if _is_pinned(name, "pinned skill guard"):
+         return _refusal(
+             f"{refuse} pinned skill '{name}': pinned skills "
+             f"are off-limits to autonomous maintenance. Ask the user to run `hermes curator "
+-            f"unpin {name}` if they want it changed.")
++            f"unpin {name}` if they want it changed." + no_retry)
+     try:
+         from agent.skill_utils import is_external_skill_path
+         if is_external_skill_path(skill_dir):
+             return _refusal(
+                 f"{refuse} skill '{name}': the skill lives in skills.external_dirs, which are "
+-                f"externally owned and read-only to autonomous curation.")
++                f"externally owned and read-only to autonomous curation." + no_retry)
+     except Exception:
+         logger.debug("external skill guard lookup failed for %s", name, exc_info=True)
+     try:
+@@ -188,7 +189,7 @@ def _background_review_delete_guard(name: str, skill_dir: Path) -> Optional[Dict
+             (skill_usage.is_hub_installed, "hub-installed"),
+             (skill_usage.is_bundled, "bundled")):
+             if predicate(name):
+-                return _refusal(f"{refuse} {label} skill '{name}'.")
++                return _refusal(f"{refuse} {label} skill '{name}'." + no_retry)
+         # Not curator-managed (no `created_by: "agent"`) => user-owned, never archived
+         # autonomously. A MISSING record and `created_by: null` must resolve identically:
+         # keying on presence let the guard's own bookkeeping flip the verdict (#67140).
+diff --git a/tools/skill_manager_tool.py b/tools/skill_manager_tool.py
+index 1d183319e5..8e4a1c7d9a 100644
+--- a/tools/skill_manager_tool.py
++++ b/tools/skill_manager_tool.py
+@@ -24,7 +24,6 @@ from utils import atomic_write_text, is_truthy_value
+ from hermes_cli.config import cfg_get
+ from agent.skill_utils import (
+     extract_skill_description,
+-    is_skill_description_truncated_for_prompt,
+     parse_frontmatter as _parse_frontmatter,
+     SKILL_PROMPT_DESC_LIMIT)
+ from tools.skill_manager_guards import (
+@@ -416,10 +415,10 @@ def _guarded_write(name: str, skill_dir: Path, target: Path, action: str, label:
+ 
+ def _add_description_prompt_preview(result: Dict[str, Any], content: str) -> Dict[str, Any]:
+     fm, _ = _parse_frontmatter(content)
+-    if is_skill_description_truncated_for_prompt(fm):
++    if len(str(fm.get("description") or "")) > SKILL_PROMPT_DESC_LIMIT or fm.get("when_to_use"):
+         result["system_prompt_preview"] = (
+-            f"System prompt will show: \"{extract_skill_description(fm)}\" — keep the trigger "
+-            f"self-contained in the first {SKILL_PROMPT_DESC_LIMIT - 3} chars.")
++            f'System prompt will show: "{extract_skill_description(fm)}" '
++            '— large categories may be shown by name only when the index exceeds its budget.')
+     return result
+ 
+ 
+diff --git a/tools/web_tools.py b/tools/web_tools.py
+index f476859710..863e0a5482 100644
+--- a/tools/web_tools.py
++++ b/tools/web_tools.py
+@@ -112,7 +112,8 @@ def _get_backend() -> str:
+         return "firecrawl"
+ 
+     # Never-configured install.
+-    return _autodetect_backend() or _keyless_backend() or "firecrawl"  # default (backward compat)
++    return (_autodetect_backend() or _keyless_backend()
++            or ("baidu" if _load_web_config().get("keyless_fallback", True) else "firecrawl"))
+ 
+ 
+ def _autodetect_backend() -> Optional[str]:
+@@ -126,14 +127,15 @@ def _autodetect_backend() -> Optional[str]:
+         ("firecrawl", _has_env("FIRECRAWL_API_KEY") or _has_env("FIRECRAWL_API_URL")),
+         ("firecrawl", _is_tool_gateway_ready()), ("searxng", _has_env("SEARXNG_URL")),
+         ("brave-free", _has_env("BRAVE_SEARCH_API_KEY")), ("ddgs", _ddgs_package_importable()),
++        ("minimax", _cloud_backend_available("minimax")),
+     )
+     for backend, available in backend_candidates:
+         if available:
+             return backend
+ 
+-    # Plugin-contributed providers (built-ins are covered above); probe the held object directly.
++    # Baidu is the final keyless rung; scoped cloud probes also apply to registered providers.
+     for provider in _list_registered_web_providers():
+-        if provider.name not in _LEGACY_WEB_BACKENDS and _probe(provider, "is_available"):
++        if provider.name not in _LEGACY_WEB_BACKENDS and provider.name != "baidu" and _is_backend_available(provider.name):
+             return provider.name
+     return None
+ 
+@@ -229,6 +231,17 @@ _BUILTIN_AVAILABILITY = {
+ _LEGACY_WEB_BACKENDS = frozenset(_BUILTIN_AVAILABILITY)
+ 
+ 
++def _cloud_backend_available(backend: str) -> bool:
++    if backend == "minimax":
++        import shutil
++        from agent.secret_scope import get_secret
++        return bool(shutil.which("mmx") or os.path.exists("/usr/bin/mmx")) and bool(
++            get_secret("MINIMAX_CODING_API_KEY") or get_secret("MINIMAX_API_KEY"))
++    if backend in {"glm", "kimi", "qwen", "openai", "anthropic"}:
++        return bool(_load_web_config().get("search_key"))
++    return backend == "baidu"
++
++
+ def _is_backend_available(backend: str) -> bool:
+     """True when *backend* is usable — the single availability chokepoint. Non-legacy names delegate to the
+     registered provider's ``is_available()`` (unregistered names fall through); built-ins use cheap probes.
+@@ -240,6 +253,8 @@ def _is_backend_available(backend: str) -> bool:
+     #32698). Built-in backends keep their cheap hardcoded probes below.
+     """
+     backend = (backend or "").lower().strip()
++    if backend in {"minimax", "glm", "kimi", "qwen", "openai", "anthropic", "baidu"}:
++        return _cloud_backend_available(backend)
+     provider = None if backend in _LEGACY_WEB_BACKENDS else _registered_web_provider(backend)
+     if provider is not None:
+         return _probe(provider, "is_available") or False
+@@ -497,8 +512,8 @@ def check_web_api_key() -> bool:
+             if provider is not None and getattr(provider, "name", None) in _WEB_CHECK_SKIP:
+                 # The registry's single-eligible / legacy walk picked a built-in that _get_backend
+                 # never autodetects (the explicit-config case was handled above): the dispatcher
+-                # would route to the keyless tier instead, so gate on exactly that.
+-                if _keyless_backend() is not None:
++                # uses the keyless tier or the cloud Baidu floor, so gate on that same route.
++                if _keyless_backend() is not None or _get_backend() == "baidu":
+                     return True
+                 continue
+             if _provider_is_ready(provider):
+diff --git a/toolsets.py b/toolsets.py
+index a16fccce1c..781f002203 100644
+--- a/toolsets.py
++++ b/toolsets.py
+@@ -203,7 +203,8 @@ TOOLSETS = {
+     "hermes-api-server": _ts(
+         "OpenAI-compatible API server — full agent tools accessible via HTTP (no "
+         "interactive UI tools like clarify or send_message)",
+-        _core_without("text_to_speech", "clarify", "computer_use", kanban=False),
++        [t for t in _core_without("text_to_speech", "clarify", "computer_use", kanban=False)
++         if not t.startswith("browser_")],
+     ),
+     "hermes-cli": _bundle("Full interactive CLI toolset - all default tools plus cronjob management"),
+ 

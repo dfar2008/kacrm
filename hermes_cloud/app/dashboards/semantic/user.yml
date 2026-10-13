@@ -1,0 +1,23 @@
+# User — organization member; used as a dimension reference target,
+# rarely queried directly. No scope distinction (1=1 across all).
+entity: user
+source_view: v_dashboard_users
+
+row_filter:
+  self: "1=1"
+  team: "1=1"
+  org:  "1=1"
+
+dimensions:
+  - {name: department_id, type: ref, references: department}
+  - {name: role_id, type: ref}
+  - {name: is_admin, type: bool}
+  - {name: created_at, type: time, granularities: [day, week, month]}
+
+measures:
+  - {name: count, type: count}
+  - {name: admin_count, type: count, where: "is_admin = true"}
+
+detail_columns:
+  default: [id, username, realname, department_id, role_id, is_admin, created_at]
+  optional: [email, mobile, status]

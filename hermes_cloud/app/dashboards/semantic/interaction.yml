@@ -1,0 +1,22 @@
+# Interaction — append-only event stream (interactions table).
+# actors[0].id extracted in view as actor_user_id; subjects/content opaque.
+entity: interaction
+source_view: v_dashboard_interactions
+
+row_filter:
+  self: "actor_user_id = :caller_id"
+  team: "actor_user_id IN (SELECT id FROM v_team_members(:caller_id))"
+  org:  "1=1"
+
+dimensions:
+  - {name: kind, type: string}
+  - {name: source, type: string}
+  - {name: actor_user_id, type: ref, references: user}
+  - {name: occurred_at, type: time, granularities: [day, week, month, quarter]}
+
+measures:
+  - {name: count, type: count}
+
+detail_columns:
+  default: [id, kind, actor_user_id, source, occurred_at]
+  optional: []

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>KaCRM</title>
+    <script>
+      (function () {
+        try {
+          var el = document.documentElement;
+          var t = localStorage.getItem("hermes.theme");
+          if (t && /^s([1-9]|[12][0-9]|3[0-5])$/.test(t)) {
+            el.setAttribute("data-theme", t);
+          }
+          if (localStorage.getItem("hermes.mode") === "light") {
+            el.setAttribute("data-mode", "light");
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

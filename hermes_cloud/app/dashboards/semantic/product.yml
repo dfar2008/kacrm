@@ -1,0 +1,27 @@
+# 产品 / Product — backed by products table.
+# View `v_dashboard_products` normalizes products_id -> id, products_name ->
+# name, owner_by -> owner_user_id.
+entity: product
+source_view: v_dashboard_products
+
+row_filter:
+  self: "owner_user_id = :caller_id"
+  team: "owner_user_id IN (SELECT id FROM v_team_members(:caller_id))"
+  org:  "1=1"
+
+dimensions:
+  - {name: status, type: string}
+  - {name: catalog, type: string}
+  - {name: owner_user_id, type: ref, references: user}
+  - {name: department_id, type: ref, references: department}
+  - {name: created_at, type: time, granularities: [day, week, month, quarter, year]}
+
+measures:
+  - {name: count, type: count}
+  - {name: low_stock_count, type: count, where: "stock IS NOT NULL AND safe_stock IS NOT NULL AND stock < safe_stock"}
+  - {name: total_stock, type: sum, sql: stock}
+  - {name: avg_price, type: avg, sql: price, requires_grant: see_revenue}
+
+detail_columns:
+  default: [id, name, status, stock, safe_stock, price, created_at]
+  optional: [catalog, productno, cost_price, owner_user_id, department_id, description]

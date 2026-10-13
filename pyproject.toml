@@ -1,0 +1,89 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hermes-cloud"
+version = "0.1.0"
+description = "Hermes Cloud — multi-tenant hermes agent platform"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.111.0",
+    "uvicorn[standard]>=0.29.0",
+    "httpx>=0.27.0",
+    "sqlalchemy>=2.0.0",
+    "pyyaml>=6.0",
+    "prometheus-client>=0.20.0",
+    "itsdangerous>=2.1.0",
+    "python-multipart>=0.0.9",
+    "bcrypt>=4.0.0",
+    "segno>=1.6.0",
+    # Feishu (Lark) SDK — used by the Feishu channel test-connection probe
+    # and cron-delivery helpers (per-profile credentials, not a shared bot).
+    # >=1.6.9: hermes v0.19 feishu adapter passes extra_ua_tags=["channel"]
+    # to lark_oapi.ws.Client (group @mention routing, upstream #50656); that
+    # kwarg does not exist before 1.6.x, so 1.5.x raises TypeError on connect.
+    "lark-oapi>=1.6.9,<1.7",
+    # Dev convenience: auto-load repo-root `.env` on dev_server startup.
+    "python-dotenv>=1.0.0",
+    "psycopg[binary]>=3.1",
+    "alembic>=1.13",
+    "psycopg-pool>=3.2",
+    "pgvector>=0.3",
+    "celery[redis]>=5.3",
+    "redis>=5.0",
+    # IMAP password AES-GCM encryption for hermes_cloud.app.imap.store.
+    "cryptography>=42.0",
+    # SSH transport for Spark training backend (rl/ssh_client.py).
+    # Optional at runtime: only imported when an SSHExecutor is actually used.
+    "paramiko>=3.4",
+    # JSON Schema validation of specialist tool_call args
+    # (hermes_cloud.app.agents._real_agent_fallback).
+    "jsonschema>=4.0",
+    "ddgs>=9.14.2",
+    # Required by hermes/cron/jobs.py for cron-expression parsing
+    # (e.g. "15 6 * * *"). Hermes upstream lists it as a core dep
+    # but doesn't bundle it via pip-install; we pin here so the
+    # cloud venv has it.
+    "croniter>=2.0",
+    # Hermes v0.21.6 gates its own dependency declarations on Python 3.14.
+    # Our cloud venv owns these runtime imports on Python 3.11 as well.
+    "truststore==0.10.4",
+    "snowballstemmer==3.1.1",
+    "tomli-w==1.2.0",
+    "nemo-relay==0.9.3",
+    # Document text-extraction for AI-assistant attachment uploads
+    # (hermes_cloud.app.llm.attachments).
+    "pypdf>=4.0",
+    "openpyxl>=3.1",
+    "python-docx>=1.1",
+    # Scanned/image-only PDF → page images for vision fallback (BSD-licensed).
+    "pypdfium2>=4.0",
+    "Pillow>=10.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.27.0",
+]
+
+# Charter v2 Phase 4b'.1.a (2026-05-06): the ``crm_tools`` plugin
+# entry-point was deleted. CRM tools are now first-class hermes
+# built-ins registered via ``hermes/tools/crm_tools.py`` (which
+# ``discover_builtin_tools()`` auto-imports at hermes startup).
+
+[tool.setuptools.packages.find]
+include = ["hermes_cloud*"]
+
+[tool.pytest.ini_options]
+# Project root must be on sys.path so tests can ``import hermes.*`` (the
+# hermes submodule is not editable-installed at top level — only its
+# subpackages are registered. CWD is on path for ``python`` runs but not
+# ``pytest``; this restores parity).
+pythonpath = ["."]
+markers = [
+    "llm_eval: tests requiring real LLM API calls (skipped without EVAL_API_KEY)",
+    "requires_real_pg: test requires a live PostgreSQL (skipped unless HERMES_TESTS_REAL_PG=1)",
+]

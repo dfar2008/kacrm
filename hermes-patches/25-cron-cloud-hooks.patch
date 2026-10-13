@@ -1,0 +1,84 @@
+diff --git a/cron/scheduler.py b/cron/scheduler.py
+index ad55899d6a..75358d8a3e 100644
+--- a/cron/scheduler.py
++++ b/cron/scheduler.py
+@@ -525,6 +525,27 @@ from cron.scheduler_liveness import ExecutionProgressStamper, _inactivity_watchd
+ # Response marker that suppresses delivery (output is still saved locally for audit).
+ SILENT_MARKER = "[SILENT]"
+ 
++def _coach_digest_delivery(job: dict) -> Optional[str]:
++    """Build the daily-coach IM digest from this run's gateway_actions
++    cards. Returns ``None`` when the run emitted no cards (no push)."""
++    uid = job.get("user_id")
++    if uid is None:
++        raise ValueError("coach_digest deliver_render requires job['user_id']")
++    from hermes.crm.db import db_session
++    from hermes.crm.insights.coach_cards import render_coach_digest
++
++    with db_session() as db:
++        return render_coach_digest(db, int(uid))
++
++
++# deliver_render value → callable(job) -> str | None. A job carrying a
++# ``deliver_render`` key has its delivered content built deterministically
++# here instead of from the agent's free-text final response.
++_DELIVER_RENDERERS = {
++    "coach_digest": _coach_digest_delivery,
++}
++
++
+ # Agent-declared failure marker for cron runs. Unlike SILENT, it is deliberately strict so a
+ # report that merely quotes the token cannot turn a healthy run into a failed one.
+ CRON_FAILURE_MARKER = "[CRON_FAILURE]"
+@@ -3078,6 +3099,29 @@ def _save_compose_deliver(
+     ) = _compose_run_delivery(
+         job, success=d.success, error=d.error, final_response=final_response,
+         output_file=output_file, agent_declared=d.agent_declared)
++
++    # deliver_render jobs: discard the agent's free-text reply
++    # and build the delivered message deterministically from
++    # emitted data (e.g. coach cards). This guarantees the push
++    # is self-contained regardless of what the agent wrote.
++    if d.success and job.get("deliver_render"):
++        renderer = _DELIVER_RENDERERS.get(job["deliver_render"])
++        if renderer is None:
++            d.delivery_error = f"unknown deliver_render '{job['deliver_render']}'"
++            deliver_content = ""
++            logger.error("Job '%s': %s", job["id"], d.delivery_error)
++        else:
++            try:
++                deliver_content = renderer(job) or ""
++            except Exception as _render_err:
++                d.delivery_error = f"deliver_render failed: {_render_err}"
++                deliver_content = ""
++                logger.error(
++                    "Job '%s': deliver_render failed: %s",
++                    job["id"], _render_err,
++                )
++
++
+     # Whitespace-only == empty: skip delivery; the guard below marks it a soft failure.
+     d.should_deliver = bool(deliver_content.strip()) and not _silent_alert
+     if d.should_deliver and not d.success and job.get("_model_unreachable"):
+@@ -3420,7 +3464,7 @@ def _run_one_job_body(
+             return True
+ 
+         # Empty final_response is a soft failure so last_status is not "ok".
+-        if d.success and not final_response.strip():
++        if d.success and not final_response.strip() and not job.get("deliver_render"):
+             d.success = False
+             d.error = "Agent completed but produced empty response (model error, timeout, or misconfiguration)"
+ 
+diff --git a/cron/scheduler_delivery.py b/cron/scheduler_delivery.py
+index 4fdbd0305f..9b6278ade1 100644
+--- a/cron/scheduler_delivery.py
++++ b/cron/scheduler_delivery.py
+@@ -2019,7 +2019,7 @@ def _deliver_result(
+     # Targets acked with NO evidence (bare SendResult(success=True) — Slack/Matrix/Mattermost);
+     # persisted as ``last_delivery_unverified`` so `hermes cron list` shows it.
+     unverified_targets: list = []
+-    if wrap_response:
++    if wrap_response and not job.get("deliver_render"):
+         task_name = job.get("name", job["id"])
+         delivery_content = (
+             f"Cronjob Response: {task_name}\n"

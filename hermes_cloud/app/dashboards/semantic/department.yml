@@ -1,0 +1,19 @@
+# Department — replaces the "team" entity. hermes-cloud has no teams
+# table; team membership is graphed via users.report_to_ids JSONB.
+entity: department
+source_view: v_dashboard_departments
+
+row_filter:
+  self: "1=1"
+  team: "1=1"
+  org:  "1=1"
+
+dimensions:
+  - {name: parent_id, type: ref, references: department}
+
+measures:
+  - {name: count, type: count}
+
+detail_columns:
+  default: [id, name]
+  optional: [parent_id, sort_order]

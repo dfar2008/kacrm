@@ -1,0 +1,82 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Dev database
+hermes_cloud_dev.db
+hermes_cloud_preview.db
+state.db
+
+# Superpowers runtime state
+.superpowers/
+
+# Git worktrees
+.worktrees/
+
+# Env files
+.env
+.env.local
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Temporary
+tmp/
+temp/
+temp.json
+.pytest_cache/
+.playwright-cli/
+
+# Release
+.release_notes.md
+
+# Nix
+.direnv/
+result
+.claude/worktrees/
+.claude/plans/
+hermes_imap.db
+hermes_mail.db
+.claude/scheduled_tasks.lock
+celerybeat-schedule.db
+.upgrade-acceptance-home/
+.gstack/
+.pytest-cache/
+
+# 运行时审计归档(本地产物,不入库)
+data/audit_archive/
+
+# Keep private documentation out; publish only the current deployment guides.
+/docs/*
+!/docs/deployment.md
+!/docs/2026-10-12-hermes-v0.21.6-upgrade.md
+/ppt-build/
+/data/
+/outputs/
+/.codex-backup/
+/.claude/
+/frontend/public/tour/*.mp4
+/frontend/public/tour/poster.jpg
+*.pem
+*.key
+*.dump
+*.sqlite
+*.sqlite3

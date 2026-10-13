@@ -1,0 +1,32 @@
+# 客户 / Customer — backed by accounts table (kacrm convention).
+# View `v_dashboard_customers` normalizes accounts_id -> id, owner_by ->
+# owner_user_id, latest_deal_date -> signed_at, accounts_name -> name.
+entity: customer
+source_view: v_dashboard_customers
+module_table: accounts  # custom fields tracked here grow accounts via ALTER TABLE
+
+row_filter:
+  self: "owner_user_id = :caller_id"
+  team: "owner_user_id IN (SELECT id FROM v_team_members(:caller_id))"
+  org:  "1=1"
+
+dimensions:
+  - {name: industry, type: string}
+  - {name: status, type: string}
+  - {name: owner_user_id, type: ref, references: user}
+  - {name: department_id, type: ref, references: department}
+  - {name: signed_at, type: time, granularities: [day, week, month, quarter, year]}
+  - {name: created_at, type: time, granularities: [day, week, month, quarter, year]}
+
+measures:
+  - {name: count, type: count}
+  - {name: total_deal_amount, type: sum, sql: deal_amount, requires_grant: see_revenue}
+  - {name: avg_deal_amount, type: avg, sql: deal_amount, requires_grant: see_revenue}
+  - {name: opportunity_amount_sum, type: sum, sql: opportunity_amount, requires_grant: see_revenue}
+  - {name: deal_count, type: sum, sql: deal_count}
+  - {name: contact_count, type: sum, sql: contact_count}
+  - {name: sleeping_days_p50, type: percentile, sql: "EXTRACT(day FROM now() - latest_contact_date)", percentile: 0.5}
+
+detail_columns:
+  default: [id, name, industry, owner_user_id, status, signed_at, created_at]
+  optional: [deal_amount, opportunity_amount, deal_count, contact_count, latest_contact_date, next_contact_date, department_id, email, mobile]

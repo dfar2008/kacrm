@@ -1,0 +1,32 @@
+# Source of truth for prod's systemd unit (203.0.113.10, bare-metal).
+# Historically this file was hand-provisioned on the box and lived nowhere
+# in the repo, so its TimeoutStopSec could silently drift. deploy-to-server.sh
+# now installs this file diff-gated (+ daemon-reload) so it stays reproducible.
+#
+# ⚠ TimeoutStopSec MUST stay ≥ the cloud supervisor's scale-to-zero drain
+# budget. On stop, KillMode=mixed sends SIGTERM to the main process only
+# (the supervisor), which runs ProfileManager's per-profile-gateway drain
+# (hermes _drain_active_agents: 30s + 15s margin ≈ 45s) before systemd
+# SIGKILLs the whole cgroup. If this timeout drops below ~45s, systemd kills
+# mid-drain and DROPS in-flight sessions — exactly what scale-to-zero drain
+# exists to prevent. Cross-check: hermes/gateway/shutdown_forensics.py
+# check_systemd_timing_alignment. If you raise the drain budget in
+# hermes_cloud/app/profile_manager.py, raise TimeoutStopSec here too.
+[Unit]
+Description=KaCRM (hermes-cloud) supervisor — pgbouncer+uvicorn+celery worker/beat
+After=network.target postgresql.service redis-server.service
+Wants=postgresql.service redis-server.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/kacrm
+ExecStart=/bin/bash /opt/kacrm/scripts/run_cloud_supervised.sh
+Restart=always
+RestartSec=5
+KillMode=mixed
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target

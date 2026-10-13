@@ -1,0 +1,6 @@
+;; pgbouncer user list. With `auth_type = trust` (see pgbouncer.ini) the
+;; password column is never checked — this file only needs to list the
+;; usernames pgbouncer will accept. The value below is an unused
+;; placeholder, NOT a credential. Production must replace this with a
+;; scram-sha-256 secret and switch auth_type accordingly.
+"openclaw" "unused-trust-auth-placeholder"

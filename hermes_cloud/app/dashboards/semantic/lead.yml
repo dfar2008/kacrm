@@ -1,0 +1,27 @@
+# 线索 / Lead
+entity: lead
+source_view: v_dashboard_leads
+module_table: leads
+
+row_filter:
+  self: "owner_user_id = :caller_id"
+  team: "owner_user_id IN (SELECT id FROM v_team_members(:caller_id))"
+  org:  "1=1"
+
+dimensions:
+  - {name: status, type: string}
+  - {name: source, type: string}
+  - {name: convertedstatus, type: string}
+  - {name: owner_user_id, type: ref, references: user}
+  - {name: department_id, type: ref, references: department}
+  - {name: created_at, type: time, granularities: [day, week, month, quarter]}
+  - {name: converteddate, type: time, granularities: [day, week, month, quarter]}
+
+measures:
+  - {name: count, type: count}
+  - {name: converted_count, type: count, where: "converteddate IS NOT NULL"}
+  - {name: open_count, type: count, where: "converteddate IS NULL"}
+
+detail_columns:
+  default: [id, name, status, source, owner_user_id, created_at]
+  optional: [convertedstatus, converteddate, contact, mobile, email, phone, department_id]

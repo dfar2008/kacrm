@@ -1,0 +1,2028 @@
+diff --git a/tests/agent/test_prompt_builder.py b/tests/agent/test_prompt_builder.py
+index fe11bb1902..8453273ee4 100644
+--- a/tests/agent/test_prompt_builder.py
++++ b/tests/agent/test_prompt_builder.py
+@@ -218,13 +218,15 @@ class TestParseSkillFile:
+         assert desc == "A useful test skill"
+ 
+ 
+-    def test_long_description_truncated(self, tmp_path):
++    def test_long_description_preserved(self, tmp_path):
++        # hermes_cloud overlay (patch 30): skill descriptions are no
++        # longer truncated to 60 chars — the full text is rendered so a
++        # skill author's trigger rules survive into the prompt index.
+         skill_file = tmp_path / "SKILL.md"
+         long_desc = "A" * 100
+         skill_file.write_text(f"---\ndescription: {long_desc}\n---\n")
+         _, _, desc = _parse_skill_file(skill_file)
+-        assert len(desc) <= 60
+-        assert desc.endswith("...")
++        assert desc == long_desc
+ 
+ 
+     def test_logs_parse_failures_and_returns_defaults(self, tmp_path, monkeypatch, caplog):
+@@ -351,6 +353,80 @@ class TestBuildSkillsSystemPrompt:
+ # Context files prompt builder
+ # =========================================================================
+ 
++    def test_cache_invalidates_when_skill_md_rewritten(self, monkeypatch, tmp_path):
++        """Editing a SKILL.md must invalidate the in-process LRU cache."""
++        import os
++        import time
++
++        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
++        skill_dir = tmp_path / "skills" / "coaching" / "coach"
++        skill_dir.mkdir(parents=True)
++        skill_md = skill_dir / "SKILL.md"
++        skill_md.write_text(
++            "---\nname: coach\ndescription: Original description here\n---\n"
++        )
++
++        first = build_skills_system_prompt()
++        assert "Original description here" in first
++
++        # Rewrite with new description and bump mtime so the fingerprint
++        # detects the change deterministically (some filesystems have
++        # second-level mtime resolution).
++        skill_md.write_text(
++            "---\nname: coach\ndescription: Updated description NEW\n---\n"
++        )
++        future = time.time() + 60
++        os.utime(skill_md, (future, future))
++
++        second = build_skills_system_prompt()
++        assert "Updated description NEW" in second
++        assert "Original description here" not in second
++
++    def test_cache_invalidates_when_skill_added(self, monkeypatch, tmp_path):
++        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
++        existing = tmp_path / "skills" / "tools" / "old-skill"
++        existing.mkdir(parents=True)
++        (existing / "SKILL.md").write_text(
++            "---\nname: old-skill\ndescription: Existed first\n---\n"
++        )
++
++        first = build_skills_system_prompt()
++        assert "old-skill" in first
++        assert "new-skill" not in first
++
++        new_dir = tmp_path / "skills" / "tools" / "new-skill"
++        new_dir.mkdir(parents=True)
++        (new_dir / "SKILL.md").write_text(
++            "---\nname: new-skill\ndescription: Just added\n---\n"
++        )
++
++        second = build_skills_system_prompt()
++        assert "new-skill" in second
++
++    def test_cache_invalidates_when_skill_removed(self, monkeypatch, tmp_path):
++        import shutil
++
++        monkeypatch.setenv("HERMES_HOME", str(tmp_path))
++        a = tmp_path / "skills" / "tools" / "skill-a"
++        a.mkdir(parents=True)
++        (a / "SKILL.md").write_text(
++            "---\nname: skill-a\ndescription: A skill\n---\n"
++        )
++        b = tmp_path / "skills" / "tools" / "skill-b"
++        b.mkdir(parents=True)
++        (b / "SKILL.md").write_text(
++            "---\nname: skill-b\ndescription: B skill\n---\n"
++        )
++
++        first = build_skills_system_prompt()
++        assert "skill-a" in first
++        assert "skill-b" in first
++
++        shutil.rmtree(b)
++        second = build_skills_system_prompt()
++        assert "skill-a" in second
++        assert "skill-b" not in second
++
+ 
+ class TestBuildContextFilesPrompt:
+     def test_empty_dir_loads_seeded_global_soul(self, tmp_path):
+diff --git a/tests/agent/test_system_prompt.py b/tests/agent/test_system_prompt.py
+index 466ab7c03a..fc8c50059b 100644
+--- a/tests/agent/test_system_prompt.py
++++ b/tests/agent/test_system_prompt.py
+@@ -541,6 +541,8 @@ def test_coding_prompt_orders_shared_context_before_workspace(monkeypatch):
+     expected = "\n\n".join((
+         "IDENTITY",
+         "HELP",
++        system_prompt.SYSTEM_NOT_YOUR_TASK_GUIDANCE,
++        system_prompt.SYSTEM_FOLLOW_THROUGH_GUIDANCE,
+         "STEER",
+         "CODING_STABLE",
+         "SYSTEM_MESSAGE",
+@@ -569,7 +571,9 @@ def test_coding_prompt_orders_shared_context_before_workspace(monkeypatch):
+         prompt = build_system_prompt(agent, system_message="SYSTEM_MESSAGE")
+ 
+     assert prompt == expected
+-    assert agent._cached_system_prompt_static == "\n\n".join(expected.split("\n\n")[:4])
++    # KaCRM adds two stable infrastructure/follow-through guidance blocks.
++    # Keep the exact upstream tier ordering and include them in the cache pin.
++    assert agent._cached_system_prompt_static == "\n\n".join(expected.split("\n\n")[:6])
+ 
+ 
+ class TestTelegramRichMessagesHint:
+diff --git a/tests/agent/test_turn_context.py b/tests/agent/test_turn_context.py
+index 41c3ecfb0a..0fb13f31fb 100644
+--- a/tests/agent/test_turn_context.py
++++ b/tests/agent/test_turn_context.py
+@@ -77,6 +77,8 @@ class _FakeAgent:
+         self._memory_nudge_interval = 0
+         self._turns_since_memory = 0
+         self._user_turn_count = 0
++        self._skill_nudge_interval = 0
++        self._iters_since_skill = 0
+         self._todo_store = _FakeTodoStore()
+         self._tool_guardrails = _FakeGuardrails()
+         self._compression_warning = None
+@@ -416,6 +418,25 @@ def test_recall_indicator_skipped_when_nothing_injected():
+         assert "👁️" not in str(call)
+ 
+ 
++def test_skill_nudge_hydrates_iters_from_history():
++    """Regression: stateless per-turn surfaces (api_server / CRM chatbox)
++    build a fresh agent every HTTP turn, resetting ``_iters_since_skill`` to 0.
++    The #22357 hydration block recovered ``_turns_since_memory`` from history
++    but NOT the skill counter, so autonomous skill creation never accumulated
++    to its threshold there (it only worked on IM, which reuses a cached agent
++    object across messages). Recover the iteration count from persisted history:
++    each assistant message is one API round is one iteration.
++    """
++    agent = _FakeAgent()
++    agent._skill_nudge_interval = 10
++    history = [{"role": "user", "content": f"u{i}"} for i in range(3)]
++    history += [{"role": "assistant", "content": f"a{i}"} for i in range(25)]
++    _build(agent, conversation_history=history)
++    # 25 assistant messages % interval(10) == 5 → counter now accumulates
++    # across turns instead of resetting to 0 every stateless turn.
++    assert agent._iters_since_skill == 5
++
++
+ def test_ensure_db_session_runs_after_system_prompt_restore():
+     """Regression for #45499.
+ 
+diff --git a/tests/conftest.py b/tests/conftest.py
+index afbbeb2adc..e1031b71c1 100644
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -30,6 +30,87 @@ from pathlib import Path
+ 
+ import pytest
+ 
++
++# ---------------------------------------------------------------------------
++# Charter §九 — PgSessionDB test isolation (added by hermes-patches/10).
++# ---------------------------------------------------------------------------
++# When ``HERMES_USE_CLOUD_DB=1``, hermes_state.SessionDB is the PG-backed
++# PgSessionDB class, and the upstream test suite (which expects a fresh
++# sqlite tmp file per test) needs explicit TRUNCATE between tests so PG
++# state doesn't bleed across runs.
++# Also skip a handful of upstream tests that assert sqlite implementation
++# details (sqlite_master, PRAGMA timeout, schema_version migrations) —
++# they're testing the storage layer, not SessionDB API, so they're moot
++# under PG.
++
++if os.environ.get("HERMES_USE_CLOUD_DB", "").strip().lower() in ("1", "true", "yes", "on"):
++
++    @pytest.fixture(autouse=True)
++    def _truncate_pg_sessiondb_tables():
++        """TRUNCATE PgSessionDB tables before each test so per-test tmp_path
++        semantics are preserved. agent_messages CASCADE handles the FK."""
++        try:
++            from crm.db import db_session
++            with db_session() as db:
++                db.execute("TRUNCATE TABLE agent_messages, agent_sessions "
++                           "RESTART IDENTITY CASCADE")
++        except Exception:
++            pass  # not connected yet / dev box without PG — let test fail
++        yield
++
++    # Tests that exercise sqlite-only details should skip under PG.
++    _SQLITE_ONLY_TEST_PATTERNS = (
++        "TestSchemaInit",                # sqlite SCHEMA_VERSION migrations
++        "test_sqlite_timeout_is_at_least_30s",
++        "test_messages_fts_table_exists",
++        "test_messages_fts_triggers",
++        # v0.11.0+ additions:
++        "TestCJKSearchFallback",         # sqlite FTS5 LIKE fallback for CJK;
++                                         # PG simple-config tokenizer handles
++                                         # CJK natively, no fallback needed.
++        "TestAutoMaintenance",           # sqlite VACUUM + auto-prune helpers;
++                                         # PG uses autovacuum + alembic.
++        "TestStateMeta",                 # sqlite kv_store helper table.
++        "TestVacuum",                    # sqlite VACUUM trigger.
++        # v0.13.0+ additions:
++        "TestFTS5ToolCallIndexing",      # sqlite FTS5 tool_calls/tool_name
++                                         # indexing (v11). PG side ranks by
++                                         # tsvector — different surface area;
++                                         # tracked as a follow-up if cloud
++                                         # ever needs tool-name search.
++        "TestFTS5ToolCallMigration",     # sqlite v10 → v11 migration test;
++                                         # PG migrations live in alembic.
++        "TestListSessionsRich",          # ``list_sessions_rich`` v11 added
++                                         # branch visibility, compression-
++                                         # tip projection, and order-by-last-
++                                         # active. PgSessionDB still ships
++                                         # the v8 form because cloud doesn't
++                                         # call this method anywhere; full
++                                         # mirror is a follow-up.
++        # v0.13.0+: hermes-internal get_messages_as_conversation features
++        # (ancestor chain walk, replay dedup, memory-context strip). Cloud
++        # doesn't call this method with include_ancestors=True or rely on
++        # the sanitize_context strip — they're CLI/replay concerns. Mirror
++        # is a follow-up if cloud ever wires them in.
++        "test_get_messages_as_conversation_includes_ancestor_chain",
++        "test_get_messages_as_conversation_avoids_repeated_resume_prompts_from_ancestors",
++        "test_get_messages_as_conversation_strips_leaked_memory_context",
++        "TestCompressionChainProjection",  # ``get_compression_tip`` not yet
++                                         # implemented in PgSessionDB; tracked
++                                         # as a follow-up enhancement.
++    )
++
++    def pytest_collection_modifyitems(config, items):
++        skip_sqlite_only = pytest.mark.skip(
++            reason="sqlite implementation detail; PgSessionDB N/A"
++        )
++        for item in items:
++            nodeid = item.nodeid
++            for pat in _SQLITE_ONLY_TEST_PATTERNS:
++                if pat in nodeid:
++                    item.add_marker(skip_sqlite_only)
++                    break
++
+ # Ensure project root is importable
+ PROJECT_ROOT = Path(__file__).parent.parent
+ if str(PROJECT_ROOT) not in sys.path:
+diff --git a/tests/cron/test_scheduler.py b/tests/cron/test_scheduler.py
+index 9d29b5bba7..55857b02b5 100644
+--- a/tests/cron/test_scheduler.py
++++ b/tests/cron/test_scheduler.py
+@@ -411,6 +411,38 @@ class TestDeliverResultWrapping:
+         assert media_metadata["user_id"] == "U123"
+         standalone_send.assert_not_awaited()
+ 
++    def test_deliver_render_bypasses_wrap(self):
++        """``deliver_render`` jobs ship a polished user-facing artifact
++        (e.g. coach digest cards); the operator-facing 'Cronjob Response: …
++        / stop reminder …' wrapper would leak debug noise to the end user.
++        Pass the renderer output untouched even when wrap_response is True.
++        """
++        from gateway.config import Platform
++
++        pconfig = MagicMock()
++        pconfig.enabled = True
++        mock_cfg = MagicMock()
++        mock_cfg.platforms = {Platform.TELEGRAM: pconfig}
++
++        with patch("gateway.config.load_gateway_config", return_value=mock_cfg), \
++             patch("tools.send_message_tool._send_to_platform", new=AsyncMock(return_value={"success": True})) as send_mock:
++            job = {
++                "id": "coach-digest-job",
++                "name": "crm-daily-coach",
++                "deliver": "origin",
++                "deliver_render": "coach_digest",   # ← key: triggers bypass
++                "origin": {"platform": "telegram", "chat_id": "123"},
++            }
++            _deliver_result(job, "🤖 今日 Coach · 共 2 件\n🟡 A · ...\n🟡 B · ...")
++
++        send_mock.assert_called_once()
++        sent = send_mock.call_args.kwargs.get("content") or send_mock.call_args[0][-1]
++        assert sent.startswith("🤖 今日 Coach")
++        assert "Cronjob Response" not in sent
++        assert "stop reminder" not in sent
++        assert "job_id" not in sent
++
++
+     def test_live_adapter_sends_media_as_attachments(self, tmp_path, monkeypatch):
+         """When a live adapter is available, MEDIA files should be sent as native
+         platform attachments (e.g., Discord voice, Telegram audio) rather than
+diff --git a/tests/gateway/test_api_server_toolset.py b/tests/gateway/test_api_server_toolset.py
+index cff23b09c9..ba4f8de7db 100644
+--- a/tests/gateway/test_api_server_toolset.py
++++ b/tests/gateway/test_api_server_toolset.py
+@@ -1,5 +1,7 @@
+ """Tests for hermes-api-server toolset and API server tool availability."""
+ 
++from unittest.mock import MagicMock, patch
++
+ class TestApiServerPlatformConfig:
+ 
+     def test_default_api_server_includes_terminal_toolset(self):
+@@ -13,3 +15,36 @@ class TestApiServerPlatformConfig:
+         from hermes_cli.tools_config import _get_platform_tools
+         discover_builtin_tools()
+         assert "terminal" in _get_platform_tools({}, "api_server")
++
++
++    def test_cloud_composite_excludes_browser_and_video_tools(self):
++        from toolsets import resolve_toolset
++
++        tools = resolve_toolset("hermes-api-server")
++        assert tools
++        assert not any(name.startswith("browser_") for name in tools)
++        assert not any(name.startswith("bfl_flux3_") for name in tools)
++
++    def test_create_agent_config_override_keeps_native_crm_toolset(self):
++        from gateway.config import PlatformConfig
++        from gateway.platforms.api_server import APIServerAdapter
++        from tools.registry import registry
++
++        adapter = APIServerAdapter(PlatformConfig())
++        # CRM registers at cloud startup. Supply its native registry seam
++        # without importing or starting a cloud server in this test process.
++        config = {"platform_toolsets": {"api_server": ["web", "terminal"]}}
++        with patch.object(registry, "get_registered_toolset_names", return_value=["crm"]), \
++             patch("hermes_cli.plugins.get_plugin_toolset_keys_nowait", return_value=set()), \
++             patch("gateway.run._resolve_runtime_agent_kwargs", return_value={"api_key": "test-key", "provider": "openai"}), \
++             patch("gateway.run._resolve_gateway_model", return_value="test/model"), \
++             patch("gateway.run._load_gateway_config", return_value=config), \
++             patch("gateway.run.GatewayRunner._load_reasoning_config", return_value=None), \
++             patch("gateway.run.GatewayRunner._load_fallback_model", return_value=None), \
++             patch.object(adapter, "_ensure_session_db", return_value=None), \
++             patch("run_agent.AIAgent", return_value=MagicMock()) as agent_cls:
++            adapter._create_agent()
++
++        agent_cls.assert_called_once()
++        assert agent_cls.call_args.kwargs["enabled_toolsets"] == ["crm", "terminal", "web"]
++        assert agent_cls.call_args.kwargs["platform"] == "api_server"
+diff --git a/tests/gateway/test_email.py b/tests/gateway/test_email.py
+index 9c4b06df72..7c4e8d058a 100644
+--- a/tests/gateway/test_email.py
++++ b/tests/gateway/test_email.py
+@@ -16,7 +16,7 @@ import os
+ import unittest
+ from email.mime.text import MIMEText
+ from email.mime.multipart import MIMEMultipart
+-from unittest.mock import patch, MagicMock, ANY
++from unittest.mock import AsyncMock, patch, MagicMock, ANY
+ 
+ 
+ 
+@@ -160,10 +160,19 @@ class TestDispatchMessage(unittest.TestCase):
+         else:
+             os.environ["EMAIL_ALLOW_ALL_USERS"] = self._prev_allow_all
+ 
+-    def _make_adapter(self):
+-        """Create an EmailAdapter with mocked env vars."""
++    def _make_adapter(self, **env_extras):
++        """Create an EmailAdapter with mocked env vars.
++
++        ``env_extras`` overrides / adds any EMAIL_* env var, e.g.
++        ``EMAIL_OWNER_USERS="boss@x.com"``. Sender-role env vars
++        (EMAIL_ALLOWED_USERS / EMAIL_OWNER_USERS / EMAIL_PERSONA /
++        EMAIL_SIGNATURE / EMAIL_CUSTOMER_REPLY_GUIDE) are NOT preset
++        here — callers either provide via ``env_extras`` or wrap the
++        call in their own ``patch.dict``. Anything not provided
++        defaults to whatever is in os.environ (typically empty).
++        """
+         from gateway.config import PlatformConfig
+-        with patch.dict(os.environ, {
++        env = {
+             "EMAIL_ADDRESS": "hermes@test.com",
+             "EMAIL_PASSWORD": "secret",
+             "EMAIL_IMAP_HOST": "imap.test.com",
+@@ -171,7 +180,9 @@ class TestDispatchMessage(unittest.TestCase):
+             "EMAIL_SMTP_HOST": "smtp.test.com",
+             "EMAIL_SMTP_PORT": "587",
+             "EMAIL_POLL_INTERVAL": "15",
+-        }):
++        }
++        env.update(env_extras)
++        with patch.dict(os.environ, env, clear=False):
+             from plugins.platforms.email.adapter import EmailAdapter
+             adapter = EmailAdapter(PlatformConfig(enabled=True))
+         return adapter
+@@ -260,7 +271,7 @@ class TestDispatchMessage(unittest.TestCase):
+         asyncio.run(adapter._dispatch_message(msg_data))
+         self.assertEqual(len(captured_events), 1)
+         self.assertNotIn("[Subject:", captured_events[0].text)
+-        self.assertEqual(captured_events[0].text, "Thanks for the help!")
++        self.assertIn("Thanks for the help!", captured_events[0].text)
+ 
+ 
+     def test_image_attachment_sets_photo_type(self):
+@@ -294,33 +305,155 @@ class TestDispatchMessage(unittest.TestCase):
+         self.assertEqual(captured_events[0].media_urls, ["/tmp/img.jpg"])
+ 
+ 
+-    def test_empty_allowlist_denies_without_optin(self):
+-        """No allowlist and no allow-all opt-in → adapter fails closed (2.6)."""
+-        import asyncio
++    def test_empty_allowlist_accepts_customer_without_optin(self):
++        """KaCRM cold inbound grants customer mode without an allow-all flag."""
+         with patch.dict(os.environ, {}, clear=False):
+-            # No allowlist, and explicitly no allow-all opt-in.
+-            for k in ("EMAIL_ALLOWED_USERS", "EMAIL_ALLOW_ALL_USERS",
+-                      "GATEWAY_ALLOW_ALL_USERS"):
+-                os.environ.pop(k, None)
+-
+-            adapter = self._make_adapter()
+-            adapter._message_handler = MagicMock()
+-
+-            msg_data = {
+-                "uid": b"101",
+-                "sender_addr": "anyone@test.com",
+-                "sender_name": "Anyone",
+-                "subject": "Hey",
+-                "message_id": "<any@test.com>",
+-                "in_reply_to": "",
+-                "body": "Hi",
+-                "attachments": [],
+-                "date": "",
+-            }
+-
+-            asyncio.run(adapter._dispatch_message(msg_data))
+-            # Fail closed: an unset allowlist without allow-all drops the sender.
+-            adapter._message_handler.assert_not_called()
++            for key in ("EMAIL_ALLOWED_USERS", "EMAIL_ALLOW_ALL_USERS", "GATEWAY_ALLOW_ALL_USERS"):
++                os.environ.pop(key, None)
++            events = self._run_dispatch_capture(
++                self._make_adapter(), self._msg("anyone@test.com")
++            )
++        self.assertEqual(len(events), 1)
++        self.assertIn("sender_role: customer", events[0].text)
++
++
++    # ----- sender-role gate + prefix injection -----
++
++    def _run_dispatch_capture(self, adapter, msg_data):
++        """Run _dispatch_message and capture the MessageEvent (or None)."""
++        import asyncio
++        captured = []
++
++        async def capture_handle(event):
++            captured.append(event)
++
++        adapter.handle_message = capture_handle
++        asyncio.run(adapter._dispatch_message(msg_data))
++        return captured
++
++    def _msg(self, sender, body="询价 product X", subject="询价", authenticated=False):
++        return {
++            "uid": b"x",
++            "sender_addr": sender,
++            "sender_name": "Someone",
++            "subject": subject,
++            "message_id": f"<msg@{sender}>",
++            "in_reply_to": "",
++            "body": body,
++            "attachments": [],
++            "date": "",
++            # v0.20.1 review fix: owner-role assignment requires an
++            # authenticated From (SPF/DKIM). Owner-path tests pass
++            # authenticated=True; customer paths don't care.
++            "sender_authenticated": authenticated,
++        }
++
++    def test_customer_prefix_when_no_owner(self):
++        """Sender not in owner_users → customer prefix, with persona default."""
++        adapter = self._make_adapter()
++        events = self._run_dispatch_capture(adapter, self._msg("stranger@x.com"))
++        self.assertEqual(len(events), 1)
++        text = events[0].text
++        self.assertIn("[HERMES_EMAIL_CONTEXT]", text)
++        self.assertIn("sender_role: customer", text)
++        self.assertIn("bot_persona: 助理", text)
++        self.assertIn("bot_signature:\nhermes@test.com", text)
++        self.assertIn("一次性问全这四项", text)
++        self.assertIn("[/HERMES_EMAIL_CONTEXT]", text)
++        self.assertIn("[原始邮件]", text)
++        self.assertIn("询价 product X", text)
++
++    def test_owner_prefix_when_in_owner_list(self):
++        adapter = self._make_adapter(EMAIL_OWNER_USERS="boss@x.com,admin@x.com")
++        events = self._run_dispatch_capture(adapter, self._msg("boss@x.com", authenticated=True))
++        self.assertEqual(len(events), 1)
++        text = events[0].text
++        self.assertIn("sender_role: owner", text)
++        self.assertNotIn("bot_persona:", text)
++        self.assertNotIn("bot_signature:", text)
++        self.assertIn("内部助手口吻", text)
++
++    def test_gate_drops_stranger_when_allowed_users_set(self):
++        adapter = self._make_adapter(
++            EMAIL_ALLOWED_USERS="known@x.com",
++            EMAIL_OWNER_USERS="boss@x.com",
++        )
++        events = self._run_dispatch_capture(adapter, self._msg("stranger@x.com"))
++        self.assertEqual(events, [])
++
++    def test_gate_owner_passes_even_if_not_in_allowed(self):
++        adapter = self._make_adapter(
++            EMAIL_ALLOWED_USERS="known@x.com",
++            EMAIL_OWNER_USERS="boss@x.com",
++        )
++        events = self._run_dispatch_capture(adapter, self._msg("boss@x.com", authenticated=True))
++        self.assertEqual(len(events), 1)
++        self.assertIn("sender_role: owner", events[0].text)
++
++    def test_spoofed_owner_from_dropped_when_unauthenticated(self):
++        """Forged From: matching EMAIL_OWNER_USERS must NOT gain owner mode.
++
++        v0.20.1 review finding: the generic From-auth gate only fires when an
++        allowlist grants access, so in the CRM norm (allowlist unset =
++        accept-all customers) a forged From: owner@… used to reach owner
++        command mode. The owner path now fails closed on authentication.
++        """
++        adapter = self._make_adapter(EMAIL_OWNER_USERS="boss@x.com")
++        events = self._run_dispatch_capture(
++            adapter, self._msg("boss@x.com", authenticated=False)
++        )
++        self.assertEqual(events, [])
++
++    def test_owner_unauthenticated_allowed_with_trust_from_header(self):
++        """EMAIL_TRUST_FROM_HEADER=true is the explicit escape valve for
++        receiving servers that don't stamp Authentication-Results."""
++        adapter = self._make_adapter(
++            EMAIL_OWNER_USERS="boss@x.com",
++            EMAIL_TRUST_FROM_HEADER="true",
++        )
++        events = self._run_dispatch_capture(
++            adapter, self._msg("boss@x.com", authenticated=False)
++        )
++        self.assertEqual(len(events), 1)
++        self.assertIn("sender_role: owner", events[0].text)
++
++    def test_customer_path_unaffected_by_owner_auth_gate(self):
++        """Cold inbound from arbitrary (unauthenticated) servers still lands
++        as customer — the owner auth gate is scoped to the privileged path."""
++        adapter = self._make_adapter(EMAIL_OWNER_USERS="boss@x.com")
++        events = self._run_dispatch_capture(
++            adapter, self._msg("stranger@y.com", authenticated=False)
++        )
++        self.assertEqual(len(events), 1)
++        self.assertIn("sender_role: customer", events[0].text)
++
++    def test_persona_and_signature_overrides(self):
++        adapter = self._make_adapter(
++            EMAIL_PERSONA="销售助理小张",
++            EMAIL_SIGNATURE="张小张\nXX 贸易\nsales@xx.com",
++        )
++        events = self._run_dispatch_capture(adapter, self._msg("c@x.com"))
++        text = events[0].text
++        self.assertIn("bot_persona: 销售助理小张", text)
++        self.assertIn("bot_signature:\n张小张\nXX 贸易\nsales@xx.com", text)
++        self.assertIn("自称\"销售助理小张\"", text)
++
++    def test_customer_reply_guide_override(self):
++        adapter = self._make_adapter(
++            EMAIL_CUSTOMER_REPLY_GUIDE="Reply in English only. Ask for Incoterms.",
++        )
++        events = self._run_dispatch_capture(adapter, self._msg("c@x.com"))
++        text = events[0].text
++        self.assertIn("Reply in English only. Ask for Incoterms.", text)
++        self.assertNotIn("一次性问全这四项", text)
++
++    def test_empty_body_still_wrapped_in_prefix(self):
++        adapter = self._make_adapter()
++        msg = self._msg("c@x.com", body="", subject="Re: ping")
++        events = self._run_dispatch_capture(adapter, msg)
++        text = events[0].text
++        self.assertIn("[HERMES_EMAIL_CONTEXT]", text)
++        self.assertIn("(empty email)", text)
+ 
+ 
+ class TestDispatchDefersToGatewayAuthorization(unittest.TestCase):
+@@ -388,7 +521,7 @@ class TestDispatchDefersToGatewayAuthorization(unittest.TestCase):
+ 
+         adapter_log = "plugins.platforms.email.adapter"
+         with self.assertLogs(adapter_log, level="WARNING") as logs:
+-            self.assertEqual(self._reached_gateway(authenticated=False, env={"EMAIL_ALLOW_ALL_USERS": "true"}), [])
++            self.assertEqual(self._reached_gateway(authenticated=False, env={"EMAIL_ALLOWED_USERS": self.STRANGER}), [])
+         self.assertIn("require_authenticated_sender: false", logs.output[0])
+         with self.assertLogs(adapter_log, level="WARNING") as logs:
+             self.assertEqual(self._reached_gateway(authenticated=False, auth_reason=_UNTRUSTED_AUTHSERV_REASON,
+@@ -425,8 +558,10 @@ class TestDispatchDefersToGatewayAuthorization(unittest.TestCase):
+         self.assertIn("EMAIL_AUTHSERV_ID", logs.output[1])
+         self.assertIn("EMAIL_TRUST_FROM_HEADER=true", logs.output[1])
+         with self.assertNoLogs(adapter_log, level="WARNING"):
+-            self.assertEqual(self._reached_gateway(authenticated=False, auth_reason="dmarc=fail",
+-                                                   env={"EMAIL_ALLOW_ALL_USERS": "true"}), [])
++            events = self._reached_gateway(authenticated=False, auth_reason="dmarc=fail",
++                                           env={"EMAIL_ALLOW_ALL_USERS": "true"})
++            self.assertEqual(len(events), 1)
++            self.assertIn("sender_role: customer", events[0].text)
+         # A listed contact's failing mail (broken DKIM, a forwarder) is worth seeing, but the opt-out is wrong advice.
+         with self.assertLogs(adapter_log, level="WARNING") as logs:
+             self.assertEqual(self._reached_gateway(authenticated=False, auth_reason="dmarc=fail",
+@@ -453,15 +588,30 @@ class TestDispatchDefersToGatewayAuthorization(unittest.TestCase):
+             with self.subTest(label):
+                 self.assertEqual(len(self._reached_gateway(**kwargs)), 1)
+ 
++    def test_cloud_cold_inbound_stays_customer_with_gateway_policy(self):
++        # KaCRM's email-specific cold-inbound policy intentionally accepts
++        # customers without an EMAIL allowlist, regardless of generic gateway
++        # default-ignore or a bare gateway username. This never grants owner mode.
++        cases = [
++            {},
++            {"authenticated": False, "env": {"EMAIL_ALLOW_ALL_USERS": "true"}},
++            {"authenticated": False, "env": {"GATEWAY_ALLOW_ALL_USERS": "true"}},
++            {"env": {"GATEWAY_ALLOWED_USERS": "stranger"}},
++            {"env": {"GATEWAY_ALLOWED_USERS": "stranger"},
++             "extra": {"unauthorized_dm_behavior": "pair"}},
++        ]
++        for kwargs in cases:
++            with self.subTest(kwargs=kwargs):
++                events = self._reached_gateway(**kwargs)
++                self.assertEqual(len(events), 1)
++                self.assertIn("sender_role: customer", events[0].text)
++                self.assertFalse(events[0].source.role_authorized)
++
+     def test_mail_the_gateway_would_ignore_or_that_forges_from_is_dropped(self):
+         cases = {
+-            "default ignore": {},
+             "pair opt-in, unauthenticated From": {"extra": {"unauthorized_dm_behavior": "pair"}, "authenticated": False},
+             "approved pairing, unauthenticated From": {"paired": True, "authenticated": False},
+             # Open access admits any sender, not any From:: a forged one would land in that address's session.
+-            "EMAIL_ALLOW_ALL_USERS, unauthenticated From": {"authenticated": False, "env": {"EMAIL_ALLOW_ALL_USERS": "true"}},
+-            "GATEWAY_ALLOW_ALL_USERS, unauthenticated From": {
+-                "authenticated": False, "env": {"GATEWAY_ALLOW_ALL_USERS": "true"}},
+             # Open access grants a stranger nothing beside a list, so a pairing code must not go to a forged From:.
+             "pair opt-in, allow-all beside EMAIL list, unauthenticated From": {
+                 "extra": {"unauthorized_dm_behavior": "pair"}, "authenticated": False,
+@@ -474,10 +624,7 @@ class TestDispatchDefersToGatewayAuthorization(unittest.TestCase):
+                 "env": {"GATEWAY_ALLOW_ALL_USERS": "true", "GATEWAY_ALLOWED_USERS": "boss@example.com"}},
+             # A bare entry (a chat username, say) names one principal, never stranger@<any domain>: the
+             # domain is the sender's to choose, so such mail is dropped rather than admitted or paired.
+-            "GATEWAY_ALLOWED_USERS bare entry": {"env": {"GATEWAY_ALLOWED_USERS": "stranger"}},
+             "EMAIL_ALLOWED_USERS bare entry, JSON list literal": {"env": {"EMAIL_ALLOWED_USERS": '["stranger"]'}},
+-            "bare entry, pair opt-in": {"env": {"GATEWAY_ALLOWED_USERS": "stranger"},
+-                                        "extra": {"unauthorized_dm_behavior": "pair"}},
+         }
+         for label, kwargs in cases.items():
+             with self.subTest(label):
+@@ -753,6 +900,9 @@ class TestPollLoop(unittest.TestCase):
+ 
+         adapter = self._make_adapter()
+         adapter._require_authenticated_sender = True
++        # The preflight auth guard applies to a privileged/listed sender;
++        # ordinary unauthenticated cold inbound intentionally stays customer.
++        adapter._allowed_users = {"owner@example.com"}
+         adapter._authserv_id = "mx.trusted.test"
+         dispatched, fetch_specs = [], []
+ 
+@@ -1010,7 +1160,7 @@ class TestReconnectSeenUidsRestore(unittest.TestCase):
+ 
+         with patch("imaplib.IMAP4_SSL", return_value=mock_imap), patch.object(
+             adapter, "_connect_smtp", return_value=smtp
+-        ):
++        ), patch.object(adapter, "_poll_loop", new=AsyncMock()):
+             return asyncio.run(adapter.connect(is_reconnect=is_reconnect))
+ 
+     def test_reconnect_restores_snapshot_instead_of_marking_all_seen(self):
+diff --git a/tests/gateway/test_feishu.py b/tests/gateway/test_feishu.py
+index 7cf9afd615..5fda0f6921 100644
+--- a/tests/gateway/test_feishu.py
++++ b/tests/gateway/test_feishu.py
+@@ -187,7 +187,7 @@ class TestFeishuAdapterMessaging(unittest.TestCase):
+             patch("plugins.platforms.feishu.adapter.release_scoped_lock"),
+             patch.object(adapter, "_hydrate_bot_identity", new=AsyncMock()),
+             patch.object(adapter, "_build_lark_client", return_value=SimpleNamespace()),
+-            patch.object(adapter, "_get_sdk_executor", return_value=owned_executor),
++            patch.object(adapter, "_get_ws_executor", return_value=owned_executor),
+         ):
+             _mock_event_dispatcher_builder(mock_handler_class)
+ 
+@@ -1177,6 +1177,906 @@ class TestAdapterBehavior(unittest.TestCase):
+         # down, which only works by accident (httpx's eager buffering).
+         self.assertLess(events.index("content_read"), events.index("client_exit"))
+ 
++    def test_dedup_state_persists_across_adapter_restart(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        with tempfile.TemporaryDirectory() as temp_home:
++            with patch.dict(os.environ, {"HERMES_HOME": temp_home}, clear=False):
++                first = FeishuAdapter(PlatformConfig())
++                self.assertFalse(first._is_duplicate("om_same"))
++                second = FeishuAdapter(PlatformConfig())
++                self.assertTrue(second._is_duplicate("om_same"))
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_process_inbound_group_message_keeps_group_type_when_chat_lookup_falls_back(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        adapter._dispatch_inbound_event = AsyncMock()
++        adapter.get_chat_info = AsyncMock(
++            return_value={"chat_id": "oc_group", "name": "oc_group", "type": "dm"}
++        )
++        adapter._resolve_sender_profile = AsyncMock(
++            return_value={"user_id": "ou_user", "user_name": "张三", "user_id_alt": None}
++        )
++        message = SimpleNamespace(
++            chat_id="oc_group",
++            thread_id=None,
++            message_type="text",
++            content='{"text":"hello group"}',
++            message_id="om_group_text",
++        )
++        sender_id = SimpleNamespace(open_id="ou_user", user_id=None, union_id=None)
++        sender = SimpleNamespace(sender_type="user", sender_id=sender_id)
++        data = SimpleNamespace(event=SimpleNamespace(message=message))
++
++        asyncio.run(
++            adapter._process_inbound_message(
++                data=data,
++                message=message,
++                sender_id=sender.sender_id,
++                chat_type="group",
++                message_id="om_group_text",
++            )
++        )
++
++        event = adapter._dispatch_inbound_event.await_args.args[0]
++        self.assertEqual(event.source.chat_type, "group")
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_process_inbound_message_fetches_reply_to_text(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        adapter._dispatch_inbound_event = AsyncMock()
++        adapter.get_chat_info = AsyncMock(
++            return_value={"chat_id": "oc_chat", "name": "Feishu DM", "type": "dm"}
++        )
++        adapter._resolve_sender_profile = AsyncMock(
++            return_value={"user_id": "ou_user", "user_name": "张三", "user_id_alt": None}
++        )
++        adapter._fetch_message_text = AsyncMock(return_value="父消息内容")
++        message = SimpleNamespace(
++            chat_id="oc_chat",
++            thread_id=None,
++            parent_id="om_parent",
++            upper_message_id=None,
++            message_type="text",
++            content='{"text":"reply"}',
++            message_id="om_reply",
++        )
++
++        asyncio.run(
++            adapter._process_inbound_message(
++                data=SimpleNamespace(event=SimpleNamespace(message=message)),
++                message=message,
++                sender_id=SimpleNamespace(open_id="ou_user", user_id=None, union_id=None),
++                is_bot=False,
++                chat_type="p2p",
++                message_id="om_reply",
++            )
++        )
++
++        event = adapter._dispatch_inbound_event.await_args.args[0]
++        self.assertEqual(event.reply_to_message_id, "om_parent")
++        self.assertEqual(event.reply_to_text, "父消息内容")
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_send_replies_in_thread_when_thread_metadata_present(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        captured = {}
++
++        class _ReplyAPI:
++            def reply(self, request):
++                captured["request"] = request
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(message_id="om_reply"),
++                )
++
++        adapter._client = SimpleNamespace(
++            im=SimpleNamespace(
++                v1=SimpleNamespace(
++                    message=_ReplyAPI(),
++                )
++            )
++        )
++
++        async def _direct(func, *args, **kwargs):
++            return func(*args, **kwargs)
++
++        with patch("plugins.platforms.feishu.adapter.asyncio.to_thread", side_effect=_direct):
++            result = asyncio.run(
++                adapter.send(
++                    chat_id="oc_chat",
++                    content="hello",
++                    reply_to="om_parent",
++                    metadata={"thread_id": "omt-thread"},
++                )
++            )
++
++        self.assertTrue(result.success)
++        self.assertEqual(result.message_id, "om_reply")
++        self.assertTrue(captured["request"].request_body.reply_in_thread)
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_send_uses_metadata_reply_target_for_threaded_feishu_topic(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        captured = {}
++
++        class _MessageAPI:
++            def reply(self, request):
++                captured["request"] = request
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(message_id="om_reply"),
++                )
++
++        adapter._client = SimpleNamespace(
++            im=SimpleNamespace(v1=SimpleNamespace(message=_MessageAPI()))
++        )
++
++        async def _direct(func, *args, **kwargs):
++            return func(*args, **kwargs)
++
++        with patch("plugins.platforms.feishu.adapter.asyncio.to_thread", side_effect=_direct):
++            result = asyncio.run(
++                adapter.send(
++                    chat_id="oc_chat",
++                    content="status update",
++                    metadata={
++                        "thread_id": "omt-thread",
++                        "reply_to_message_id": "om_trigger",
++                    },
++                )
++            )
++
++        self.assertTrue(result.success)
++        self.assertEqual(captured["request"].message_id, "om_trigger")
++        self.assertTrue(captured["request"].request_body.reply_in_thread)
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_send_retries_transient_failure(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        captured = {"attempts": 0}
++        sleeps = []
++
++        class _MessageAPI:
++            def create(self, request):
++                captured["attempts"] += 1
++                captured["request"] = request
++                if captured["attempts"] == 1:
++                    raise OSError("temporary send failure")
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(message_id="om_retry"),
++                )
++
++        adapter._client = SimpleNamespace(
++            im=SimpleNamespace(
++                v1=SimpleNamespace(
++                    message=_MessageAPI(),
++                )
++            )
++        )
++
++        async def _direct(func, *args, **kwargs):
++            return func(*args, **kwargs)
++
++        async def _sleep(delay):
++            sleeps.append(delay)
++
++        with (
++            patch("plugins.platforms.feishu.adapter.asyncio.to_thread", side_effect=_direct),
++            patch("plugins.platforms.feishu.adapter.asyncio.sleep", side_effect=_sleep),
++        ):
++            result = asyncio.run(adapter.send(chat_id="oc_chat", content="hello retry"))
++
++        self.assertTrue(result.success)
++        self.assertEqual(result.message_id, "om_retry")
++        self.assertEqual(captured["attempts"], 2)
++        self.assertEqual(sleeps, [1])
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_send_does_not_retry_deterministic_api_failure(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        captured = {"attempts": 0}
++        sleeps = []
++
++        class _MessageAPI:
++            def create(self, request):
++                captured["attempts"] += 1
++                return SimpleNamespace(
++                    success=lambda: False,
++                    code=400,
++                    msg="bad request",
++                )
++
++        adapter._client = SimpleNamespace(
++            im=SimpleNamespace(
++                v1=SimpleNamespace(
++                    message=_MessageAPI(),
++                )
++            )
++        )
++
++        async def _direct(func, *args, **kwargs):
++            return func(*args, **kwargs)
++
++        async def _sleep(delay):
++            sleeps.append(delay)
++
++        with (
++            patch("plugins.platforms.feishu.adapter.asyncio.to_thread", side_effect=_direct),
++            patch("plugins.platforms.feishu.adapter.asyncio.sleep", side_effect=_sleep),
++        ):
++            result = asyncio.run(adapter.send(chat_id="oc_chat", content="bad payload"))
++
++        self.assertFalse(result.success)
++        self.assertEqual(result.error, "[400] bad request")
++        self.assertEqual(captured["attempts"], 1)
++        self.assertEqual(sleeps, [])
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_send_document_reply_uses_thread_flag(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        captured = {}
++
++        class _FileAPI:
++            def create(self, request):
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(file_key="file_123"),
++                )
++
++        class _MessageAPI:
++            def reply(self, request):
++                captured["request"] = request
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(message_id="om_file_reply"),
++                )
++
++        adapter._client = SimpleNamespace(
++            im=SimpleNamespace(
++                v1=SimpleNamespace(
++                    file=_FileAPI(),
++                    message=_MessageAPI(),
++                )
++            )
++        )
++
++        async def _direct(func, *args, **kwargs):
++            return func(*args, **kwargs)
++
++        with tempfile.NamedTemporaryFile("wb", suffix=".pdf", delete=False) as tmp:
++            tmp.write(b"%PDF-1.4 test")
++            file_path = tmp.name
++
++        try:
++            with patch("plugins.platforms.feishu.adapter.asyncio.to_thread", side_effect=_direct):
++                result = asyncio.run(
++                    adapter.send_document(
++                        chat_id="oc_chat",
++                        file_path=file_path,
++                        reply_to="om_parent",
++                        metadata={"thread_id": "omt-thread"},
++                    )
++                )
++        finally:
++            os.unlink(file_path)
++
++        self.assertTrue(result.success)
++        self.assertTrue(captured["request"].request_body.reply_in_thread)
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_send_document_uploads_file_and_sends_file_message(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        captured = {}
++
++        class _FileAPI:
++            def create(self, request):
++                captured["upload_request"] = request
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(file_key="file_123"),
++                )
++
++        class _MessageAPI:
++            def create(self, request):
++                captured["message_request"] = request
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(message_id="om_file_msg"),
++                )
++
++        adapter._client = SimpleNamespace(
++            im=SimpleNamespace(
++                v1=SimpleNamespace(
++                    file=_FileAPI(),
++                    message=_MessageAPI(),
++                )
++            )
++        )
++
++        async def _direct(func, *args, **kwargs):
++            return func(*args, **kwargs)
++
++        with tempfile.NamedTemporaryFile("wb", suffix=".pdf", delete=False) as tmp:
++            tmp.write(b"%PDF-1.4 test")
++            file_path = tmp.name
++
++        try:
++            with patch("plugins.platforms.feishu.adapter.asyncio.to_thread", side_effect=_direct):
++                result = asyncio.run(adapter.send_document(chat_id="oc_chat", file_path=file_path))
++        finally:
++            os.unlink(file_path)
++
++        self.assertTrue(result.success)
++        self.assertEqual(result.message_id, "om_file_msg")
++        self.assertEqual(captured["upload_request"].request_body.file_type, "pdf")
++        self.assertEqual(
++            captured["message_request"].request_body.content,
++            '{"file_key": "file_123"}',
++        )
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_send_document_with_caption_uses_single_post_message(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        captured = {}
++
++        class _FileAPI:
++            def create(self, request):
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(file_key="file_123"),
++                )
++
++        class _MessageAPI:
++            def create(self, request):
++                captured["message_request"] = request
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(message_id="om_post_msg"),
++                )
++
++        adapter._client = SimpleNamespace(
++            im=SimpleNamespace(
++                v1=SimpleNamespace(
++                    file=_FileAPI(),
++                    message=_MessageAPI(),
++                )
++            )
++        )
++
++        async def _direct(func, *args, **kwargs):
++            return func(*args, **kwargs)
++
++        with tempfile.NamedTemporaryFile("wb", suffix=".pdf", delete=False) as tmp:
++            tmp.write(b"%PDF-1.4 test")
++            file_path = tmp.name
++
++        try:
++            with patch("plugins.platforms.feishu.adapter.asyncio.to_thread", side_effect=_direct):
++                result = asyncio.run(
++                    adapter.send_document(chat_id="oc_chat", file_path=file_path, caption="报告请看")
++                )
++        finally:
++            os.unlink(file_path)
++
++        self.assertTrue(result.success)
++        self.assertEqual(captured["message_request"].request_body.msg_type, "post")
++        self.assertIn('"tag": "media"', captured["message_request"].request_body.content)
++        self.assertIn('"file_key": "file_123"', captured["message_request"].request_body.content)
++        self.assertIn("报告请看", captured["message_request"].request_body.content)
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_send_image_file_uploads_image_and_sends_image_message(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        captured = {}
++
++        class _ImageAPI:
++            def create(self, request):
++                captured["upload_request"] = request
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(image_key="img_123"),
++                )
++
++        class _MessageAPI:
++            def create(self, request):
++                captured["message_request"] = request
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(message_id="om_image_msg"),
++                )
++
++        adapter._client = SimpleNamespace(
++            im=SimpleNamespace(
++                v1=SimpleNamespace(
++                    image=_ImageAPI(),
++                    message=_MessageAPI(),
++                )
++            )
++        )
++
++        async def _direct(func, *args, **kwargs):
++            return func(*args, **kwargs)
++
++        with tempfile.NamedTemporaryFile("wb", suffix=".png", delete=False) as tmp:
++            tmp.write(b"\x89PNG\r\n\x1a\n")
++            image_path = tmp.name
++
++        try:
++            with patch("plugins.platforms.feishu.adapter.asyncio.to_thread", side_effect=_direct):
++                result = asyncio.run(adapter.send_image_file(chat_id="oc_chat", image_path=image_path))
++        finally:
++            os.unlink(image_path)
++
++        self.assertTrue(result.success)
++        self.assertEqual(result.message_id, "om_image_msg")
++        self.assertEqual(captured["upload_request"].request_body.image_type, "message")
++        self.assertEqual(
++            captured["message_request"].request_body.content,
++            '{"image_key": "img_123"}',
++        )
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_send_image_file_with_caption_uses_single_post_message(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        captured = {}
++
++        class _ImageAPI:
++            def create(self, request):
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(image_key="img_123"),
++                )
++
++        class _MessageAPI:
++            def create(self, request):
++                captured["message_request"] = request
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(message_id="om_post_img"),
++                )
++
++        adapter._client = SimpleNamespace(
++            im=SimpleNamespace(
++                v1=SimpleNamespace(
++                    image=_ImageAPI(),
++                    message=_MessageAPI(),
++                )
++            )
++        )
++
++        async def _direct(func, *args, **kwargs):
++            return func(*args, **kwargs)
++
++        with tempfile.NamedTemporaryFile("wb", suffix=".png", delete=False) as tmp:
++            tmp.write(b"\x89PNG\r\n\x1a\n")
++            image_path = tmp.name
++
++        try:
++            with patch("plugins.platforms.feishu.adapter.asyncio.to_thread", side_effect=_direct):
++                result = asyncio.run(
++                    adapter.send_image_file(chat_id="oc_chat", image_path=image_path, caption="截图说明")
++                )
++        finally:
++            os.unlink(image_path)
++
++        self.assertTrue(result.success)
++        self.assertEqual(captured["message_request"].request_body.msg_type, "post")
++        self.assertIn('"tag": "img"', captured["message_request"].request_body.content)
++        self.assertIn('"image_key": "img_123"', captured["message_request"].request_body.content)
++        self.assertIn("截图说明", captured["message_request"].request_body.content)
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_send_video_uploads_file_and_sends_media_message(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        captured = {}
++
++        class _FileAPI:
++            def create(self, request):
++                captured["upload_request"] = request
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(file_key="file_video_123"),
++                )
++
++        class _MessageAPI:
++            def create(self, request):
++                captured["message_request"] = request
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(message_id="om_video_msg"),
++                )
++
++        adapter._client = SimpleNamespace(
++            im=SimpleNamespace(
++                v1=SimpleNamespace(
++                    file=_FileAPI(),
++                    message=_MessageAPI(),
++                )
++            )
++        )
++
++        async def _direct(func, *args, **kwargs):
++            return func(*args, **kwargs)
++
++        with tempfile.NamedTemporaryFile("wb", suffix=".mp4", delete=False) as tmp:
++            tmp.write(b"\x00\x00\x00\x18ftypmp42")
++            video_path = tmp.name
++
++        try:
++            with patch("plugins.platforms.feishu.adapter.asyncio.to_thread", side_effect=_direct):
++                result = asyncio.run(adapter.send_video(chat_id="oc_chat", video_path=video_path))
++        finally:
++            os.unlink(video_path)
++
++        self.assertTrue(result.success)
++        self.assertEqual(captured["upload_request"].request_body.file_type, "mp4")
++        self.assertEqual(captured["message_request"].request_body.msg_type, "media")
++        self.assertEqual(captured["message_request"].request_body.content, '{"file_key": "file_video_123"}')
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_send_voice_uploads_opus_and_sends_audio_message(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        captured = {}
++
++        class _FileAPI:
++            def create(self, request):
++                captured["upload_request"] = request
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(file_key="file_audio_123"),
++                )
++
++        class _MessageAPI:
++            def create(self, request):
++                captured["message_request"] = request
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(message_id="om_audio_msg"),
++                )
++
++        adapter._client = SimpleNamespace(
++            im=SimpleNamespace(
++                v1=SimpleNamespace(
++                    file=_FileAPI(),
++                    message=_MessageAPI(),
++                )
++            )
++        )
++
++        async def _direct(func, *args, **kwargs):
++            return func(*args, **kwargs)
++
++        with tempfile.NamedTemporaryFile("wb", suffix=".opus", delete=False) as tmp:
++            tmp.write(b"opus")
++            audio_path = tmp.name
++
++        try:
++            with patch("plugins.platforms.feishu.adapter.asyncio.to_thread", side_effect=_direct):
++                result = asyncio.run(adapter.send_voice(chat_id="oc_chat", audio_path=audio_path))
++        finally:
++            os.unlink(audio_path)
++
++        self.assertTrue(result.success)
++        self.assertEqual(captured["upload_request"].request_body.file_type, "opus")
++        self.assertEqual(captured["message_request"].request_body.msg_type, "audio")
++        self.assertEqual(captured["message_request"].request_body.content, '{"file_key": "file_audio_123"}')
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_build_post_payload_extracts_title_and_links(self):
++        from plugins.platforms.feishu.adapter import _build_markdown_post_payload
++
++        payload = json.loads(_build_markdown_post_payload("# 标题\n访问 [文档](https://example.com)"))
++
++        elements = payload["zh_cn"]["content"][0]
++        self.assertEqual(elements, [{"tag": "md", "text": "# 标题\n访问 [文档](https://example.com)"}])
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_build_post_payload_wraps_markdown_in_md_tag(self):
++        from plugins.platforms.feishu.adapter import _build_markdown_post_payload
++
++        payload = json.loads(
++            _build_markdown_post_payload("支持 **粗体**、*斜体* 和 `代码`")
++        )
++
++        elements = payload["zh_cn"]["content"][0]
++        self.assertEqual(
++            elements,
++            [
++                {"tag": "md", "text": "支持 **粗体**、*斜体* 和 `代码`"},
++            ],
++        )
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_build_post_payload_keeps_full_markdown_text(self):
++        from plugins.platforms.feishu.adapter import _build_markdown_post_payload
++
++        payload = json.loads(
++            _build_markdown_post_payload(
++                "---\n1. 第一项\n  2. 子项\n- 外层\n  - 内层\n<u>下划线</u> 和 ~~删除线~~"
++            )
++        )
++
++        rows = payload["zh_cn"]["content"]
++        self.assertEqual(
++            rows,
++            [[{"tag": "md", "text": "---\n1. 第一项\n  2. 子项\n- 外层\n  - 内层\n<u>下划线</u> 和 ~~删除线~~"}]],
++        )
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_build_outbound_payload_uses_post_for_markdown_table(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        content = "| Name | Score |\n| --- | ---: |\n| Ada | 10 |"
++
++        msg_type, raw_payload = adapter._build_outbound_payload(content)
++
++        self.assertEqual(msg_type, "post")
++        payload = json.loads(raw_payload)
++        # KaCRM overlay (patch 20): Feishu post-type 'md' elements render
++        # markdown tables blank on the client (server-side rendering,
++        # independent of hermes version). Our _build_outbound_payload wraps
++        # post content in _isolate_markdown_tables(), which fences table
++        # blocks as ``` code rows so they show as monospace instead of
++        # blank. Upstream trusts the raw table (``text == content``); we
++        # assert the fenced form our overlay produces.
++        fenced = f"```\n{content}\n```"
++        self.assertEqual(
++            payload["zh_cn"]["content"],
++            [[{"tag": "md", "text": fenced}]],
++        )
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_send_uses_post_for_every_chunk_of_multi_chunk_markdown(self):
++        """Regression for #26841: when a long Markdown message is split
++        across multiple chunks, every chunk must go out as
++        ``msg_type=post`` — including chunk 1.  The bug was that the
++        first chunk often had only plain prose (the per-chunk regex
++        didn't match) and was sent as ``text``, so users saw literal
++        ``**bold``/``## heading``/code fences while later chunks
++        rendered correctly.
++        """
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        captured = []
++
++        class _MessageAPI:
++            def create(self, request):
++                captured.append(request)
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(
++                        message_id=f"om_chunk_{len(captured)}",
++                    ),
++                )
++
++        adapter._client = SimpleNamespace(
++            im=SimpleNamespace(
++                v1=SimpleNamespace(
++                    message=_MessageAPI(),
++                )
++            )
++        )
++
++        async def _direct(func, *args, **kwargs):
++            return func(*args, **kwargs)
++
++        # Force a deterministic split so the test doesn't depend on the
++        # exact 8000-char limit.  Chunk 1 is plain prose; chunk 2 has
++        # the markdown markers.  Without the fix, chunk 1 went out as
++        # ``msg_type=text``.
++        first_chunk = "Here is a short intro that has no markdown markers at all."
++        second_chunk = "## Heading\nAnd then some **bold** text."
++
++        with patch.object(
++            adapter, "truncate_message", return_value=[first_chunk, second_chunk],
++        ), patch("plugins.platforms.feishu.adapter.asyncio.to_thread", side_effect=_direct):
++            result = asyncio.run(
++                adapter.send(
++                    chat_id="oc_chat",
++                    content=first_chunk + "\n" + second_chunk,
++                )
++            )
++
++        self.assertTrue(result.success)
++        self.assertEqual(len(captured), 2)
++        msg_types = [r.request_body.msg_type for r in captured]
++        self.assertEqual(msg_types, ["post", "post"])
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_send_plain_text_message_not_upgraded_by_prefer_post(self):
++        """A message with no markdown at all must still go out as plain
++        ``msg_type=text`` — the whole-message ``prefer_post`` decision
++        only flips on when the formatted message matches the hint regex.
++        """
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        captured = []
++
++        class _MessageAPI:
++            def create(self, request):
++                captured.append(request)
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(
++                        message_id=f"om_chunk_{len(captured)}",
++                    ),
++                )
++
++        adapter._client = SimpleNamespace(
++            im=SimpleNamespace(
++                v1=SimpleNamespace(
++                    message=_MessageAPI(),
++                )
++            )
++        )
++
++        async def _direct(func, *args, **kwargs):
++            return func(*args, **kwargs)
++
++        with patch("plugins.platforms.feishu.adapter.asyncio.to_thread", side_effect=_direct):
++            result = asyncio.run(
++                adapter.send(
++                    chat_id="oc_chat",
++                    content="just a plain sentence",
++                )
++            )
++
++        self.assertTrue(result.success)
++        self.assertEqual(len(captured), 1)
++        self.assertEqual(captured[0].request_body.msg_type, "text")
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_send_uses_post_for_inline_markdown(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        captured = {}
++
++        class _MessageAPI:
++            def create(self, request):
++                captured["request"] = request
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(message_id="om_markdown"),
++                )
++
++        adapter._client = SimpleNamespace(
++            im=SimpleNamespace(
++                v1=SimpleNamespace(
++                    message=_MessageAPI(),
++                )
++            )
++        )
++
++        async def _direct(func, *args, **kwargs):
++            return func(*args, **kwargs)
++
++        with patch("plugins.platforms.feishu.adapter.asyncio.to_thread", side_effect=_direct):
++            result = asyncio.run(
++                adapter.send(
++                    chat_id="oc_chat",
++                    content="可以用 **粗体** 和 *斜体*。",
++                )
++            )
++
++        self.assertTrue(result.success)
++        self.assertEqual(captured["request"].request_body.msg_type, "post")
++        payload = json.loads(captured["request"].request_body.content)
++        elements = payload["zh_cn"]["content"][0]
++        self.assertEqual(elements, [{"tag": "md", "text": "可以用 **粗体** 和 *斜体*。"}])
++
++    @patch.dict(os.environ, {}, clear=True)
++    def test_send_splits_fenced_code_blocks_into_separate_post_rows(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = FeishuAdapter(PlatformConfig())
++        captured = {}
++
++        class _MessageAPI:
++            def create(self, request):
++                captured["request"] = request
++                return SimpleNamespace(
++                    success=lambda: True,
++                    data=SimpleNamespace(message_id="om_codeblock"),
++                )
++
++        adapter._client = SimpleNamespace(
++            im=SimpleNamespace(
++                v1=SimpleNamespace(
++                    message=_MessageAPI(),
++                )
++            )
++        )
++
++        async def _direct(func, *args, **kwargs):
++            return func(*args, **kwargs)
++
++        content = (
++            "确认已入库 ✓\n"
++            "文件路径：`/root/.hermes/profiles/agent_cto/cron/jobs.json`\n"
++            "**解码后的内容：**\n"
++            "```json\n"
++            '{"cron": "list"}\n'
++            "```\n"
++            "后续说明仍应保留。"
++        )
++
++        with patch("plugins.platforms.feishu.adapter.asyncio.to_thread", side_effect=_direct):
++            result = asyncio.run(
++                adapter.send(
++                    chat_id="oc_chat",
++                    content=content,
++                )
++            )
++
++        self.assertTrue(result.success)
++        self.assertEqual(captured["request"].request_body.msg_type, "post")
++        payload = json.loads(captured["request"].request_body.content)
++        rows = payload["zh_cn"]["content"]
++        self.assertEqual(
++            rows,
++            [
++                [
++                    {
++                        "tag": "md",
++                        "text": "确认已入库 ✓\n文件路径：`/root/.hermes/profiles/agent_cto/cron/jobs.json`\n**解码后的内容：**",
++                    }
++                ],
++                [{"tag": "md", "text": "```json\n{\"cron\": \"list\"}\n```"}],
++                [{"tag": "md", "text": "后续说明仍应保留。"}],
++            ],
++        )
++
+     def test_download_remote_document_blocks_connect_time_rebind(self):
+         import httpcore
+         from httpcore._backends.auto import AutoBackend
+@@ -2530,3 +3430,160 @@ def test_processing_failure_skips_cross_mark_when_typing_removal_fails(fake_lark
+     assert tracker.created == ["Typing"]
+     assert tracker.deleted == ["r_typing"]
+     assert adapter._pending_processing_reactions["om_msg"] == "r_typing"
++
++@unittest.skipUnless(_HAS_LARK_OAPI, "lark-oapi not installed")
++class TestOutboundPayloadTables(unittest.TestCase):
++    """Markdown tables must not degrade the whole reply to a raw text payload.
++
++    Regression guard: content containing a markdown table used to ship as a
++    plain-text payload with the ORIGINAL markdown — users saw bare ###, **
++    and | markers on the Feishu client. Tables now ride inside the post as
++    fenced code rows so surrounding markdown still renders.
++    """
++
++    _TABLE_REPLY = (
++        "### 本周汇总\n"
++        "\n"
++        "**重点客户**:\n"
++        "\n"
++        "| 客户 | 阶段 |\n"
++        "| --- | --- |\n"
++        "| 华为 | 谈判 |\n"
++        "\n"
++        "下一步 **尽快跟进**。"
++    )
++
++    def _make_adapter(self):
++        from gateway.config import PlatformConfig
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        with patch.dict(os.environ, {"FEISHU_APP_ID": "cli", "FEISHU_APP_SECRET": "sec"}, clear=True):
++            return FeishuAdapter(PlatformConfig())
++
++    def test_table_content_ships_as_post_not_raw_text(self):
++        adapter = self._make_adapter()
++        msg_type, payload = adapter._build_outbound_payload(self._TABLE_REPLY)
++        self.assertEqual(msg_type, "post")
++        rows = json.loads(payload)["zh_cn"]["content"]
++        texts = [element["text"] for row in rows for element in row]
++        fenced = [t for t in texts if t.startswith("```")]
++        self.assertEqual(len(fenced), 1)
++        self.assertIn("| 华为 | 谈判 |", fenced[0])
++        prose = "\n".join(t for t in texts if not t.startswith("```"))
++        self.assertIn("### 本周汇总", prose)
++        self.assertIn("**尽快跟进**", prose)
++        self.assertNotIn("|", prose)
++
++    def test_pure_table_ships_as_single_fenced_post_row(self):
++        adapter = self._make_adapter()
++        msg_type, payload = adapter._build_outbound_payload(
++            "| a | b |\n| --- | --- |\n| 1 | 2 |"
++        )
++        self.assertEqual(msg_type, "post")
++        rows = json.loads(payload)["zh_cn"]["content"]
++        self.assertEqual(len(rows), 1)
++        self.assertTrue(rows[0][0]["text"].startswith("```"))
++        self.assertIn("| 1 | 2 |", rows[0][0]["text"])
++
++    def test_table_inside_existing_code_fence_untouched(self):
++        from plugins.platforms.feishu.adapter import _isolate_markdown_tables
++
++        content = "```\n| a | b |\n| --- | --- |\n```"
++        self.assertEqual(_isolate_markdown_tables(content), content)
++
++    def test_multiple_tables_each_fenced(self):
++        from plugins.platforms.feishu.adapter import _isolate_markdown_tables
++
++        content = "| a |\n| - |\n| 1 |\n\nprose\n\n| b |\n| - |\n| 2 |"
++        isolated = _isolate_markdown_tables(content)
++        self.assertEqual(isolated.count("```"), 4)
++        self.assertIn("prose", isolated)
++
++    def test_content_without_table_unchanged(self):
++        from plugins.platforms.feishu.adapter import _isolate_markdown_tables
++
++        content = "**bold** and `code`\nno tables here | stray pipe"
++        self.assertEqual(_isolate_markdown_tables(content), content)
++
++
++class TestDmApprovalClickAuthorization(unittest.TestCase):
++    """Regression: an inbound-DM approval card's Approve click must be
++    authorized (live-verified 2026-08-16).
++
++    Inbound Feishu DMs carry "oc_"-prefixed chat ids (same prefix as
++    groups); only open_id-keyed proactive sends use "ou_". The DM bypass
++    used to key on the "ou_" prefix alone, so every click on a card raised
++    from a normal DM conversation fell through to the GROUP policy gate and
++    was rejected ("Unauthorized approval click"). Detection now also keys
++    on the stored gateway session_key ("agent:<profile>:feishu:dm:<chat>").
++    """
++
++    def _make_adapter(self, group_policy="allowlist"):
++        from plugins.platforms.feishu.adapter import FeishuAdapter
++
++        adapter = object.__new__(FeishuAdapter)
++        adapter._approval_state = {}
++        adapter._admins = set()
++        adapter._allowed_group_users = set()
++        adapter._group_rules = {}
++        adapter._default_group_policy = ""
++        adapter._group_policy = group_policy
++        adapter._sender_name_cache = {}
++        adapter._submitted = []
++        adapter._submit_on_loop = lambda loop, coro: (
++            adapter._submitted.append(coro), coro.close(), True
++        )[-1]
++        return adapter
++
++    def _click(self, adapter, chat_id, approval_id="ap1"):
++        operator = SimpleNamespace(open_id="ou_clicker", user_id="")
++        context = SimpleNamespace(open_chat_id=chat_id)
++        event = SimpleNamespace(operator=operator, context=context)
++        return adapter._handle_approval_card_action(
++            event=event,
++            action_value={"approval_id": approval_id, "hermes_action": "approve"},
++            loop=None,
++        )
++
++    def test_inbound_dm_click_is_authorized(self):
++        adapter = self._make_adapter()
++        adapter._approval_state["ap1"] = {
++            "session_key": "agent:main:feishu:dm:oc_dmchat",
++            "message_id": "om_1",
++            "chat_id": "oc_dmchat",  # inbound DM: oc_-prefixed, NOT ou_
++        }
++        self._click(adapter, "oc_dmchat")
++        self.assertEqual(
++            len(adapter._submitted), 1,
++            "DM approval click must reach _resolve_approval, not the group gate",
++        )
++
++    def test_openid_keyed_dm_click_still_authorized(self):
++        adapter = self._make_adapter()
++        adapter._approval_state["ap1"] = {
++            "session_key": "",
++            "message_id": "om_1",
++            "chat_id": "ou_peer",  # proactive open_id-keyed send
++        }
++        self._click(adapter, "ou_peer")
++        self.assertEqual(len(adapter._submitted), 1)
++
++    def test_click_rejected_when_operator_not_in_configured_allowlist(self):
++        """v0.21.0 moved the card-action gate from the GROUP policy to
++        ``_is_interactive_operator_authorized``: with no admins/allowlist
++        configured every operator is authorized (which is precisely the
++        root-cause fix for the DM rejection we hit live on 2026-08-16 —
++        upstream now owns it). The guard that remains is the allowlist
++        itself, so that is what this asserts."""
++        adapter = self._make_adapter()
++        adapter._allowed_group_users = {"ou_somebody_else"}
++        adapter._approval_state["ap1"] = {
++            "session_key": "agent:main:feishu:group:oc_groupchat",
++            "message_id": "om_1",
++            "chat_id": "oc_groupchat",
++        }
++        self._click(adapter, "oc_groupchat")
++        self.assertEqual(
++            len(adapter._submitted), 0,
++            "an operator outside a configured allowlist must be rejected",
++        )
+diff --git a/tests/gateway/test_feishu_comment_rules.py b/tests/gateway/test_feishu_comment_rules.py
+index 1b3d4dac4d..decfea9aa8 100644
+--- a/tests/gateway/test_feishu_comment_rules.py
++++ b/tests/gateway/test_feishu_comment_rules.py
+@@ -114,9 +114,12 @@ class TestLoadConfig(unittest.TestCase):
+             json.dump(raw, f)
+             path = Path(f.name)
+         try:
++            # Patching the RULES_FILE constant is enough: the call-time path
++            # helper honors it and the per-path mtime-cache registry builds a
++            # fresh cache for that path (multiplex-safe accessor, see
++            # feishu_comment_rules._rules_cache).
+             with patch("plugins.platforms.feishu.feishu_comment_rules.RULES_FILE", path):
+-                with patch("plugins.platforms.feishu.feishu_comment_rules._rules_cache", _MtimeCache(path)):
+-                    cfg = load_config()
++                cfg = load_config()
+             self.assertTrue(cfg.enabled)
+             self.assertEqual(cfg.policy, "allowlist")
+             self.assertEqual(cfg.allow_from, frozenset(["ou_a"]))
+@@ -126,6 +129,14 @@ class TestLoadConfig(unittest.TestCase):
+         finally:
+             path.unlink()
+ 
++    def test_load_missing_file_returns_defaults(self):
++        with patch("plugins.platforms.feishu.feishu_comment_rules.RULES_FILE", Path("/nonexistent")):
++            cfg = load_config()
++        self.assertTrue(cfg.enabled)
++        self.assertEqual(cfg.policy, "pairing")
++        self.assertEqual(cfg.allow_from, frozenset())
++        self.assertEqual(cfg.documents, {})
++
+ 
+ class TestPairingStore(unittest.TestCase):
+     def setUp(self):
+@@ -133,16 +144,13 @@ class TestPairingStore(unittest.TestCase):
+         self._pairing_file = Path(self._tmpdir) / "pairing.json"
+         with open(self._pairing_file, "w") as f:
+             json.dump({"approved": {}}, f)
++        # Patching the PAIRING_FILE constant is enough: the call-time path
++        # helper honors it and the per-path mtime-cache registry keys off the
++        # resolved path (multiplex-safe accessor, see _pairing_cache).
+         self._patcher_file = patch("plugins.platforms.feishu.feishu_comment_rules.PAIRING_FILE", self._pairing_file)
+-        self._patcher_cache = patch(
+-            "plugins.platforms.feishu.feishu_comment_rules._pairing_cache",
+-            _MtimeCache(self._pairing_file),
+-        )
+         self._patcher_file.start()
+-        self._patcher_cache.start()
+ 
+     def tearDown(self):
+-        self._patcher_cache.stop()
+         self._patcher_file.stop()
+         if self._pairing_file.exists():
+             self._pairing_file.unlink()
+diff --git a/tests/gateway/test_weixin.py b/tests/gateway/test_weixin.py
+index b8a8c459c9..f9df2926f6 100644
+--- a/tests/gateway/test_weixin.py
++++ b/tests/gateway/test_weixin.py
+@@ -572,6 +572,18 @@ class TestIsStaleSessionRet:
+ 
+ 
+ 
++    def test_ret_minus_2_with_no_errmsg_is_stale(self):
++        # hermes_cloud overlay (patch 20, gateway/platforms/weixin.py):
++        # the overlay's _is_stale_session_ret ALSO treats ``{ret:-2}`` with no
++        # errmsg AND no errcode as a stale-session signal — observed in
++        # production after a session silently expired (the iLink bridge
++        # returns a bare -2 with no errmsg). Upstream treats that bare -2 as
++        # not-stale; the overlay deliberately diverges, so we assert the
++        # overlay behavior here.
++        assert weixin._is_stale_session_ret(-2, None, None) is True
++        assert weixin._is_stale_session_ret(-2, None, "") is True
++
++
+ class TestWeixinContentDedup:
+     """Regression tests for Issue #16182 — upstream API sends duplicate content
+     with different message_ids, bypassing message_id deduplication.
+diff --git a/tests/tools/test_cronjob_tools.py b/tests/tools/test_cronjob_tools.py
+index 0af6ee75ba..ff0cfc1322 100644
+--- a/tests/tools/test_cronjob_tools.py
++++ b/tests/tools/test_cronjob_tools.py
+@@ -3,6 +3,8 @@
+ import json
+ import pytest
+ 
++from cron.jobs import load_jobs
++from gateway.session_context import clear_session_vars, set_session_vars
+ from tools.cronjob_tools import (
+     _scan_cron_prompt,
+     check_cronjob_requirements,
+@@ -421,6 +423,33 @@ class TestUnifiedCronjobTool:
+         stored = get_job(created["job_id"])
+         assert stored["deliver"] == "telegram"
+ 
++    def test_create_from_gateway_session_captures_origin(self):
++        tokens = set_session_vars(
++            platform="weixin",
++            chat_id="o9cq800J0tufT9RgOk0-vYK1WSkY@im.wechat",
++            chat_name="ClawBot DM",
++        )
++        try:
++            created = json.loads(
++                cronjob(
++                    action="create",
++                    prompt="1 minute reminder",
++                    schedule="1m",
++                )
++            )
++        finally:
++            clear_session_vars(tokens)
++
++        assert created["success"] is True
++
++        listing = json.loads(cronjob(action="list"))
++        job = next(j for j in listing["jobs"] if j["job_id"] == created["job_id"])
++        assert job["deliver"] == "origin"
++        stored = next(j for j in load_jobs() if j["id"] == created["job_id"])
++        assert stored["origin"]["platform"] == "weixin"
++        assert stored["origin"]["chat_id"] == "o9cq800J0tufT9RgOk0-vYK1WSkY@im.wechat"
++        assert stored["origin"]["chat_name"] == "ClawBot DM"
++
+ 
+ # =========================================================================
+ # Agent-facing surface: per-job model pins are user-owned
+diff --git a/tests/tools/test_web_providers.py b/tests/tools/test_web_providers.py
+index d1198200e3..cd6e992f74 100644
+--- a/tests/tools/test_web_providers.py
++++ b/tests/tools/test_web_providers.py
+@@ -171,12 +171,15 @@ class TestUnconfiguredErrorEnvelopeParity:
+             monkeypatch.delenv(k, raising=False)
+ 
+     def test_unconfigured_search_emits_top_level_error(self, monkeypatch):
+-        """``web_search_tool`` with no creds returns ``{"error": "Error searching web: ..."}``
+-        — matching main's ``tool_error()`` envelope, not a per-result shape.
+-
+-        Keyless fallback (Parallel/Exa free tiers) is disabled here: with it
+-        on, a zero-credential install routes to the keyless tier instead of
+-        erroring (covered in test_web_keyless_fallback.py).
++        """hermes_cloud overlay note (patch 30 web backends):
++
++        The China-deployment overlay adds an unconditional, key-less
++        ``baidu`` backstop as the LAST entry in ``_get_backend``'s candidate
++        list. That means an otherwise-unconfigured install no longer hits the
++        upstream "no creds → top-level error" path — it resolves to the baidu
++        floor instead. Upstream's error-envelope contract therefore does not
++        apply under the overlay, so we assert the overlay behavior here (and
++        avoid a live baidu network call) rather than the upstream error shape.
+         """
+         from tools import web_tools
+         from agent import web_search_registry
+@@ -189,11 +192,8 @@ class TestUnconfiguredErrorEnvelopeParity:
+         monkeypatch.setattr(web_search_registry, "_keyless_tier_enabled", lambda: False)
+         monkeypatch.setattr(web_tools, "_is_tool_gateway_ready", lambda: False)
+ 
+-        result = json.loads(web_tools.web_search_tool("hello world", limit=3))
+-        assert "error" in result, f"expected top-level 'error' key, got {result}"
+-        assert "Error searching web:" in result["error"]
+-        assert "FIRECRAWL_API_KEY" in result["error"]
+-        assert "results" not in result
++        # Key-less baidu backstop wins when nothing else is configured.
++        assert web_tools._get_backend() == "baidu"
+ 
+ 
+     def test_explicit_firecrawl_unconfigured_uses_firecrawl_keyless(self, monkeypatch):
+diff --git a/tests/tools/test_web_tools_config.py b/tests/tools/test_web_tools_config.py
+index 9c73c9a006..0a46e7c3f5 100644
+--- a/tests/tools/test_web_tools_config.py
++++ b/tests/tools/test_web_tools_config.py
+@@ -10,6 +10,7 @@ Coverage:
+ """
+ 
+ import importlib
++import importlib.util
+ import json
+ import os
+ import sys
+@@ -343,11 +344,15 @@ class TestBackendSelection:
+             assert _get_backend() == "firecrawl"
+ 
+     def test_fallback_no_keys_defaults_to_firecrawl(self):
+-        """No keys, no config, keyless tier off → 'firecrawl' sentinel.
+-
+-        With the keyless tier on (default), zero credentials resolves to
+-        the Parallel/Exa free tier instead — covered in
+-        test_web_keyless_fallback.py.
++        """hermes_cloud overlay (patch 30 web backends): the China-deployment
++        overlay appends an unconditional, key-less ``baidu`` backstop as the
++        LAST candidate in ``_get_backend``. So "no keys, no config" resolves to
++        the baidu floor rather than upstream's ``firecrawl`` sentinel — we
++        assert the overlay behavior here.
++
++        (Upstream's keyless-tier note still applies to the tier itself: with
++        it on, zero credentials resolves to the Parallel/Exa free tier —
++        covered in test_web_keyless_fallback.py.)
+         """
+         from tools.web_tools import _get_backend
+         with patch("tools.web_tools._load_web_config", return_value={}), \
+@@ -355,7 +360,7 @@ class TestBackendSelection:
+              patch("tools.web_tools._ddgs_package_importable", return_value=False), \
+              patch("tools.web_tools._list_registered_web_providers", return_value=[]), \
+              patch("agent.web_search_registry._keyless_tier_enabled", return_value=False):
+-            assert _get_backend() == "firecrawl"
++            assert _get_backend() == "baidu"
+ 
+     def test_invalid_config_is_returned_verbatim(self):
+         """Strict selection: web.backend=nonexistent is returned as-is so the
+@@ -411,6 +416,18 @@ class TestBackendSelection:
+             assert _get_backend() == "firecrawl"
+ 
+ 
++@pytest.mark.skipif(
++    importlib.util.find_spec("parallel") is None,
++    reason=(
++        "hermes_cloud overlay (patch 50): v0.20's plugins/web/parallel/provider "
++        "calls lazy_deps.ensure('search.parallel') BEFORE importing the SDK, and "
++        "conftest seals lazy installs (HERMES_DISABLE_LAZY_INSTALLS=1) — so "
++        "without the real parallel-web distribution installed, ensure() raises "
++        "FeatureUnavailable before the test's fake sys.modules['parallel'] stub "
++        "can satisfy the import. Fails identically on VANILLA v0.20.1 in a venv "
++        "without parallel-web; upstream CI installs the SDK."
++    ),
++)
+ class TestParallelClientConfig:
+     """Test suite for Parallel client initialization."""
+ 
+@@ -852,6 +869,16 @@ class TestNonBuiltinProviderAvailability:
+             from tools.web_tools import check_web_api_key
+             assert check_web_api_key() is True
+ 
++    @pytest.mark.skip(
++        reason="KaCRM overlay: patch 30 appends an unconditional key-less "
++        "``baidu`` backstop as the LAST candidate in _get_backend(), so baidu "
++        "is ALWAYS available and no scenario has a custom provider as the *only* "
++        "available backend — _get_backend() resolves to the baidu floor instead "
++        "of falling through to plugin discovery. Cloud configures web.backend "
++        "explicitly (minimax) so this fallback path isn't hit in normal "
++        "operation; the overlay's baidu-floor behavior is asserted in "
++        "test_get_backend_baidu_floor_* above."
++    )
+     def test_get_backend_discovers_custom_provider(self):
+         """_get_backend() must return the custom provider name when it's
+         the only available provider."""
+@@ -1004,11 +1031,8 @@ class TestSiblingProvidersEnvResolution:
+ 
+ 
+ def test_xai_only_gate_agrees_with_dispatcher_when_web_xai_plugin_loaded(monkeypatch, tmp_path):
+-    """With the bundled web-xai plugin registered (the default), the registry resolves xai
+-    as the single eligible search provider while _get_backend never autodetects it. The
+-    gate must follow the dispatcher: keyless off -> no servable backend -> tools stay off
+-    (#116175 review follow-up). Module-level on purpose: TestCheckWebApiKey neutralizes the
+-    registry path with get_active_*_provider -> None."""
++    """XAI remains explicit-only, while KaCRM's keyless Baidu floor keeps
++    the availability gate consistent with automatic backend selection."""
+     from agent import web_search_registry as registry
+     from plugins.web.xai.provider import XAIWebSearchProvider
+ 
+@@ -1024,11 +1048,12 @@ def test_xai_only_gate_agrees_with_dispatcher_when_web_xai_plugin_loaded(monkeyp
+         with patch("tools.web_tools._load_web_config", return_value={}), \
+              patch("tools.web_tools._ensure_web_plugins_loaded", lambda: None), \
+              patch("tools.web_tools.check_firecrawl_api_key", return_value=False), \
++             patch("tools.web_tools._ddgs_package_importable", return_value=False), \
+              patch("agent.web_search_registry._keyless_tier_enabled", return_value=False):
+             from tools.web_tools import _get_backend, check_web_api_key
+             assert registry.get_active_search_provider().name == "xai"
+-            assert _get_backend() == "firecrawl"  # legacy sentinel: nothing servable
+-            assert check_web_api_key() is False
++            assert _get_backend() == "baidu"  # KaCRM keyless floor
++            assert check_web_api_key() is True
+     finally:
+         with registry._lock:
+             registry._providers.clear()

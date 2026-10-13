@@ -1,0 +1,54 @@
+groups:
+  - name: hermes_cloud
+    interval: 30s
+    rules:
+      # No healthy workers
+      - alert: NoHealthyWorkers
+        expr: hermes_cloud_workers_healthy == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "All Hermes workers are unhealthy"
+          description: "hermes_cloud_workers_healthy has been 0 for 1 minute"
+
+      # High error rate
+      - alert: HighErrorRate
+        expr: |
+          rate(hermes_cloud_http_requests_total{status_code=~"5.."}[5m]) /
+          rate(hermes_cloud_http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High HTTP error rate (>5%)"
+
+      # High latency
+      - alert: HighChatLatency
+        expr: |
+          histogram_quantile(0.95,
+            rate(hermes_cloud_http_request_duration_seconds_bucket{path="/v1/chat/completions"}[5m])
+          ) > 60
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 chat latency > 60s"
+
+      # Rate limit storm
+      - alert: RateLimitStorm
+        expr: rate(hermes_cloud_rate_limit_hits_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate of rate limit rejections"
+
+      # Auth failure spike
+      - alert: AuthFailureSpike
+        expr: rate(hermes_cloud_auth_failures_total[5m]) > 20
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Spike in authentication failures — possible brute force"

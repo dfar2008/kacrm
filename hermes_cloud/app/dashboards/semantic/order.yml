@@ -1,0 +1,33 @@
+# 订单 / Order — backed by salesorders table.
+# View `v_dashboard_orders` normalizes salesorders_id -> id, salesorders_name
+# -> name, owner_by -> owner_user_id, and EXTRACTS the JSONB final_amount
+# (which holds e.g. {"CNY":400000}) into a numeric column `amount` so the
+# semantic-layer SUM / AVG measures can operate on it directly.
+entity: order
+source_view: v_dashboard_orders
+
+row_filter:
+  self: "owner_user_id = :caller_id"
+  team: "owner_user_id IN (SELECT id FROM v_team_members(:caller_id))"
+  org:  "1=1"
+
+dimensions:
+  - {name: status, type: string}
+  - {name: payment_status, type: string}
+  - {name: invoicestatus, type: string}
+  - {name: ordertype, type: string}
+  - {name: owner_user_id, type: ref, references: user}
+  - {name: department_id, type: ref, references: department}
+  - {name: accounts_id, type: ref, references: customer}
+  - {name: orderdate, type: time, granularities: [day, week, month, quarter, year]}
+  - {name: created_at, type: time, granularities: [day, week, month, quarter, year]}
+
+measures:
+  - {name: count, type: count}
+  - {name: total_amount, type: sum, sql: amount, requires_grant: see_revenue}
+  - {name: avg_amount, type: avg, sql: amount, requires_grant: see_revenue}
+  - {name: total_quantity_sum, type: sum, sql: total_quantity}
+
+detail_columns:
+  default: [id, name, status, amount, accounts_id, owner_user_id, orderdate]
+  optional: [payment_status, invoicestatus, ordertype, department_id, created_at, total_quantity]

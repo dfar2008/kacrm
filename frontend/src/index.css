@@ -1,0 +1,575 @@
+:root {
+  /* ── 身份变量(每个 [data-theme] 块覆盖这一组,其余全部派生)── */
+  --accent: #3FE0D0;
+  --accent-2: #9C8CFF;
+
+  /* ── 表面层级(深色基底)──
+     画布/面板/边框带极淡的方案色相 tint(由 --scheme-hue 推导),让内容区
+     与边栏/顶栏同属一套主题,而非"有色边栏 + 中性灰内容"的割裂感。饱和度
+     很低,保持深邃、不抢数据。自定义属性惰性求值,引用下方的 --scheme-hue OK。 */
+  --bg: hsl(var(--scheme-hue) 28% 7%);
+  --panel: hsl(var(--scheme-hue) 25% 11.5%);
+  --panel-2: hsl(var(--scheme-hue) 23% 16.5%);
+  --border: hsl(var(--scheme-hue) 21% 27%);
+  /* 方案色相(themes.css 每套覆盖;默认 = s1 品牌青 174)。侧栏/顶栏
+     由它推导,深色模式深、浅色模式浅(见 html[data-mode="light"])。 */
+  --scheme-hue: 174;
+  --sidebar-bg: hsl(var(--scheme-hue) 42% 13%);
+  --sidebar-active: color-mix(in srgb, var(--accent) 26%, transparent);
+  --topbar-bg: hsl(var(--scheme-hue) 34% 11%);
+
+  /* ── 文字 ── */
+  --fg: #EEF1FF;
+  --fg-strong: #f4f6ff;
+  --muted: #7B85B0;
+  --muted-2: #5a648c;
+  --fg-on-accent: #06121a;
+  --link: var(--accent);
+
+  /* ── 边框衍生 ── */
+  --border-strong: color-mix(in srgb, var(--border) 60%, var(--fg) 18%);
+  --border-subtle: color-mix(in srgb, var(--border) 55%, transparent);
+
+  /* ── accent 派生(全站染色的核心)── */
+  --accent-hover: color-mix(in srgb, var(--accent) 82%, #ffffff);
+  --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+  --accent-soft-strong: color-mix(in srgb, var(--accent) 20%, transparent);
+  --accent-2-soft: color-mix(in srgb, var(--accent-2) 12%, transparent);
+  --accent-2-soft-strong: color-mix(in srgb, var(--accent-2) 18%, transparent);
+
+  /* ── 状态色(跨主题恒定)── */
+  --success: #9ece6a;
+  --warning: #e0af68;
+  --danger: #f7768e;
+  --info: #7aa2f7;
+  --success-soft: color-mix(in srgb, var(--success) 16%, transparent);
+  --warning-soft: color-mix(in srgb, var(--warning) 16%, transparent);
+  --danger-soft: color-mix(in srgb, var(--danger) 16%, transparent);
+  --info-soft: color-mix(in srgb, var(--info) 16%, transparent);
+  /* 实心语义徽章(通知角标等)上的前景:两模式都用白 —— 不能用 fg-strong,
+     它在浅色模式翻成近黑,红底黑字看不清。 */
+  --on-danger: #ffffff;
+
+  /* ── 数据状态/选项色板(picklist/stage 语义着色)──
+     深色基底用 Tailwind-400 系亮色;浅色模式整组覆盖成 -600/-700
+     深色版以保证白底对比(见 html[data-mode="light"])。-soft 由
+     color-mix 派生,自动随明暗模式调整不透明度,无需重写。 */
+  --stat-blue: #60a5fa;
+  --stat-green: #34d399;
+  --stat-amber: #fbbf24;
+  --stat-pink: #f472b6;
+  --stat-violet: #a78bfa;
+  --stat-cyan: #22d3ee;
+  --stat-orange: #fb923c;
+  --stat-slate: #94a3b8;
+  --stat-red: #f87171;
+  --stat-soft-pct: 15%;
+  --stat-blue-soft: color-mix(in srgb, var(--stat-blue) var(--stat-soft-pct), transparent);
+  --stat-green-soft: color-mix(in srgb, var(--stat-green) var(--stat-soft-pct), transparent);
+  --stat-amber-soft: color-mix(in srgb, var(--stat-amber) var(--stat-soft-pct), transparent);
+  --stat-pink-soft: color-mix(in srgb, var(--stat-pink) var(--stat-soft-pct), transparent);
+  --stat-violet-soft: color-mix(in srgb, var(--stat-violet) var(--stat-soft-pct), transparent);
+  --stat-cyan-soft: color-mix(in srgb, var(--stat-cyan) var(--stat-soft-pct), transparent);
+  --stat-orange-soft: color-mix(in srgb, var(--stat-orange) var(--stat-soft-pct), transparent);
+  --stat-slate-soft: color-mix(in srgb, var(--stat-slate) var(--stat-soft-pct), transparent);
+  --stat-red-soft: color-mix(in srgb, var(--stat-red) var(--stat-soft-pct), transparent);
+
+  /* ── 表面悬浮/弹层 ── */
+  --surface-hover: color-mix(in srgb, var(--fg) 6%, transparent);
+  --popover-bg: var(--panel);
+
+  /* ── 聊天 ── */
+  --chat-bubble-user-bg: var(--panel-2);
+  --chat-bubble-user-fg: var(--fg-strong);
+  --chat-bubble-assistant-fg: #d1d5db;
+  --toolcall-header: var(--accent);
+  --toolcall-bg: color-mix(in srgb, var(--accent) 8%, var(--panel));
+  --toolcall-border: color-mix(in srgb, var(--accent) 28%, var(--border));
+  --toolcall-body-bg: color-mix(in srgb, var(--bg) 80%, #000);
+  --toolcall-crm-header: var(--accent-2);
+  --toolcall-crm-bg: color-mix(in srgb, var(--accent-2) 10%, var(--panel));
+  --toolcall-crm-border: color-mix(in srgb, var(--accent-2) 30%, var(--border));
+  --reasoning-fg: color-mix(in srgb, var(--accent-2) 55%, var(--muted));
+  --reasoning-bg: color-mix(in srgb, var(--accent-2) 8%, var(--panel));
+  --reasoning-border: color-mix(in srgb, var(--accent-2) 24%, var(--border));
+
+  /* ── CRM 卡 / 表格 ── */
+  --card-bg: color-mix(in srgb, var(--panel) 88%, #000);
+  --card-border: var(--border);
+  --card-header-bg: var(--accent-soft);
+  --card-badge-bg: var(--accent-2-soft);
+  --table-header-bg: var(--card-bg);
+  --table-header-fg: var(--muted);
+  --table-row-hover: var(--accent-soft);
+  --md-th-bg: color-mix(in srgb, var(--accent-2) 14%, var(--panel));
+  --md-th-fg: color-mix(in srgb, var(--accent-2) 55%, var(--fg));
+  --md-th-border: color-mix(in srgb, var(--accent-2) 45%, var(--border));
+
+  /* ── 代码 ── */
+  --code-inline-bg: color-mix(in srgb, var(--panel-2) 70%, #000);
+  --code-inline-fg: color-mix(in srgb, var(--accent-2) 60%, var(--fg));
+  --code-block-bg: color-mix(in srgb, var(--bg) 70%, #000);
+
+  /* ── 滚动条 / 阴影 / 遮罩 ── */
+  --scrollbar-thumb: var(--border);
+  --scrollbar-thumb-hover: var(--border-strong);
+  --shadow-popover: 0 6px 24px rgba(0, 0, 0, 0.4);
+  --shadow-modal: 0 12px 48px rgba(0, 0, 0, 0.55);
+  --overlay: rgba(0, 0, 0, 0.5);
+
+  --radius: 8px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* =========================================================
+   浅色模式 — 与 35 套 accent 正交的第二个维度。
+   只翻转【中性色 + 几个写死方向的派生】;accent/accent-soft/
+   card-header 等由 accent 派生的 token 自动跟随,无需重写。
+   侧栏/顶栏走"浅彩"(方案色的很浅 tint,kacrm 浅色系风格)。
+   ========================================================= */
+html[data-mode="light"] {
+  /* 表面层级:白卡 + 页底 —— 带极淡方案色相 tint(随 --scheme-hue),
+     与边栏/顶栏成套;卡片近白仍清爽,不影响读数据。 */
+  --bg: hsl(var(--scheme-hue) 34% 96.5%);
+  --panel: hsl(var(--scheme-hue) 40% 99.3%);
+  --panel-2: hsl(var(--scheme-hue) 30% 95%);
+  --border: hsl(var(--scheme-hue) 26% 88%);
+
+  /* 文字:深字 */
+  --fg: #232A3A;
+  --fg-strong: #121826;
+  --muted: #5C6678;
+  --muted-2: #939DB0;
+
+  /* 侧栏/顶栏:方案色的很浅 tint(白内容上的浅彩侧栏) */
+  --sidebar-bg: hsl(var(--scheme-hue) 52% 95%);
+  --topbar-bg: hsl(var(--scheme-hue) 48% 97%);
+  --sidebar-active: color-mix(in srgb, var(--accent) 22%, transparent);
+
+  /* 状态色:深色版,保证白底上对比 */
+  --success: #2E9E54;
+  --warning: #C2820B;
+  --danger: #D6425C;
+  --info: #2D6FE0;
+
+  /* 数据状态色板:浅色模式整组压深(Tailwind-600/700 系),
+     白卡上文字达 WCAG AA;soft 底不透明度略提一档保持可见。 */
+  --stat-blue: #2563EB;
+  --stat-green: #15803D;
+  --stat-amber: #B45309;
+  --stat-pink: #DB2777;
+  --stat-violet: #7C3AED;
+  --stat-cyan: #0E7490;
+  --stat-orange: #C2410C;
+  --stat-slate: #64748B;
+  --stat-red: #DC2626;
+  --stat-soft-pct: 10%;
+
+  /* 几个写死"朝黑混"的派生 → 浅色版 */
+  --chat-bubble-assistant-fg: #232A3A;
+  --card-bg: #FFFFFF;
+  --toolcall-body-bg: #F2F4FA;
+  --code-inline-bg: #EEF1F8;
+  --code-block-bg: #F2F4FA;
+
+  /* 阴影/遮罩:浅底上收敛黑度,别太重 */
+  --shadow-popover: 0 6px 20px rgba(20, 30, 60, 0.10);
+  --shadow-modal: 0 16px 48px rgba(20, 30, 60, 0.18);
+  --overlay: rgba(20, 28, 48, 0.35);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+button {
+  font: inherit;
+  color: inherit;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s;
+}
+button:hover:not(:disabled) { background: var(--surface-hover); border-color: var(--border-strong); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+button.primary { background: var(--accent); color: var(--fg-on-accent); border-color: var(--accent); font-weight: 600; }
+button.primary:hover:not(:disabled) { background: var(--accent-hover); }
+button.ghost { background: transparent; border-color: transparent; padding: 4px 8px; }
+button.ghost:hover:not(:disabled) { background: var(--panel-2); }
+/* Square close/icon (×) buttons on modals & panels: kill the global 6px/12px
+   padding (which squeezes the glyph off-center in fixed-size boxes) and
+   dead-center the glyph with flex. Per-instance styles keep border/color/size. */
+button.icon-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+  flex: none;
+}
+
+/* 通用数据表(审计/列表)—— 紧凑、左对齐、列按内容自然宽度。原本无样式,
+   靠 width:100% 撑开列才不挤;改用真实单元格内边距 + 分隔线后,表格可
+   width:auto 自然排列(见 AdminExportAudit)。 */
+.data-table { border-collapse: collapse; }
+.data-table th, .data-table td { padding: 8px 14px; }
+.data-table th {
+  text-align: left; font-weight: 500; color: var(--muted);
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+.data-table td { border-bottom: 1px solid var(--border); }
+
+/* Tell the UA to render native controls (date/datetime pickers, the
+   月/日/年 segments + calendar icon, scrollbars, etc.) in the active
+   theme — otherwise they render light-on-dark and look washed out. The
+   theme provider sets data-mode="light" only in light mode (dark is the
+   :root default). */
+:root { color-scheme: dark; }
+html[data-mode="light"] { color-scheme: light; }
+
+input, textarea, select {
+  font: inherit;
+  color: inherit;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  width: 100%;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+/* The blanket input rule above (width:100% + padding + panel bg) turns
+   checkboxes/radios into full-width padded panels — floating boxes,
+   labels shoved to the far edge. Reset them to native sized controls so
+   toggle/radio groups render correctly app-wide. */
+input[type="checkbox"], input[type="radio"] {
+  width: auto;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  accent-color: var(--accent);
+  vertical-align: middle;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+textarea { resize: vertical; min-height: 70px; font-family: inherit; }
+label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 4px; }
+
+.row { display: flex; gap: 8px; align-items: center; }
+.col { display: flex; flex-direction: column; gap: 8px; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+/* CRM tab strip: thin/transparent horizontal scrollbar so the strip
+   reads as a clean tab row even when the viewport forces overflow. */
+.crm-tab-strip::-webkit-scrollbar { height: 4px; }
+.crm-tab-strip::-webkit-scrollbar-thumb {
+  background: transparent;
+  transition: background 0.15s ease;
+}
+.crm-tab-strip:hover::-webkit-scrollbar-thumb {
+  background: var(--border);
+}
+
+/* =========================================================
+   Chat bubbles — ported from legacy hermes_cloud/static/style.css
+   ========================================================= */
+.chat-scroll { flex: 1; overflow: auto; padding: 16px 14px; display: flex; flex-direction: column; gap: 4px; }
+.msg-new { display: flex; flex-direction: column; gap: 3px; max-width: 82%; }
+.msg-new.user { align-self: flex-end; align-items: flex-end; }
+.msg-new.assistant { align-self: flex-start; align-items: flex-start; }
+.msg-role-label { font-size: 13px; color: var(--muted-2); padding: 0 4px; }
+.msg-bubble-new {
+  padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.6;
+  word-break: break-word;
+}
+.msg-new.user .msg-bubble-new { background: var(--chat-bubble-user-bg); color: var(--chat-bubble-user-fg); }
+/* Charter §三: assistant 的内容（CRM 卡 / tool 块 / md 表 / reasoning）
+   都自带边界，外面再包一层气泡就是 "盒中盒"。让 assistant 的内容直接
+   在对话流里呼吸，只保留文本的 padding/line-height。 */
+.msg-new.assistant .msg-bubble-new {
+  background: transparent; color: var(--chat-bubble-assistant-fg);
+  border: none; padding: 0;
+  display: flex; flex-direction: column; gap: 6px;
+  width: 100%;
+}
+.msg-new.assistant { max-width: 92%; }
+
+/* Tool call block */
+.tool-call-block {
+  background: var(--toolcall-bg); border: 1px solid var(--toolcall-border);
+  border-radius: 6px; margin: 4px 0; font-size: 13px;
+  overflow: hidden;
+}
+.tool-call-block.crm-tool-block { border-color: var(--toolcall-crm-border); background: var(--toolcall-crm-bg); }
+.tool-call-header {
+  padding: 3px 10px; display: flex; align-items: center; gap: 6px;
+  color: var(--toolcall-header); user-select: none;
+  font-size: 13px;
+}
+.tool-call-status { margin-left: auto; }
+.tool-call-block.crm-tool-block .tool-call-header { color: var(--toolcall-crm-header); }
+.tool-call-icon { font-size: 14px; opacity: 0.8; }
+.tool-call-name { font-weight: 500; font-size: 13px; }
+.tool-call-status { font-size: 13px; }
+.tool-call-status-done { color: var(--success); }
+.tool-call-status-running { color: var(--warning); }
+.tool-call-status-error { color: var(--danger); }
+.tool-call-duration { color: var(--muted); font-size: 12px; }
+.gen-duration { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.gen-duration.gen-duration-slow { color: var(--warning, #f59e0b); }
+.turn-total { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+/* Reasoning block — collapsed by default (<details>).
+   Charter §三: tool/think is 旁注, the spoken answer is the 主角 —
+   so the header stays thin and muted until the user actively peeks. */
+.reasoning-block {
+  background: var(--reasoning-bg); border: 1px solid var(--reasoning-border);
+  border-radius: 6px; margin: 4px 0; font-size: 13px;
+}
+.reasoning-block > summary {
+  list-style: none;
+  padding: 3px 10px; display: flex; align-items: center; gap: 6px;
+  cursor: pointer; color: var(--reasoning-fg); user-select: none;
+  font-size: 13px;
+}
+.reasoning-block > summary::-webkit-details-marker { display: none; }
+.reasoning-block > summary::marker { content: ""; }
+.reasoning-block[open] > summary { border-bottom: 1px solid var(--reasoning-border); }
+.reasoning-icon { font-size: 14px; opacity: 0.7; }
+.reasoning-label { font-weight: 500; }
+.reasoning-body {
+  padding: 6px 10px 8px;
+  color: var(--reasoning-fg); font-size: 13px; line-height: 1.55;
+  font-style: italic; white-space: pre-wrap;
+}
+
+/* CRM projection cards */
+.crm-tool-block .crm-projection { margin-top: 8px; }
+.crm-card {
+  background: var(--card-bg); border: 1px solid var(--card-border);
+  border-radius: 12px; overflow: hidden; font-size: 14px;
+}
+.crm-card-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px; border-bottom: 1px solid var(--card-border);
+  background: var(--card-header-bg);
+}
+.crm-card-icon { font-size: 16px; flex-shrink: 0; }
+.crm-card-title { font-weight: 600; color: var(--fg-strong); flex: 1; }
+.crm-card-badge {
+  font-size: 13px; color: var(--accent-2);
+  background: var(--card-badge-bg);
+  padding: 2px 8px; border-radius: 10px; white-space: nowrap;
+}
+.crm-card-table-wrap { overflow-x: auto; max-height: 320px; overflow-y: auto; }
+.crm-card-table { width: 100%; border-collapse: collapse; }
+.crm-card-th {
+  text-align: left; padding: 7px 10px; font-weight: 600;
+  color: var(--table-header-fg); font-size: 13px; text-transform: uppercase;
+  letter-spacing: 0.05em; border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap; position: sticky; top: 0; background: var(--table-header-bg);
+}
+.crm-card-td {
+  padding: 7px 10px; color: var(--chat-bubble-assistant-fg);
+  border-bottom: 1px solid var(--border-subtle);
+  max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.crm-card-row:hover { background: var(--table-row-hover); }
+.crm-card-footer {
+  padding: 6px 14px; font-size: 13px; color: var(--muted);
+  border-top: 1px solid var(--card-border); text-align: center;
+}
+.crm-card-empty { padding: 20px; text-align: center; color: var(--muted); }
+.crm-card-fields { padding: 6px 0; }
+.crm-card-field {
+  display: flex; padding: 6px 14px; gap: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.crm-card-field:last-child { border-bottom: none; }
+.crm-card-field-label {
+  width: 120px; flex-shrink: 0; font-size: 13px; font-weight: 600;
+  color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em;
+  padding-top: 1px;
+}
+.crm-card-field-value { flex: 1; color: var(--fg-strong); word-break: break-word; }
+.crm-card-success, .crm-card-pending, .crm-card-error {
+  display: flex; align-items: center; gap: 8px; padding: 12px 16px;
+}
+.crm-card-success { color: var(--success); border-color: var(--success-soft); }
+.crm-card-pending { color: var(--warning); border-color: var(--warning-soft); }
+.crm-card-error { color: var(--danger); border-color: var(--danger-soft); }
+.crm-card-modules { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px; }
+.crm-card-module-item {
+  background: var(--accent-2-soft); color: var(--accent-2);
+  padding: 4px 10px; border-radius: 6px; font-size: 14px; font-weight: 500;
+}
+
+/* Inbox conversation list — ported from legacy style.css:2081+
+   Grouped by 今天/昨天/前天/更早 + per-item relative-time timestamp. */
+.conv-list-scroll { flex: 1; overflow-y: auto; padding: 0 4px 8px; }
+.conv-group-label {
+  padding: 8px 12px 2px; font-size: 13px; color: var(--muted-2);
+  text-transform: uppercase; letter-spacing: 0.08em; flex-shrink: 0;
+}
+.conv-item-new {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 8px 10px; border-radius: 8px; cursor: pointer; margin-bottom: 1px;
+}
+.conv-item-new:hover { background: var(--surface-hover); }
+.conv-item-new.active { background: var(--accent-soft); }
+.conv-item-menu { opacity: 0; transition: opacity .15s; }
+.conv-item-new:hover .conv-item-menu,
+.conv-item-menu:focus-within { opacity: 1; }
+.conv-item-row { display: flex; align-items: center; gap: 6px; }
+.conv-platform-badge { font-size: 14px; flex-shrink: 0; }
+.conv-item-title {
+  font-size: 14px; color: var(--fg-strong); font-weight: 500;
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.conv-item-time { font-size: 13px; color: var(--muted-2); flex-shrink: 0; }
+.conv-item-preview {
+  font-size: 13px; color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding-left: 18px;
+}
+
+/* Chat area header — source badge + title + sub (source · time · profile).
+   Charter L1 (events>state): every conversation carries provenance — the
+   header surfaces it so you can see WHERE this conversation came from,
+   not just what's in it. */
+.chat-area-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+}
+.chat-area-header-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--accent-soft);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.chat-area-header-info { flex: 1; min-width: 0; }
+.chat-area-title { font-size: 14px; font-weight: 600; color: var(--fg-strong); }
+.chat-area-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.chat-area-sep { color: var(--muted-2); }
+
+/* Markdown inside assistant bubbles — ported from legacy style.css:2225+
+   Charter §三: 主界面=语言。LLM 返回的 markdown（含表格）是用户读懂
+   CRM 数据的主要通道，必须好看。 */
+.md-content p { margin: 0 0 8px; }
+.md-content p:last-child { margin-bottom: 0; }
+.md-content strong { color: var(--fg-strong); font-weight: 600; }
+.md-content code {
+  background: var(--code-inline-bg); border-radius: 3px;
+  padding: 1px 5px; font-family: monospace; font-size: 13px; color: var(--code-inline-fg);
+}
+.md-content pre {
+  background: var(--code-block-bg); border: 1px solid var(--border); border-radius: 6px;
+  padding: 10px 12px; overflow-x: auto; margin: 8px 0;
+}
+.md-content pre code { background: transparent; padding: 0; color: var(--chat-bubble-assistant-fg); }
+.md-content ul, .md-content ol { padding-left: 20px; margin: 6px 0; }
+.md-content li { margin-bottom: 2px; }
+.md-content h2 { font-size: 16px; font-weight: 700; color: var(--fg-strong); margin: 12px 0 6px; }
+.md-content h3 { font-size: 14px; font-weight: 700; color: var(--fg-strong); margin: 10px 0 4px; }
+.md-content h4 { font-size: 14px; font-weight: 600; color: var(--chat-bubble-assistant-fg); margin: 8px 0 4px; }
+.md-content hr { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+.md-content table {
+  width: 100%; border-collapse: collapse; font-size: 14px;
+  margin: 8px 0; border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--md-th-border);
+}
+.md-content th {
+  background: var(--md-th-bg); color: var(--md-th-fg); font-weight: 600;
+  padding: 8px 12px; text-align: left; white-space: nowrap;
+  border-bottom: 2px solid var(--md-th-border);
+}
+.md-content td {
+  padding: 6px 12px; color: var(--chat-bubble-assistant-fg);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.md-content tbody tr:hover { background: var(--accent-2-soft); }
+.md-content tbody tr:last-child td { border-bottom: none; }
+
+/* CRM resizable panel handles (Spec 1) — invisible hit area that
+   highlights on hover so the drag affordance is discoverable. */
+.crm-resize-handle { transition: background 0.12s; }
+.crm-resize-handle:hover,
+.crm-resize-handle:active { background: var(--accent); opacity: 0.5; }
+/* View-tab edit/delete actions reveal inline on hover (to the right of the
+   tab name). Hidden by default so tabs stay tightly packed; inline-flex —
+   not an absolute popover — so a wrapped second row is never overlapped. */
+.crm-view-actions { display: none; }
+.crm-view-tab:hover .crm-view-actions { display: inline-flex; }
+
+/* ── Live reasoning strip (2026-07-07 latency plan Phase 5) ─────────────
+   Streams the model's thinking tokens during the pre-content window so the
+   user sees motion instead of a frozen "思考中…". Dim, small, plain text. */
+.reasoning-strip {
+  margin: 4px 0 8px;
+  padding: 6px 10px;
+  border-left: 2px solid var(--border-color, #3a3f4b);
+  opacity: 0.62;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.reasoning-strip-label {
+  display: block;
+  font-size: 11px;
+  opacity: 0.8;
+  margin-bottom: 2px;
+  user-select: none;
+}
+.reasoning-strip-text {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 9em;      /* keep long trains of thought from flooding the bubble */
+  overflow-y: auto;
+}
