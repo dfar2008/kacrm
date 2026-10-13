@@ -12,31 +12,31 @@ KaCRM is a conversational AI CRM powered by [Hermes Agent](https://github.com/No
 
 [User Guide](docs/user-guide.html) · [Deployment Guide](docs/deployment.md) · [Hermes Upgrade Notes](docs/2026-10-12-hermes-v0.21.6-upgrade.md) · [Script Reference](scripts/README.md) · [Report an Issue](https://github.com/dfar2008/kacrm/issues)
 
-![KaCRM business dashboard with an AI assistant](assets/readme/dashboard.png)
+![KaCRM business dashboard with an AI assistant](assets/readme/en/dashboard.png)
 
 *Sales metrics, the opportunity funnel, and an AI assistant on one dashboard.*
 
 ## Product Tour
 
-These images come from existing project materials and show earlier versions of the interface. Model names, screen details, and available features depend on the current version and configuration. Screenshots and linked user and deployment guides are currently in Chinese; the application supports Chinese and English.
+These English illustrations were localized from existing screenshots with image-editing tools; they show earlier interface examples rather than captures of the current live English UI. Model names, screen details, and available features depend on the current version and configuration. The linked user and deployment guides are currently in Chinese; the application supports Chinese and English.
 
 ### Shape your customer records around your business
 
 Organize fields, layouts, and options in the module builder, and configure AI-assisted field filling to match your team's workflow.
 
-![KaCRM module builder and field configuration](assets/readme/schema-builder.png)
+![KaCRM module builder and field configuration](assets/readme/en/schema-builder.png)
 
 ### Give agents the skills your team needs
 
 Organize customer research, meeting preparation, email drafting, and sales analysis as skills that can be enabled or disabled for each agent.
 
-![KaCRM agent skill management](assets/readme/agent-skills.png)
+![KaCRM agent skill management](assets/readme/en/agent-skills.png)
 
 ### Schedule recurring work
 
 Create agent tasks, inspect their schedules and execution status, and manage daily reminders and periodic summaries.
 
-![KaCRM agent scheduled tasks](assets/readme/agent-scheduling.png)
+![KaCRM agent scheduled tasks](assets/readme/en/agent-scheduling.png)
 
 ## Why KaCRM
 
@@ -132,7 +132,7 @@ See the [Deployment Guide](docs/deployment.md) for production deployment, health
 
 ## Product Architecture
 
-![KaCRM product architecture](assets/readme/architecture.png)
+![KaCRM product architecture](assets/readme/en/architecture.png)
 
 *Capability overview: channel integrations, agents, customer data, sales insights, and business customization. Availability depends on the version and deployment configuration.*
 

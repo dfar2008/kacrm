@@ -13,3 +13,7 @@
 截图为历史界面素材，不能用于证明当前版本的运行状态或实际业务指标。更新截图时同步检查品牌名称、模型版本和展示数据。
 
 `architecture.png` 基于来源项目的 `architecture.png` 更换品牌名称，由图片编辑工具生成；`architecture.html` 保留同步改名的可编辑源文件。
+
+## English illustrations
+
+`en/` contains English versions of the dashboard, schema builder, skills, scheduled tasks, and architecture images. They were translated from the corresponding Chinese images using an image-editing tool, preserving the overall layout and styling. They are documentation illustrations, not live English UI screenshots, and do not verify current features or configuration. Chinese originals remain unchanged.
