@@ -67,6 +67,7 @@ data/audit_archive/
 # Keep private documentation out; publish only the current deployment guides.
 /docs/*
 !/docs/deployment.md
+!/docs/user-guide.html
 !/docs/2026-10-12-hermes-v0.21.6-upgrade.md
 /ppt-build/
 /data/
