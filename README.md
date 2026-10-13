@@ -4,103 +4,105 @@
 
 <h1 align="center">KaCRM</h1>
 
-**把客户管理、团队协作与 AI Agent 放在同一个工作空间。**
+<p align="center"><strong>English</strong> · <a href="README.zh-CN.md">简体中文</a></p>
 
-KaCRM 是基于 [Hermes Agent](https://github.com/NousResearch/hermes-agent) 的对话式 AI CRM。通过业务视图管理客户与销售流程，通过自然语言查询信息、整理跟进记录和调用 CRM 工具，并用权限、审批与审计管理业务操作。
+**Customer management, team collaboration, and AI agents in one workspace.**
 
-[使用指南](docs/user-guide.html) · [部署指南](docs/deployment.md) · [Hermes 升级记录](docs/2026-10-12-hermes-v0.21.6-upgrade.md) · [脚本说明](scripts/README.md) · [反馈问题](https://github.com/dfar2008/kacrm/issues)
+KaCRM is a conversational AI CRM powered by [Hermes Agent](https://github.com/NousResearch/hermes-agent). Manage customers and sales processes through configurable business views, use natural language to find information and work with CRM tools, and govern operations with permissions, approvals, and audit trails.
 
-![KaCRM 业务仪表盘与 AI 助手](assets/readme/dashboard.png)
+[User Guide](docs/user-guide.html) · [Deployment Guide](docs/deployment.md) · [Hermes Upgrade Notes](docs/2026-10-12-hermes-v0.21.6-upgrade.md) · [Script Reference](scripts/README.md) · [Report an Issue](https://github.com/dfar2008/kacrm/issues)
 
-*业务仪表盘：将销售指标、商机漏斗与 AI 助手放在同一页面。*
+![KaCRM business dashboard with an AI assistant](assets/readme/dashboard.png)
 
-## 产品导览
+*Sales metrics, the opportunity funnel, and an AI assistant on one dashboard.*
 
-以下配图来自项目已有的品牌素材，展示历史版本的界面与配置方式；模型名称、页面细节和可用功能以当前版本及实际配置为准。
+## Product Tour
 
-### 配置适合团队的业务字段
+These images come from existing project materials and show earlier versions of the interface. Model names, screen details, and available features depend on the current version and configuration. Screenshots and linked user and deployment guides are currently in Chinese; the application supports Chinese and English.
 
-在模块管理中组织字段、调整布局和选项，并配置 AI 自动填充，让客户档案贴合团队的业务流程。
+### Shape your customer records around your business
 
-![KaCRM 模块管理与字段配置](assets/readme/schema-builder.png)
+Organize fields, layouts, and options in the module builder, and configure AI-assisted field filling to match your team's workflow.
 
-### 为 Agent 配置业务技能
+![KaCRM module builder and field configuration](assets/readme/schema-builder.png)
 
-将客户研究、会议准备、邮件起草与销售分析等能力组织为技能，按 Agent 启用或禁用。
+### Give agents the skills your team needs
 
-![KaCRM Agent 技能管理](assets/readme/agent-skills.png)
+Organize customer research, meeting preparation, email drafting, and sales analysis as skills that can be enabled or disabled for each agent.
 
-### 让重复工作按计划执行
+![KaCRM agent skill management](assets/readme/agent-skills.png)
 
-为 Agent 设置定时任务，查看调度、运行状态与下一次执行时间，管理每日提醒和周期总结。
+### Schedule recurring work
 
-![KaCRM Agent 定时任务](assets/readme/agent-scheduling.png)
+Create agent tasks, inspect their schedules and execution status, and manage daily reminders and periodic summaries.
 
-## 为什么选择 KaCRM
+![KaCRM agent scheduled tasks](assets/readme/agent-scheduling.png)
 
-销售工作同时发生在客户资料、业务单据、沟通记录和团队消息中。KaCRM 将这些信息连接起来，让团队在同一套业务数据上使用 CRM 界面与 AI 助手。
+## Why KaCRM
 
-- **围绕客户开展工作**：从线索、客户、联系人到商机和销售单据，保留关联资料与跟进记录。
-- **用对话处理业务**：为 Agent 配置模型与技能，在聊天中访问 CRM 工具，并保留会话历史。
-- **适配自己的业务流程**：配置模块、字段、视图和工作流，结合角色、部门与审批管理协作。
-- **部署在自己的基础设施上**：业务数据存放于 PostgreSQL，模型和消息渠道由管理员自行配置。
+Sales work spans customer profiles, business documents, conversation history, and team messages. KaCRM connects this information so teams can use CRM views and AI assistants with the same business data.
 
-## 核心功能
+- **Keep customer context together.** Connect leads, accounts, contacts, opportunities, and sales documents with related records and interaction history.
+- **Work through conversation.** Configure agent models and skills, access CRM tools in chat, and retain conversation history.
+- **Adapt to your workflow.** Configure modules, fields, views, and workflows, with roles, departments, and approvals for collaboration.
+- **Run on your infrastructure.** Store business data in PostgreSQL and configure your own model providers and messaging channels.
 
-| 能力 | 说明 |
+## Features
+
+| Capability | What it provides |
 | --- | --- |
-| 客户与销售管理 | 管理线索、客户、联系人、商机、产品、报价和订单，查看关联记录与互动历史。 |
-| 可配置业务界面 | 自定义字段、筛选条件、显示列与视图，使用列表、看板、日历等方式组织记录。 |
-| AI Agent 工作空间 | 管理 Agent 的模型、渠道、技能、工作区与定时任务，支持 Web 对话与历史会话。 |
-| 模型接入 | 配置多个模型提供商、兼容 API 和本地模型，设置默认模型、辅助模型及多模型协作。 |
-| 消息渠道 | 提供飞书、钉钉、企业微信等渠道接入配置；具体能力取决于渠道凭据及运行依赖。 |
-| 团队权限与审批 | 管理用户、角色、部门、数据访问范围、审批流程与操作审计。 |
-| 工作流与异步任务 | 配置业务工作流，使用 Celery worker 与 beat 执行异步处理和周期任务。 |
-| 记忆与数据分析 | 查看记忆与实体关联，结合业务仪表盘、使用统计和审计信息分析工作情况。 |
-| 中英文界面 | 提供中文与英文界面及主题设置。 |
+| Customer and sales management | Leads, accounts, contacts, opportunities, products, quotes, and orders, with related records and interaction history. |
+| Configurable business views | Custom fields, filters, display columns, and views, including lists, kanban boards, and calendars. |
+| AI agent workspace | Model, channel, skill, workspace, and scheduled-task settings, with web chat and conversation history. |
+| Model integrations | Multiple providers, compatible APIs, and local models, with default and auxiliary models and multi-model collaboration. |
+| Messaging channels | Configuration for platforms such as Feishu/Lark, DingTalk, and WeCom. Capabilities depend on platform credentials and runtime dependencies. |
+| Permissions and approvals | Users, roles, departments, data access scopes, approval flows, and operation auditing. |
+| Workflows and background jobs | Business workflows, asynchronous processing, and periodic jobs using Celery workers and beat. |
+| Memory and analytics | Memory and entity relationships, business dashboards, usage statistics, and audit information. |
+| Chinese and English UI | Interface language and theme settings. |
 
-## 使用指南
+## User Guide
 
-[KaCRM 使用指南](docs/user-guide.html) 包含首次设置、对话、CRM、看板、Agent、任务与系统管理的图文说明。克隆仓库后可在浏览器打开 `docs/user-guide.html` 阅读，或通过浏览器打印为 PDF；在 GitHub 上查看时需下载仓库后打开，图片与指南一同提供。
+The illustrated [KaCRM User Guide](docs/user-guide.html) covers initial setup, chat, CRM, dashboards, agents, tasks, and administration. After cloning the repository, open `docs/user-guide.html` in a browser to read it or print it to PDF. GitHub displays the HTML source; download the repository to view the guide with its bundled images.
 
-## 开始使用
+## Getting Started
 
-### 环境要求
+### Requirements
 
-| 组件 | 要求或用途 |
+| Component | Requirement or purpose |
 | --- | --- |
-| Git | 获取主仓库及 Hermes 子模块。 |
-| Python / uv | Python 3.11，使用 uv 创建虚拟环境并安装依赖。 |
-| Node.js / npm | Node.js 20.19+ 或 22.12+，用于构建 Web 界面。 |
-| PostgreSQL / pgvector | 保存业务数据、身份、会话与向量数据。 |
-| Redis | 为 Celery 异步任务提供消息队列与结果后端。 |
-| PgBouncer | 完整 supervisor 部署使用的数据库连接池。 |
+| Git | Clone the repository and the Hermes submodule. |
+| Python / uv | Python 3.11; create a virtual environment and install dependencies with uv. |
+| Node.js / npm | Node.js 20.19+ or 22.12+ to build the web interface. |
+| PostgreSQL / pgvector | Business data, identities, conversations, and vector storage. |
+| Redis | Message broker and result backend for Celery tasks. |
+| PgBouncer | Database connection pool used by the full supervisor deployment. |
 
-模型对话需要可用的模型服务；消息渠道需要各平台的接入凭据。
+Agent conversations require an available model service. Messaging integrations require credentials for the corresponding platforms.
 
-### 1. 获取源码
+### 1. Clone the repository
 
 ```bash
 git clone --recurse-submodules https://github.com/dfar2008/kacrm.git
 cd kacrm
 ```
 
-当前 Hermes Agent 固定为 **v0.21.6**，提交为 `818c13be1dc4fd28987e1e881a9408224afd4535`。本仓库通过 `hermes-patches/` 提供 CRM 扩展与云端集成，升级需同时验证子模块与补丁。
+Hermes Agent is pinned to **v0.21.6**, commit `818c13be1dc4fd28987e1e881a9408224afd4535`. CRM extensions and cloud integration live in `hermes-patches/`. Upgrades must validate both the submodule and its patches.
 
-### 2. 初始化环境
+### 2. Initialize the environment
 
-按照 [部署指南第 2–4 节](docs/deployment.md#2-获取源码安装依赖) 完成以下步骤：
+Follow [sections 2–4 of the Deployment Guide](docs/deployment.md#2-获取源码安装依赖):
 
-1. 创建 Python 虚拟环境，安装主项目、Hermes 与 Agent 运行依赖。
-2. 从 `.env.example` 创建 `.env`，设置数据库、管理员账号、会话密钥与 profile 目录。
-3. 应用 Hermes 补丁，执行 Alembic 迁移与初始化 seed。
-4. 安装前端依赖并构建界面。
+1. Create a Python virtual environment and install the main project, Hermes, and agent runtime dependencies.
+2. Copy `.env.example` to `.env` and configure the database, administrator account, session secret, and profile directories.
+3. Apply the Hermes patches, run Alembic migrations, and initialize the database with the seed command.
+4. Install frontend dependencies and build the interface.
 
-当前数据库迁移 head 为 **0115**。部署指南包含完整命令、配置示例和验证步骤；仓库中的旧 Docker Compose 开发示例不作为当前版本的安装入口。
+The current database migration head is **0115**. The Deployment Guide includes complete commands, configuration examples, and verification steps. Legacy Docker Compose development examples are not the installation path for this version.
 
-### 3. 启动 Web 界面
+### 3. Start the web interface
 
-完成初始化后，在仓库根目录执行：
+After initialization, run from the repository root:
 
 ```bash
 set -a
@@ -111,85 +113,85 @@ export PYTHONPATH="$PWD:$PWD/hermes"
   --host 127.0.0.1 --port 8765
 ```
 
-打开 [http://127.0.0.1:8765/app/](http://127.0.0.1:8765/app/)，使用初始化时配置的管理员账号登录。
+Open [http://127.0.0.1:8765/app/](http://127.0.0.1:8765/app/) and sign in with the administrator account configured during initialization.
 
-此命令启动 Web/API 服务。需要异步任务与定时工作流时，按 [部署指南](docs/deployment.md#5-启动和验收) 配置 Redis、PgBouncer，并启动完整 supervisor：
+This command starts the web/API service. For background jobs and scheduled workflows, configure Redis and PgBouncer as described in the [Deployment Guide](docs/deployment.md#5-启动和验收), then start the full supervisor:
 
 ```bash
 bash scripts/run_cloud_supervised.sh
 ```
 
-### 4. 完成首次配置
+### 4. Configure your workspace
 
-1. 在 Agent 的「模型」页面配置提供商、凭据与默认模型，测试连接。
-2. 在聊天页面发送一条消息，确认 Agent 运行状态与实际回复。
-3. 在 CRM 中创建一条测试记录，检查读取、编辑和关联信息。
-4. 根据团队需要配置角色、部门、审批、消息渠道与定时任务。
+1. Open the agent's **Model** page, configure a provider and credentials, select a default model, and test the connection.
+2. Send a message in chat and verify the agent's status and actual response.
+3. Create a test CRM record and check reading, editing, and related information.
+4. Configure roles, departments, approvals, messaging channels, and scheduled tasks for your team.
 
-生产部署、健康检查、备份、回滚与升级门禁见 [部署指南](docs/deployment.md)。
+See the [Deployment Guide](docs/deployment.md) for production deployment, health checks, backups, rollback, and upgrade validation.
 
-## 产品架构
+## Product Architecture
 
-![KaCRM 产品架构](assets/readme/architecture.png)
+![KaCRM product architecture](assets/readme/architecture.png)
 
-*产品能力概览：渠道接入、Agent、客户资产、销售洞察与业务定制。具体可用能力取决于版本和部署配置。*
+*Capability overview: channel integrations, agents, customer data, sales insights, and business customization. Availability depends on the version and deployment configuration.*
 
-## 技术架构
+## Technology Stack
 
-| 层级 | 技术与职责 |
+| Layer | Technologies and responsibilities |
 | --- | --- |
-| Web 界面 | React、TypeScript、Vite；提供聊天、CRM、Agent 管理和管理后台。 |
-| 服务端 | Python、FastAPI、SQLAlchemy；提供认证、业务 API 与 profile 管理。 |
-| Agent 运行时 | Hermes Agent 与本地补丁；提供模型调用、技能、工具和消息网关。 |
-| 数据存储 | PostgreSQL、pgvector、Alembic；保存业务数据并管理数据库迁移。 |
-| 后台任务 | Redis、Celery worker、Celery beat；处理异步任务与周期调度。 |
+| Web interface | React, TypeScript, and Vite for chat, CRM, agent management, and administration. |
+| Backend | Python, FastAPI, and SQLAlchemy for authentication, business APIs, and profile management. |
+| Agent runtime | Hermes Agent and local patches for model calls, skills, tools, and the messaging gateway. |
+| Data | PostgreSQL, pgvector, and Alembic for business storage and database migrations. |
+| Background jobs | Redis, Celery workers, and Celery beat for asynchronous processing and periodic scheduling. |
 
-### 源码结构
+### Repository Layout
 
 ```text
 kacrm/
-├── frontend/       # Web 界面
-├── hermes_cloud/   # API、业务服务与云端集成
-├── hermes/         # 固定版本的上游 Agent 子模块
-├── hermes-patches/ # CRM 扩展与上游兼容补丁
-├── alembic/        # 数据库迁移
-├── tests/          # 业务与集成测试
-├── scripts/        # 开发、验证和运维脚本
-├── deploy/         # 部署模板
-└── docs/           # 公开部署与升级文档
+├── frontend/       # Web interface
+├── hermes_cloud/   # APIs, business services, and cloud integration
+├── hermes/         # Pinned upstream agent submodule
+├── hermes-patches/ # CRM extensions and upstream compatibility patches
+├── alembic/        # Database migrations
+├── tests/          # Business and integration tests
+├── scripts/        # Development, verification, and operations scripts
+├── deploy/         # Deployment templates
+└── docs/           # Deployment, upgrade, and user documentation
 ```
 
-## 开发与验证
+## Development and Verification
 
-安装开发依赖、应用补丁并配置独立测试环境后，可运行：
+After installing development dependencies, applying patches, and configuring an isolated test environment:
 
 ```bash
-# 服务端测试：排除现有 dev_server 收集问题及真实模型评测
+# Backend: exclude the existing dev_server collection issue and live model evaluations
 PYTHONPATH="$PWD/hermes:$PWD" .venv/bin/python -m pytest tests/hermes_cloud/ \
   --import-mode=importlib --ignore=tests/hermes_cloud/test_dev_server.py \
   -m 'not llm_eval' -q
 
-# 前端测试与构建；测试命令需要安装 Bun
+# Frontend tests and build; tests require Bun
 cd frontend
 bun test
 npm run build
 ```
 
-真实 PostgreSQL 测试须使用独立测试库并设置 `HERMES_TESTS_REAL_PG=1`。仓库仍有部分历史测试需要与当前 schema 和已移除功能同步，测试命令不代表全套回归已通过。
+Real PostgreSQL tests require a separate test database and `HERMES_TESTS_REAL_PG=1`. Some historical tests still need to be aligned with the current schema and removed features; these commands do not imply that the entire regression suite passes.
 
-修改 Hermes 扩展时，将对应改动同步到 `hermes-patches/`，使新检出和后续升级能够重放。脚本的用途与执行条件见 [脚本说明](scripts/README.md)。
+Capture Hermes extension changes in `hermes-patches/` so they can be replayed on fresh checkouts and future upgrades. See the [Script Reference](scripts/README.md) for script purposes and execution requirements.
 
-## 参与贡献
+## Contributing
 
-欢迎通过 [Issues](https://github.com/dfar2008/kacrm/issues) 提交问题与建议，通过 [Pull Requests](https://github.com/dfar2008/kacrm/pulls) 提交改进。
+Report bugs and suggest improvements through [Issues](https://github.com/dfar2008/kacrm/issues), or submit changes through [Pull Requests](https://github.com/dfar2008/kacrm/pulls).
 
-- 报告问题时，说明复现步骤、预期行为、实际结果和运行环境；日志中移除密钥与客户数据。
-- 提交改动时，说明解决的问题、影响范围及验证结果。
-- 数据结构变更需包含迁移；Agent 扩展需包含可重放补丁。
-- 项目命名约定见 [AGENTS.md](AGENTS.md)。
+- Include reproduction steps, expected behavior, actual results, and your environment. Remove credentials and customer data from logs.
+- Explain the problem, scope, and verification results for each change.
+- Include migrations for schema changes and replayable patches for agent extensions.
+- Follow the naming conventions in [AGENTS.md](AGENTS.md).
 
-## 许可证与致谢
+## License and Acknowledgments
 
-KaCRM 自有代码目前尚未指定开源许可证，使用与分发授权以未来发布的许可证为准。
+KaCRM's own code does not yet have an open-source license. Usage and distribution terms remain to be defined by a future license release.
 
-感谢 [Hermes Agent](https://github.com/NousResearch/hermes-agent) 及其贡献者提供 Agent 运行时。上游代码的许可证见 [hermes/LICENSE](hermes/LICENSE)，其授权范围不自动覆盖 KaCRM 自有代码。
+Thanks to [Hermes Agent](https://github.com/NousResearch/hermes-agent) and its contributors for the agent runtime. The upstream license is available in [hermes/LICENSE](hermes/LICENSE); it does not automatically cover KaCRM's own code.
