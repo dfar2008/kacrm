@@ -10,7 +10,7 @@
 
 KaCRM 是基于 [Hermes Agent](https://github.com/NousResearch/hermes-agent) 的对话式 AI CRM。通过业务视图管理客户与销售流程，通过自然语言查询信息、整理跟进记录和调用 CRM 工具，并用权限、审批与审计管理业务操作。
 
-[使用指南](docs/user-guide.html) · [部署指南](docs/deployment.md) · [Hermes 升级记录](docs/2026-10-12-hermes-v0.21.6-upgrade.md) · [脚本说明](scripts/README.md) · [反馈问题](https://github.com/dfar2008/kacrm/issues)
+[使用指南](docs/user-guide.md) · [部署指南](docs/deployment.md) · [Hermes 升级记录](docs/2026-10-12-hermes-v0.21.6-upgrade.md) · [脚本说明](scripts/README.md) · [反馈问题](https://github.com/dfar2008/kacrm/issues)
 
 ![KaCRM 业务仪表盘与 AI 助手](assets/readme/dashboard.png)
 
@@ -63,7 +63,7 @@ KaCRM 是基于 [Hermes Agent](https://github.com/NousResearch/hermes-agent) 的
 
 ## 使用指南
 
-[KaCRM 使用指南](docs/user-guide.html) 包含首次设置、对话、CRM、看板、Agent、任务与系统管理的图文说明。克隆仓库后可在浏览器打开 `docs/user-guide.html` 阅读，或通过浏览器打印为 PDF；在 GitHub 上查看时需下载仓库后打开，图片与指南一同提供。
+[KaCRM 使用指南](docs/user-guide.md) 包含首次设置、对话、CRM、看板、Agent、任务与系统管理的图文说明，可在 GitHub 直接阅读。Markdown 为主要维护版本；[HTML 打印版](docs/user-guide.html) 保留排版快照，克隆仓库后可在浏览器打开并打印为 PDF。
 
 ## 开始使用
 

@@ -10,7 +10,7 @@
 
 KaCRM is a conversational AI CRM powered by [Hermes Agent](https://github.com/NousResearch/hermes-agent). Manage customers and sales processes through configurable business views, use natural language to find information and work with CRM tools, and govern operations with permissions, approvals, and audit trails.
 
-[User Guide](docs/user-guide.html) · [Deployment Guide](docs/deployment.md) · [Hermes Upgrade Notes](docs/2026-10-12-hermes-v0.21.6-upgrade.md) · [Script Reference](scripts/README.md) · [Report an Issue](https://github.com/dfar2008/kacrm/issues)
+[User Guide](docs/user-guide.md) · [Deployment Guide](docs/deployment.md) · [Hermes Upgrade Notes](docs/2026-10-12-hermes-v0.21.6-upgrade.md) · [Script Reference](scripts/README.md) · [Report an Issue](https://github.com/dfar2008/kacrm/issues)
 
 ![KaCRM business dashboard with an AI assistant](assets/readme/en/dashboard.png)
 
@@ -63,7 +63,7 @@ Sales work spans customer profiles, business documents, conversation history, an
 
 ## User Guide
 
-The illustrated [KaCRM User Guide](docs/user-guide.html) covers initial setup, chat, CRM, dashboards, agents, tasks, and administration. After cloning the repository, open `docs/user-guide.html` in a browser to read it or print it to PDF. GitHub displays the HTML source; download the repository to view the guide with its bundled images.
+The illustrated [KaCRM User Guide](docs/user-guide.md) covers initial setup, chat, CRM, dashboards, agents, tasks, and administration, and can be read directly on GitHub. Markdown is the primary maintained version. The [HTML print edition](docs/user-guide.html) preserves a layout snapshot for browser printing or PDF export after cloning the repository.
 
 ## Getting Started
 
