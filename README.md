@@ -12,6 +12,12 @@ KaCRM is a conversational AI CRM powered by [Hermes Agent](https://github.com/No
 
 [User Guide](docs/user-guide.en.md) · [Deployment Guide](docs/deployment.en.md) · [Hermes Upgrade Notes](docs/2026-10-12-hermes-v0.21.6-upgrade.en.md) · [Script Reference](scripts/README.en.md) · [Report an Issue](https://github.com/dfar2008/kacrm/issues)
 
+## Product Architecture
+
+![KaCRM product architecture](assets/readme/en/architecture.png)
+
+*Capability overview: channel integrations, agents, customer data, sales insights, and business customization. Availability depends on the version and deployment configuration.*
+
 ![KaCRM business dashboard with an AI assistant](assets/readme/en/dashboard.png)
 
 *Sales metrics, the opportunity funnel, and an AI assistant on one dashboard.*
@@ -129,12 +135,6 @@ bash scripts/run_cloud_supervised.sh
 4. Configure roles, departments, approvals, messaging channels, and scheduled tasks for your team.
 
 See the [Deployment Guide](docs/deployment.en.md) for production deployment, health checks, backups, rollback, and upgrade validation.
-
-## Product Architecture
-
-![KaCRM product architecture](assets/readme/en/architecture.png)
-
-*Capability overview: channel integrations, agents, customer data, sales insights, and business customization. Availability depends on the version and deployment configuration.*
 
 ## Technology Stack
 

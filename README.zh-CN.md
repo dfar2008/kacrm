@@ -12,6 +12,12 @@ KaCRM 是基于 [Hermes Agent](https://github.com/NousResearch/hermes-agent) 的
 
 [使用指南](docs/user-guide.md) · [部署指南](docs/deployment.md) · [Hermes 升级记录](docs/2026-10-12-hermes-v0.21.6-upgrade.md) · [脚本说明](scripts/README.md) · [反馈问题](https://github.com/dfar2008/kacrm/issues)
 
+## 产品架构
+
+![KaCRM 产品架构](assets/readme/architecture.png)
+
+*产品能力概览：渠道接入、Agent、客户资产、销售洞察与业务定制。具体可用能力取决于版本和部署配置。*
+
 ![KaCRM 业务仪表盘与 AI 助手](assets/readme/dashboard.png)
 
 *业务仪表盘：将销售指标、商机漏斗与 AI 助手放在同一页面。*
@@ -129,12 +135,6 @@ bash scripts/run_cloud_supervised.sh
 4. 根据团队需要配置角色、部门、审批、消息渠道与定时任务。
 
 生产部署、健康检查、备份、回滚与升级门禁见 [部署指南](docs/deployment.md)。
-
-## 产品架构
-
-![KaCRM 产品架构](assets/readme/architecture.png)
-
-*产品能力概览：渠道接入、Agent、客户资产、销售洞察与业务定制。具体可用能力取决于版本和部署配置。*
 
 ## 技术架构
 
