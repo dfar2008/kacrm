@@ -1,4 +1,4 @@
-# KaCRM User Guide
+# Kacrm User Guide
 
 **English** · [简体中文](user-guide.md)
 
@@ -21,7 +21,7 @@ This guide was adapted from the existing product manual. Screenshots show earlie
 
 ## Product Overview
 
-KaCRM is a conversational AI CRM that connects customer records, interactions, and sales work with a personal agent. Use natural language to record information, follow up with customers, and manage opportunities. Configured channels and scheduled tasks can bring communication history and follow-up reminders into the same workspace.
+Kacrm is a conversational AI CRM that connects customer records, interactions, and sales work with a personal agent. Use natural language to record information, follow up with customers, and manage opportunities. Configured channels and scheduled tasks can bring communication history and follow-up reminders into the same workspace.
 
 ### Five core ideas
 
@@ -33,7 +33,7 @@ KaCRM is a conversational AI CRM that connects customer records, interactions, a
 | Reusable knowledge | Retain writing preferences, sales playbooks, fields, and skills, and refine them with feedback. |
 | Scheduled assistance | Run configured coaching and follow-up tasks and deliver results through connected channels. |
 
-![KaCRM product architecture: channels, agents, customer data, insights, and customization](../assets/readme/en/architecture.png)
+![Kacrm product architecture: channels, agents, customer data, insights, and customization](../assets/readme/en/architecture.png)
 
 *Figure 1-1. English product architecture illustration.*
 
@@ -41,11 +41,11 @@ KaCRM is a conversational AI CRM that connects customer records, interactions, a
 
 ### 2.1 Sign in
 
-1. Open your KaCRM installation's URL and go to the sign-in page.
+1. Open your Kacrm installation's URL and go to the sign-in page.
 2. Enter the **email or username** and **password** provided by your administrator, then select **Sign in**.
 3. Your first sign-in initializes your personal AI workspace, called a profile.
 
-![KaCRM sign-in page, shown in Chinese](../assets/user-guide/screens/01-login.png)
+![Kacrm sign-in page, shown in Chinese](../assets/user-guide/screens/01-login.png)
 
 *Figure 2-1. Sign-in page.*
 
@@ -428,7 +428,7 @@ Configure defaults for new users: identity in `SOUL.md`, personality, skills, sc
 
 ### Can I keep business data on my infrastructure?
 
-KaCRM supports self-hosting. Business data is stored in the configured database and profile directories. Model providers and messaging platforms may receive data needed for their services; configure them according to your requirements. Permissions, approvals, and audit logs help control business operations.
+Kacrm supports self-hosting. Business data is stored in the configured database and profile directories. Model providers and messaging platforms may receive data needed for their services; configure them according to your requirements. Permissions, approvals, and audit logs help control business operations.
 
 ### Do salespeople need to learn a complex system?
 
