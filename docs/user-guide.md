@@ -1,5 +1,7 @@
 # KaCRM 使用指南
 
+[English](user-guide.en.md) · **简体中文**
+
 本 Markdown 文档为使用指南的主要维护版本，可在 GitHub 直接阅读。[HTML 打印版](user-guide.html) 保留当前排版快照，供浏览器打印或另存为 PDF。后续内容更新以本文件为准。
 
 ## 目录
