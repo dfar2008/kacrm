@@ -17,7 +17,7 @@ This Markdown guide can be read directly on GitHub. It covers the same ten chapt
 - [Personal Settings](#personal-settings)
 - [Frequently Asked Questions and Support](#frequently-asked-questions-and-support)
 
-This guide was adapted from the existing product manual. Screenshots show earlier interfaces; some are still in Chinese. Where available, English illustrations localized with image-editing tools are used and are not live captures of the current English UI. Model names, interface details, and available capabilities depend on the version and configuration. See the [Deployment Guide (Chinese)](deployment.md) for installation and upgrades. The interface-tour video is not bundled with this repository.
+This guide was adapted from the existing product manual. All illustrations in this English guide use English text and are stored separately from the Chinese guide's images. They were localized from historical screenshots with image-editing tools and are not live captures of the current English UI. Model names, interface details, and available capabilities depend on the version and configuration. See the [Deployment Guide (Chinese)](deployment.md) for installation and upgrades. The interface-tour video is not bundled with this repository.
 
 ## Product Overview
 
@@ -33,7 +33,7 @@ Kacrm is a conversational AI CRM that connects customer records, interactions, a
 | Reusable knowledge | Retain writing preferences, sales playbooks, fields, and skills, and refine them with feedback. |
 | Scheduled assistance | Run configured coaching and follow-up tasks and deliver results through connected channels. |
 
-![Kacrm product architecture: channels, agents, customer data, insights, and customization](../assets/readme/en/architecture.png)
+![Kacrm product architecture: channels, agents, customer data, insights, and customization](../assets/user-guide/en/architecture.png)
 
 *Figure 1-1. English product architecture illustration.*
 
@@ -45,7 +45,7 @@ Kacrm is a conversational AI CRM that connects customer records, interactions, a
 2. Enter the **email or username** and **password** provided by your administrator, then select **Sign in**.
 3. Your first sign-in initializes your personal AI workspace, called a profile.
 
-![Kacrm sign-in page, shown in Chinese](../assets/user-guide/screens/01-login.png)
+![Kacrm sign-in page](../assets/user-guide/en/01-login.png)
 
 *Figure 2-1. Sign-in page.*
 
@@ -55,7 +55,7 @@ Administrators create accounts and assign roles in **User Management**. Contact 
 
 On first sign-in, the setup wizard helps configure your workspace. You can also visit `/app/setup`. It has three tabs: **Quick Setup**, **Conversation Demo**, and **CRM Interface Tour**. Complete Quick Setup first, then explore the demonstrations.
 
-![Initial setup wizard, shown in Chinese](../assets/user-guide/screens/19-setup-wizard.png)
+![Initial setup wizard](../assets/user-guide/en/19-setup-wizard.png)
 
 *Figure 2-2. Quick Setup: model, channel, and shortcuts.*
 
@@ -91,7 +91,7 @@ The **Conversation Demo** illustrates eight common interactions:
 
 Use the chapter controls to jump between steps, pause, or replay, then select **Try Chat** to begin.
 
-![Conversation demonstration, shown in Chinese](../assets/user-guide/screens/20-setup-demo.png)
+![Conversation demonstration](../assets/user-guide/en/20-setup-demo.png)
 
 *Figure 2-3. Conversation demo showing an AI-assisted research field.*
 
@@ -108,7 +108,7 @@ The **CRM Interface Tour** introduces these eight parts of the interface through
 | Record Copilot | Read summaries and suggested questions, select a model, and work with the current record. |
 | Approvals | Review critical agent actions and approve or reject them. |
 
-![CRM interface tour showing an opportunity board, in Chinese](../assets/user-guide/screens/21-crm-tour.jpg)
+![CRM interface tour showing an opportunity board](../assets/user-guide/en/21-crm-tour.png)
 
 *Figure 2-4. Interface-tour example. The recording is not included in this repository.*
 
@@ -116,7 +116,7 @@ The **CRM Interface Tour** introduces these eight parts of the interface through
 
 The left navigation bar has three main module icons and an account avatar at the bottom. Select the avatar to open the account menu. Entries appear according to your permissions.
 
-![Navigation bar and account menu, shown in Chinese](../assets/user-guide/screens/18-nav-menu.png)
+![Navigation bar and account menu](../assets/user-guide/en/18-nav-menu.png)
 
 *Figure 2-5. Main modules and account-menu shortcuts.*
 
@@ -143,7 +143,7 @@ The agent can consult its usage-guide skill and explain the steps. It may resear
 
 Chat is the main workspace for collaborating with your agent. Describe what you want in natural language, inspect its responses and tool calls, and retain the conversation history. Configured coaching features may also surface suggested work for today.
 
-![Chat workspace with CRM tool calls, shown in Chinese](../assets/user-guide/screens/02-chat-crm.png)
+![Chat workspace with CRM tool calls](../assets/user-guide/en/02-chat-crm.png)
 
 *Figure 3-1. Chat workspace.*
 
@@ -178,7 +178,7 @@ When there is no active conversation, a weekly report may summarize the agent's 
 
 CRM modules organize sales records and their relationships. Communication and operations feed into interaction timelines; fields and views can be configured for your business.
 
-![CRM interaction timeline and Copilot panel, shown in Chinese](../assets/user-guide/screens/03-crm-records.png)
+![CRM interaction timeline and Copilot panel](../assets/user-guide/en/03-crm-records.png)
 
 *Figure 4-1. CRM records and interaction history.*
 
@@ -234,7 +234,7 @@ Where available, open **Account menu → Unclaimed Messages**. Messages that cou
 
 Dashboards display business charts and let you ask the AI assistant to create or modify charts in natural language.
 
-![English illustration of the business dashboard and AI assistant](../assets/readme/en/dashboard.png)
+![English illustration of the business dashboard and AI assistant](../assets/user-guide/en/04-dashboards.png)
 
 *Figure 5-1. Localized English dashboard illustration.*
 
@@ -273,7 +273,7 @@ Each user has a personal agent profile. Open **Profile Settings / My Agent** fro
 
 Connect a supported platform to use the agent outside the web interface and deliver notifications. Incoming interactions can be associated with customer records.
 
-![Messaging-channel settings, shown in Chinese](../assets/user-guide/screens/06-agent-channels.png)
+![Messaging-channel settings](../assets/user-guide/en/06-agent-channels.png)
 
 *Figure 6-1. Channel settings.*
 
@@ -296,7 +296,7 @@ Set a **primary channel** for default scheduled delivery. Some platforms restric
 
 The same profile's agent can serve web chat and its connected channels.
 
-![A daily coaching message delivered through Feishu, shown in Chinese](../assets/user-guide/screens/05-feishu-chat.png)
+![A daily coaching message delivered through Feishu](../assets/user-guide/en/05-feishu-chat.png)
 
 *Figure 6-2. Example of a coaching notification in a connected channel.*
 
@@ -304,7 +304,7 @@ The same profile's agent can serve web chat and its connected channels.
 
 Skills package capabilities such as email drafting, research, and sales playbooks. The interface distinguishes **private skills** from **organization skills** shared with the team.
 
-![English illustration of agent skill management](../assets/readme/en/agent-skills.png)
+![English illustration of agent skill management](../assets/user-guide/en/13-agent-skills.png)
 
 *Figure 6-3. Localized English skills illustration.*
 
@@ -336,7 +336,7 @@ Configure provider API keys, base URLs, and API formats. Choose the default mode
 
 Scheduled tasks run recurring instructions, such as daily follow-up lists or weekly sales summaries, without requiring you to keep the web interface open. The runtime and delivery channel must be configured and running.
 
-![English illustration of agent scheduled tasks](../assets/readme/en/agent-scheduling.png)
+![English illustration of agent scheduled tasks](../assets/user-guide/en/14-agent-scheduling.png)
 
 *Figure 6-4. Localized English scheduled-task illustration.*
 
@@ -365,7 +365,7 @@ You can also request schedules in chat: “Send me today's follow-up accounts ev
 
 Tasks collect next actions from coaching or specialist agents. Filter pending, completed, or all tasks; mark a task complete, remove it through the available recoverable action, or open its linked CRM record. Due dates are displayed where configured. Access depends on your role and data scope.
 
-![Task list, shown in Chinese](../assets/user-guide/screens/08-tasks.png)
+![Task list](../assets/user-guide/en/08-tasks.png)
 
 *Figure 7-1. Task list.*
 
@@ -377,7 +377,7 @@ Administrative entries appear in the account menu according to your permissions.
 
 Create or remove users, assign roles and departments, manage administrator permissions, reset passwords, and generate or rotate API keys. Inspect each user's agent status and apply the onboarding template where available.
 
-![User management, shown in Chinese](../assets/user-guide/screens/09-admin-users.png)
+![User management](../assets/user-guide/en/09-admin-users.png)
 
 *Figure 8-1. User management.*
 
@@ -395,7 +395,7 @@ Create, edit, clone, or remove roles. Use the module-by-operation permission mat
 - **Proposals:** Review field or option proposals generated by the agent, then approve or reject them.
 - **Change log:** Inspect who changed modules or fields, when, why, and the before-and-after values, subject to access permissions.
 
-![English illustration of the module and field builder](../assets/readme/en/schema-builder.png)
+![English illustration of the module and field builder](../assets/user-guide/en/10-schema-hub.png)
 
 *Figure 8-2. Localized English schema-builder illustration.*
 
@@ -403,7 +403,7 @@ Create, edit, clone, or remove roles. Use the module-by-operation permission mat
 
 Configure defaults for new users: identity in `SOUL.md`, personality, skills, schedules, and models. New users inherit the configured template; existing users can receive it through user management where available. Select **Save Template** after editing.
 
-![Onboarding template configuration, shown in Chinese](../assets/user-guide/screens/16-onboarding.png)
+![Onboarding template configuration](../assets/user-guide/en/16-onboarding.png)
 
 *Figure 8-3. New-user template.*
 
@@ -413,7 +413,7 @@ Configure defaults for new users: identity in `SOUL.md`, personality, skills, sc
 
 **Export Audit** records metadata about dashboard drill-down CSV exports, including the actor, scope, and row or column counts. Filter by user and time where supported.
 
-![Usage statistics, shown in Chinese](../assets/user-guide/screens/17-admin-usage.png)
+![Usage statistics](../assets/user-guide/en/17-admin-usage.png)
 
 *Figure 8-4. Usage summary and model/date details.*
 
