@@ -192,6 +192,6 @@ npm run build
 
 ## 许可证与致谢
 
-KaCRM 自有代码目前尚未指定开源许可证，使用与分发授权以未来发布的许可证为准。
+KaCRM 自有代码采用 **[AGPL-3.0](LICENSE)**（`AGPL-3.0-only`），并提供需与相关权利人另行签约的**独立商业授权**。AGPL 允许符合条款的商业使用；闭源分发、托管修改版本时针对协议覆盖代码的源码提供义务豁免等权利，须通过独立书面协议约定。授权范围、第三方声明、贡献权利与咨询入口见 [授权说明](LICENSING.md#kacrm-授权说明)。
 
 感谢 [Hermes Agent](https://github.com/NousResearch/hermes-agent) 及其贡献者提供 Agent 运行时。上游代码的许可证见 [hermes/LICENSE](hermes/LICENSE)，其授权范围不自动覆盖 KaCRM 自有代码。

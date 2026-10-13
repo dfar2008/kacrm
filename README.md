@@ -192,6 +192,6 @@ Report bugs and suggest improvements through [Issues](https://github.com/dfar200
 
 ## License and Acknowledgments
 
-KaCRM's own code does not yet have an open-source license. Usage and distribution terms remain to be defined by a future license release.
+KaCRM's original code is licensed under **[AGPL-3.0](LICENSE)** (`AGPL-3.0-only`), with **separate commercial licensing** available by agreement with the relevant rights holders. AGPL allows commercial use subject to its terms; alternative rights, such as proprietary distribution or hosting a modified version without AGPL source-offer obligations for the covered code, require a separate written agreement. See [Licensing](LICENSING.md) for scope, third-party notices, contribution rights, and inquiries.
 
 Thanks to [Hermes Agent](https://github.com/NousResearch/hermes-agent) and its contributors for the agent runtime. The upstream license is available in [hermes/LICENSE](hermes/LICENSE); it does not automatically cover KaCRM's own code.

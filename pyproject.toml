@@ -7,6 +7,7 @@ name = "hermes-cloud"
 version = "0.1.0"
 description = "Hermes Cloud — multi-tenant hermes agent platform"
 requires-python = ">=3.11"
+license = {text = "AGPL-3.0-only"}
 dependencies = [
     "fastapi>=0.111.0",
     "uvicorn[standard]>=0.29.0",
