@@ -1,3 +1,4 @@
+import { CrmIcon, type CrmIconName } from "./CrmIcon";
 import { useEffect, useState } from "react";
 import {
   listInteractions, undoLastUpdate, type Interaction, ApiError,
@@ -222,24 +223,24 @@ function sourceChip(src?: string): string {
 }
 
 /** Compute display actor: 🤖 agent / 👤 user / 🌐 channel. */
-function actorLabel(t: T, i: Interaction): { icon: string; name: string } {
+function actorLabel(t: T, i: Interaction): { icon: CrmIconName; name: string } {
   const actors = i.actors || [];
   // Prefer agent actor if present.
   const agentActor = actors.find((a: any) => a && (a.type === "agent" || a.agent));
   if (agentActor) {
-    return { icon: "🤖", name: String(agentActor.agent || agentActor.name || agentActor.id || "agent") };
+    return { icon: "bot", name: String(agentActor.agent || agentActor.name || agentActor.id || "agent") };
   }
   const userActor = actors.find((a: any) => a && a.type === "user");
   if (userActor) {
-    return { icon: "👤", name: String(userActor.name || userActor.id || t("timeline.actor.user")) };
+    return { icon: "user", name: String(userActor.name || userActor.id || t("timeline.actor.user")) };
   }
   if (i.source && i.source.startsWith("channel:")) {
-    return { icon: "🌐", name: i.source.replace("channel:", "") };
+    return { icon: "message", name: i.source.replace("channel:", "") };
   }
   if (i.source && i.source.startsWith("agent:")) {
-    return { icon: "🤖", name: i.source.replace("agent:", "") };
+    return { icon: "bot", name: i.source.replace("agent:", "") };
   }
-  return { icon: "·", name: i.source || "system" };
+  return { icon: "activity", name: i.source || "system" };
 }
 
 export function InteractionTimeline({ module, recordId, refreshKey, onUndone }: Props) {
@@ -295,7 +296,7 @@ export function InteractionTimeline({ module, recordId, refreshKey, onUndone }: 
   const visible = items.filter(i => !_HIDDEN_KINDS.has(i.kind));
 
   return (
-    <div className="col" style={{ gap: 8 }}>
+    <div className="col kacrm-detail-timeline" style={{ gap: 8 }}>
       <div className="row" style={{ justifyContent: "space-between" }}>
         <div style={{ fontWeight: 600 }}>{t("timeline.title")}</div>
         <div className="muted small">{t("timeline.count", { n: visible.length })}</div>
@@ -310,19 +311,19 @@ export function InteractionTimeline({ module, recordId, refreshKey, onUndone }: 
       {visible.map(i => {
         const actor = actorLabel(t, i);
         return (
-          <div key={i.id} className="card col" style={{
+          <div key={i.id} className="card col kacrm-timeline-event" style={{
             gap: 6, padding: 10,
             borderLeft: "3px solid var(--border)",
           }}>
             {/* Row 1: kind icon + actor + source chips + time + undo */}
-            <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
+            <div className="row kacrm-event-header" style={{ justifyContent: "space-between", alignItems: "baseline" }}>
               <div className="row" style={{ gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                 <span style={{ display: "inline-flex", alignItems: "center",
                                  color: "var(--muted)" }}>
                   <KindIcon i={i} />
                 </span>
                 <span className="chip" title={actor.name}>
-                  {actor.icon} {actor.name}
+                  <CrmIcon name={actor.icon} size={14} /> {actor.name}
                 </span>
                 {i.source && <span className="chip" style={{ opacity: 0.7 }}>
                   {sourceChip(i.source)}
@@ -342,7 +343,7 @@ export function InteractionTimeline({ module, recordId, refreshKey, onUndone }: 
                     background: "var(--surface-soft)",
                     color: "var(--accent)",
                   }} title={`决策 thread ${i.provenance.caused_by_thread}`}>
-                    🧭 来自决策
+                    <CrmIcon name="target" size={14} /> 来自决策
                   </span>
                 )}
               </div>

@@ -1,3 +1,4 @@
+import { CrmIcon } from "./CrmIcon";
 import { useEffect, useRef, useState } from "react";
 import {
   getRecord, updateRecord,
@@ -329,7 +330,7 @@ export function CopilotPanel({ module, recordId, prefill, onRecordUpdated, hideI
   return (
     <div className="col" style={{ height: "100%", padding: 8, gap: 8 }}>
       <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ fontWeight: 600 }}>{t("copilot.title")}</div>
+        <div style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}><CrmIcon name="sparkles" />{t("copilot.title")}</div>
       </div>
 
       {/* Phase 5.2.C — manager team brief at top sticky region (above
@@ -458,7 +459,7 @@ export function CopilotPanel({ module, recordId, prefill, onRecordUpdated, hideI
               }} />
             <button className="ghost" title={t("chat.input.attach")}
               onClick={() => attachInputRef.current?.click()}
-              style={{ padding: "4px 8px", fontSize: 16, lineHeight: 1 }}>📎</button>
+              style={{ padding: "4px 8px", fontSize: 16, lineHeight: 1 }}><CrmIcon name="paperclip" size={16} /></button>
             <ModelPicker persistKey="copilot" onChange={setModel} maxWidth={200} />
           </div>
           <div className="row" style={{ gap: 8, alignItems: "center" }}>

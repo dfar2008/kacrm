@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "@/lib/router";
 import { getListBrief, type ListBriefCoachCard } from "@/lib/api";
 import { useT } from "@/lib/i18n";
+import { CrmIcon } from "./CrmIcon";
 
 /**
  * "📋 今日 Coach · N" — main-area tab next to TodayPriority.
@@ -104,33 +105,25 @@ function CoachRow({ card }: { card: ListBriefCoachCard }) {
   };
 
   return (
-    <div style={{
-      padding: "8px 10px",
-      border: "1px solid var(--border)", borderRadius: 6,
-      background: "var(--surface-hover)",
-      borderLeft: `3px solid ${sevColor}`,
-      display: "flex", flexDirection: "column", gap: 6,
-    }}>
+    <article className="kacrm-coach-card" style={{ borderLeftColor: sevColor }}>
       {/* headline + copy icon */}
       <div style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-        <div
-          onClick={onOpen}
+        <button className="ghost kacrm-coach-title"
+          onClick={onOpen} disabled={!card.module || !card.record_id}
           title={card.module && card.record_id
             ? t("brief.coach_card_open_title", {
                 module: card.module, id: String(card.record_id),
               })
             : undefined}
-          style={{
-            flex: 1, fontSize: 14, lineHeight: 1.5,
-            cursor: card.module && card.record_id ? "pointer" : "default",
-          }}
         >
           {hint}
-        </div>
+        </button>
         {draft && (
           <button
             onClick={onCopy}
-            title={copied ? t("brief.coach_card_copied") : "复制话术"}
+            className="ghost kacrm-copy-action"
+            title={copied ? t("brief.coach_card_copied") : t("brief.coach_card_copy")}
+            aria-label={copied ? t("brief.coach_card_copied") : t("brief.coach_card_copy")}
             style={{
               border: "1px solid var(--border)",
               borderRadius: 6,
@@ -142,29 +135,21 @@ function CoachRow({ card }: { card: ListBriefCoachCard }) {
               lineHeight: 1.2,
             }}
           >
-            {copied ? "✓" : "📋"}
+            <CrmIcon name={copied ? "check" : "copy"} size={16} />
+            {copied ? t("brief.coach_card_copied") : t("brief.coach_card_copy")}
           </button>
         )}
       </div>
       {/* full draft text, verbatim */}
       {draft && (
-        <pre style={{
-          margin: 0,
-          padding: "8px 10px",
-          fontSize: 14, lineHeight: 1.55,
-          fontFamily: "inherit",
-          whiteSpace: "pre-wrap",
-          wordBreak: "break-word",
-          background: "var(--surface-hover)",
-          borderRadius: 4,
-          border: "1px dashed var(--border)",
-        }}>{draft}</pre>
+        <pre className="kacrm-coach-draft">{draft}</pre>
       )}
       {card.reasoning && (
-        <div className="muted" style={{ fontSize: 13, lineHeight: 1.5 }}>
-          💡 {card.reasoning}
-        </div>
+        <details className="kacrm-reasoning">
+          <summary><CrmIcon name="chevron" size={16} />{t("brief.coach_card_reasoning")}</summary>
+          <p>{card.reasoning}</p>
+        </details>
       )}
-    </div>
+    </article>
   );
 }

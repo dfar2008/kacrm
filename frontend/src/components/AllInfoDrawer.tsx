@@ -1,3 +1,4 @@
+import { CrmIcon } from "./CrmIcon";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { CrmRecord, CrmFieldMeta, AiFieldMeta } from "@/lib/api";
@@ -106,11 +107,12 @@ function rowToLineItem(p: any): LineItem {
 }
 
 export function AllInfoDrawer({
-  open, onClose, module, recordId, record, fields, onUpdated, onAskCopilot,
+  open, onClose, module, moduleTitle, recordId, record, fields, onUpdated, onAskCopilot,
 }: {
   open: boolean;
   onClose: () => void;
   module: string;
+  moduleTitle?: string;
   recordId: number;
   record: CrmRecord;
   fields: CrmFieldMeta[];
@@ -122,6 +124,14 @@ export function AllInfoDrawer({
   const [editingName, setEditingName] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState<string>("");
   const [saving, setSaving] = useState(false);
+  const scrollBodyRef = useRef<HTMLDivElement>(null);
+  const [savedRowHeights, setSavedRowHeights] = useState<Record<string, number>>({});
+  useEffect(() => {
+    setSavedRowHeights({});
+    const reset = () => setSavedRowHeights({});
+    window.addEventListener("resize", reset);
+    return () => window.removeEventListener("resize", reset);
+  }, [open, module, recordId]);
   // Line items for quotes / salesorders. ``hasProducts`` is null
   // until the first /edit fetch resolves so the section doesn't
   // flash empty for modules that don't have products.
@@ -211,6 +221,14 @@ export function AllInfoDrawer({
 
   async function save(field: CrmFieldMeta, value: string) {
     if (saving) return;
+    // Closing a multiline editor must not shorten the scroll range or
+    // move the browser's scroll anchor during a successful save.
+    const row = Array.from(scrollBodyRef.current?.querySelectorAll<HTMLElement>(".info-row") || [])
+      .find(el => el.dataset.fieldName === field.field_name);
+    if (row) {
+      const height = row.getBoundingClientRect().height;
+      setSavedRowHeights(prev => ({ ...prev, [field.field_name]: Math.max(prev[field.field_name] || 0, height) }));
+    }
     const original = editBaseline(t, field, record, locale);
     if (value.trim() === original.trim()) {
       setEditingName(null);
@@ -266,6 +284,7 @@ export function AllInfoDrawer({
       <div
         key={f.field_name}
         className="info-row"
+        data-field-name={f.field_name}
         style={{
           display: "grid",
           gridTemplateColumns: "110px 1fr auto",
@@ -274,7 +293,8 @@ export function AllInfoDrawer({
           borderBottom: "1px solid var(--border)",
           alignItems: "center",
           fontSize: 14,
-          minHeight: 32,
+          minHeight: savedRowHeights[f.field_name] || 32,
+          boxSizing: "border-box",
         }}
       >
         <div className="muted small" style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 2 }}>
@@ -329,7 +349,7 @@ export function AllInfoDrawer({
               title={t("allinfo.btn.copilot_title")}
               onClick={() => onAskCopilot(t("allinfo.copilot.prefill", { label }))}
               style={{ fontSize: 13, padding: "2px 6px", opacity: 0.6 }}
-            >🤖</button>
+            ><CrmIcon name="bot" size={16} /></button>
           )}
         </div>
       </div>
@@ -349,6 +369,7 @@ export function AllInfoDrawer({
       />
       <div
         role="dialog"
+        className="kacrm-info-drawer"
         aria-label={t("allinfo.title")}
         style={{
           position: "fixed", top: 0, right: 0, bottom: 0,
@@ -371,7 +392,7 @@ export function AllInfoDrawer({
           <div>
             <div style={{ fontWeight: 600, fontSize: 14 }}>{t("allinfo.title")}</div>
             <div className="muted small" style={{ fontSize: 13 }}>
-              {t("allinfo.sub", { module, recordId, n: shown.length })}
+              {t("allinfo.sub", { module: moduleTitle || module, recordId, n: shown.length })}
             </div>
           </div>
           <div style={{ display: "flex", gap: 0, alignItems: "center" }}>
@@ -447,14 +468,14 @@ export function AllInfoDrawer({
             </button>
           </div>
         </div>
-        <div style={{ flex: 1, overflowY: "auto", padding: "8px 12px" }}>
+        <div ref={scrollBodyRef} style={{ flex: 1, overflowY: "auto", overflowAnchor: "none", padding: "8px 12px" }}>
           {primary.length > 0 && (
             <div style={{ marginBottom: 16 }}>
               <div className="muted small" style={{
                 fontSize: 13, textTransform: "uppercase", letterSpacing: 0.5,
                 marginBottom: 4, paddingLeft: 4,
               }}>{t("allinfo.group.primary")}</div>
-              <div style={{
+              <div className="kacrm-info-field-grid" style={{
                 display: "grid",
                 gridTemplateColumns: cols === 2 ? "1fr 1fr" : "1fr",
                 columnGap: 12,
@@ -469,7 +490,7 @@ export function AllInfoDrawer({
                 fontSize: 13, textTransform: "uppercase", letterSpacing: 0.5,
                 marginBottom: 4, paddingLeft: 4,
               }}>{t("allinfo.group.system")}</div>
-              <div style={{
+              <div className="kacrm-info-field-grid" style={{
                 display: "grid",
                 gridTemplateColumns: cols === 2 ? "1fr 1fr" : "1fr",
                 columnGap: 12,
@@ -485,16 +506,18 @@ export function AllInfoDrawer({
           )}
           {hasProducts && (
             <div style={{ marginTop: 20 }}>
+              <fieldset disabled={savingProducts} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
               <LineItemsEditor
                 value={lineItems}
                 onChange={(next) => { setLineItems(next); setLineItemsDirty(true); }}
                 def={productDef}
               />
-              {lineItemsDirty && (
+              </fieldset>
+              {/* Keep the action area mounted so saving cannot shrink the scroll range. */}
                 <div style={{ marginTop: 10, display: "flex", justifyContent: "flex-end", gap: 8 }}>
                   <button
                     className="ghost"
-                    disabled={savingProducts}
+                    disabled={savingProducts || !lineItemsDirty}
                     onClick={async () => {
                       // Re-fetch to discard local edits.
                       const r = await getEditFormExisting(module, recordId);
@@ -505,7 +528,7 @@ export function AllInfoDrawer({
                   >{t("allinfo.products.revert")}</button>
                   <button
                     className="primary"
-                    disabled={savingProducts}
+                    disabled={savingProducts || !lineItemsDirty}
                     onClick={async () => {
                       setSavingProducts(true);
                       try {
@@ -532,9 +555,8 @@ export function AllInfoDrawer({
                       }
                     }}
                     style={{ fontSize: 14, padding: "4px 14px" }}
-                  >{savingProducts ? t("crm.new_record_saving") : t("allinfo.products.save")}</button>
+                  >{savingProducts ? t("headline.saving") : t("allinfo.products.save")}</button>
                 </div>
-              )}
             </div>
           )}
           {genericSubs.map(sub => (
@@ -1010,7 +1032,11 @@ export function UserPicker({
     if (!open) return;
     const recompute = () => {
       const r = (inputRef.current || anchorRef.current)?.getBoundingClientRect();
-      if (r) setPos({ left: r.left, top: r.bottom + 2, width: r.width });
+      if (r) {
+        const width = Math.min(r.width, window.innerWidth - 24);
+        setPos({ left: Math.max(12, Math.min(r.left, window.innerWidth - width - 12)),
+          top: Math.max(12, Math.min(r.bottom + 2, window.innerHeight - 292)), width });
+      }
     };
     recompute();
     window.addEventListener("scroll", recompute, true);
@@ -1092,10 +1118,10 @@ export function UserPicker({
         onKeyDown={e => {
           if (e.key === "Escape") { e.preventDefault(); setOpen(false); onCancel(); }
         }}
-        style={{ width: "100%", fontSize: 14, padding: "4px 8px" }}
+        style={{ width: "100%", boxSizing: "border-box", fontSize: 14, padding: "4px 8px" }}
       />
       {open && pos && createPortal(
-        <div ref={popupRef} style={{
+        <div ref={popupRef} className="kacrm-user-picker-popup" style={{
           position: "fixed", left: pos.left, top: pos.top, width: pos.width,
           maxHeight: 280, overflowY: "auto",
           background: "var(--bg)", border: "1px solid var(--border)",
@@ -1262,6 +1288,9 @@ export function RelationPicker({
       />
       <div
         role="dialog"
+        className="kacrm-relation-picker"
+        aria-label={t("allinfo.relation_picker_title", { module: targetLabel })}
+        aria-modal="true"
         style={{
           position: "fixed", top: "20vh", left: "50%", transform: "translateX(-50%)",
           width: 420, maxWidth: "90vw", maxHeight: "60vh",
@@ -1277,14 +1306,14 @@ export function RelationPicker({
           <div style={{ fontWeight: 600, fontSize: 14 }}>
             {t("allinfo.relation_picker_title", { module: targetLabel })}
           </div>
-          <button className="ghost icon-close" onClick={onCancel}>×</button>
+          <button className="ghost icon-close" aria-label={t("allinfo.close")} onClick={onCancel}>×</button>
         </div>
         <input
           autoFocus
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder={t("allinfo.relation_search_placeholder")}
-          style={{ margin: 10, padding: "4px 8px", fontSize: 14 }}
+          style={{ width: "calc(100% - 20px)", boxSizing: "border-box", margin: 10, padding: "4px 8px", fontSize: 14 }}
           onKeyDown={e => { if (e.key === "Escape") onCancel(); }}
         />
         <div style={{ flex: 1, overflowY: "auto", padding: "0 6px 8px" }}>
@@ -1334,6 +1363,7 @@ function mergeCache<T extends { id: number }>(prev: T[], next: T[]): T[] {
 
 const pickerRowStyle: React.CSSProperties = {
   display: "block", width: "100%", textAlign: "left",
+  boxSizing: "border-box", minHeight: 44,
   padding: "6px 10px", background: "transparent", border: "none",
   cursor: "pointer", fontSize: 14, color: "var(--fg)",
 };

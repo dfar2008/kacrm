@@ -6,6 +6,7 @@ import { usePermissions } from "@/lib/permissions";
 import { UserProfileModal } from "@/components/UserProfileModal";
 import { ThemePicker } from "@/components/ThemePicker";
 import { KacrmMark } from "@/components/KacrmMark";
+import { CrmIcon } from "@/components/CrmIcon";
 import { useLocale, useT, type DictKey } from "@/lib/i18n";
 
 /**
@@ -128,7 +129,7 @@ interface RailItem {
 // (Personality / channels / model / etc.) is reachable via the bottom
 // avatar menu's "我的 Agent Profile" entry now.
 const RAIL: RailItem[] = [
-  { to: "/",       labelKey: "shell.nav.chat",   icon: "💬" },
+  { to: "/",       labelKey: "shell.nav.chat",   icon: <CrmIcon name="message" size={22} /> },
   { to: "/crm",    labelKey: "shell.nav.crm",    icon: SVG_USERS, require: "accounts.index" },
   // /decisions nav entry removed in consolidation Phase 2.C
   // (2026-05-16). The chat surface migrated to HomeChatBar on /crm

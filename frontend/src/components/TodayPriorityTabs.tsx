@@ -3,6 +3,7 @@ import { useT } from "@/lib/i18n";
 import { TodayPriority } from "@/components/TodayPriority";
 import { TodayCoachCards } from "@/components/TodayCoachCards";
 import { TodayDecisionPrompts } from "@/components/TodayDecisionPrompts";
+import { CrmIcon } from "./CrmIcon";
 
 /**
  * Tab strip at the top of DailyFeed that hosts three AI-driven surfaces
@@ -45,6 +46,8 @@ export function TodayPriorityTabs({ refreshKey, module, onAskCopilot }: {
     return (
       <button
         key={key}
+        className="kacrm-priority-tab"
+        aria-pressed={isActive}
         onClick={() => !disabled && setActive(key)}
         disabled={disabled}
         style={{
@@ -60,7 +63,8 @@ export function TodayPriorityTabs({ refreshKey, module, onAskCopilot }: {
           opacity: disabled ? 0.5 : 1,
         }}
       >
-        {label}{n != null ? ` · ${n}` : ""}
+        <CrmIcon name={key === "priority" ? "alert" : key === "coach" ? "clipboard" : "target"} size={16} />
+        {label}{n != null && <span className="kacrm-tab-count">{n}</span>}
       </button>
     );
   };
@@ -83,24 +87,16 @@ export function TodayPriorityTabs({ refreshKey, module, onAskCopilot }: {
   };
 
   return (
-    <div style={{
-      border: "1px solid var(--border)",
-      borderRadius: 8,
-      padding: "10px 14px 12px",
-      marginBottom: 12,
-      background: "linear-gradient(135deg, rgba(224,74,74,0.05), rgba(92,134,230,0.04))", /* theme-guard:ignore */
-    }}>
+    <section className="kacrm-priorities">
       <div style={{
         display: "flex", alignItems: "center", gap: 8, marginBottom: 10,
         flexWrap: "wrap",
       }}>
-        {tabBtn("priority",  "🚨 " + t("today_priority.title_short"),    priorityN)}
-        {tabBtn("coach",     "📋 " + t("brief.coach_cards_title_short"), coachN)}
-        {tabBtn("decisions", "🎯 " + t("decision_prompts.title_short"),  decisionsN)}
-        <span className="muted" style={{ fontSize: 13, marginLeft: "auto" }}>
-          {t(hintKey[effective] as any)}
-        </span>
+        {tabBtn("priority",  t("today_priority.title_short"),    priorityN)}
+        {tabBtn("coach",     t("brief.coach_cards_title_short"), coachN)}
+        {tabBtn("decisions", t("decision_prompts.title_short"),  decisionsN)}
       </div>
+      <p className="kacrm-priority-hint">{t(hintKey[effective] as any)}</p>
 
       <div style={{ display: effective === "priority" ? "block" : "none" }}>
         <TodayPriority
@@ -127,6 +123,6 @@ export function TodayPriorityTabs({ refreshKey, module, onAskCopilot }: {
           onAsk={onAskCopilot}
         />
       </div>
-    </div>
+    </section>
   );
 }

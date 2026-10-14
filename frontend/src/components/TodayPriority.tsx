@@ -1,3 +1,4 @@
+import { CrmIcon, type CrmIconName } from "./CrmIcon";
 import { useEffect, useState } from "react";
 import { useRouter } from "@/lib/router";
 import { getTodayPriority, type TodayPriorityItem } from "@/lib/api";
@@ -22,11 +23,11 @@ const MODULE_LABEL_KEY: Record<string, DictKey> = {
   potentials: "daily.module.potentials",
 };
 
-function reasonIcon(kind: string): string {
-  if (kind === "coach_hint") return "🎓";
-  if (kind === "overdue") return "🔴";
-  if (kind === "silence") return "🧱";
-  return "•";
+function reasonIcon(kind: string): CrmIconName {
+  if (kind === "coach_hint") return "target";
+  if (kind === "overdue") return "alert";
+  if (kind === "silence") return "clock";
+  return "activity";
 }
 
 export function TodayPriority({ refreshKey, module, headerless, onCount }: {
@@ -154,7 +155,7 @@ function Row({ item, rank, moduleLabel, onOpen, onAct }: {
         }}>
           {top2.map((r, i) => (
             <span key={i} style={{ marginRight: 8 }}>
-              {reasonIcon(r.kind)} {r.text}
+              <CrmIcon name={reasonIcon(r.kind)} size={14} /> {r.text}
             </span>
           ))}
         </div>
@@ -171,7 +172,7 @@ function Row({ item, rank, moduleLabel, onOpen, onAct }: {
             }}
             title="整行点击 = 跳到记录 + Copilot 已填好这句话"
           >
-            🤖 → {action.text}
+            <CrmIcon name="sparkles" size={14} /> {action.text}
           </div>
         )}
       </div>

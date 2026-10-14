@@ -572,7 +572,7 @@ async def _list_brief_inner(
         with db_session() as db:
             from hermes.crm.insights.coach_cards import read_coach_proposals
             coach_cards = read_coach_proposals(
-                db, user_id, unread_only=False, limit=5,
+                db, user_id, unread_only=False, module=module, limit=5,
             )
     except Exception:
         logger.exception("list_brief_coach_cards_failed user=%s", user_id)

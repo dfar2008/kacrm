@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CrmFieldMeta } from "@/lib/api";
 import { createRecord, getEditFormNew, listModules, listSubdetails, ApiError } from "@/lib/api";
 import type { SubdetailDef } from "@/lib/api";
@@ -10,6 +10,9 @@ import { fieldLabel, moduleLabel } from "@/lib/crmLabels";
 import { UserPicker, RelationPicker, isSystemField } from "./AllInfoDrawer";
 import { LineItemsEditor, type LineItem } from "./LineItemsEditor";
 import { GenericSubdetailEditor } from "./GenericSubdetailEditor";
+import { CrmIcon } from "./CrmIcon";
+import { createRecordValues, createValueErrors } from "@/lib/createRecordValues";
+import "./create-record.css";
 
 /**
  * Create-new-record modal. Loads the empty edit form for ``module``
@@ -37,9 +40,10 @@ function isCreatable(f: CrmFieldMeta): boolean {
 }
 
 export function CreateRecordModal({
-  module, onClose, onCreated,
+  module, moduleTitle, onClose, onCreated,
 }: {
   module: string;
+  moduleTitle?: string;
   onClose: () => void;
   onCreated: (newId: number) => void;
 }) {
@@ -47,7 +51,20 @@ export function CreateRecordModal({
   const [fields, setFields] = useState<CrmFieldMeta[] | null>(null);
   const [values, setValues] = useState<Record<string, any>>({});
   const [errs, setErrs] = useState<Record<string, string>>({});
+  const bodyRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!Object.keys(errs).length) return;
+    const control = bodyRef.current?.querySelector<HTMLElement>(
+      '[data-invalid="true"] input, [data-invalid="true"] select, [data-invalid="true"] textarea, [data-invalid="true"] button',
+    );
+    control?.focus({ preventScroll: true });
+    control?.scrollIntoView({ block: "center", behavior: "auto" });
+  }, [errs]);
   const [saving, setSaving] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  useEffect(() => {
+    if (submitError && bodyRef.current) bodyRef.current.scrollTop = 0;
+  }, [submitError]);
   const [loadErr, setLoadErr] = useState<string | null>(null);
   const [hasProducts, setHasProducts] = useState(false);
   const [expanded, setExpanded] = useState(false); // 全屏(产品明细宽表)
@@ -56,7 +73,7 @@ export function CreateRecordModal({
   const [genericSubs, setGenericSubs] = useState<SubdetailDef[]>([]);
   const [detailRows, setDetailRows] = useState<Record<string, Record<string, unknown>[]>>({});
   const [moduleCache, setModuleCache] = useState<{ name: string; label: string }[] | null>(null);
-  const moduleTitleLabel = moduleLabel(module, moduleCache);
+  const moduleTitleLabel = moduleTitle || moduleLabel(module, moduleCache);
 
   useEffect(() => {
     let cancelled = false;
@@ -110,21 +127,23 @@ export function CreateRecordModal({
 
   async function submit() {
     if (saving) return;
+    setSubmitError(null);
     if (missingRequired.length > 0) {
       const m: Record<string, string> = {};
       missingRequired.forEach(f => { m[f.field_name] = t("crm.new_record_required"); });
       setErrs(m);
       return;
     }
+    const valueErrors = createValueErrors(fields || [], values);
+    if (Object.keys(valueErrors).length) {
+      setErrs(Object.fromEntries(Object.keys(valueErrors).map(name => [name, t("crm.new_record_invalid_number")])));
+      return;
+    }
     setSaving(true);
     setErrs({});
     try {
       // Strip empty strings so the server's defaults / nullable cols apply.
-      const payload: Record<string, any> = {};
-      for (const [k, v] of Object.entries(values)) {
-        if (v === "" || v === null || v === undefined) continue;
-        payload[k] = v;
-      }
+      const payload = createRecordValues(fields || [], values);
       if (hasProducts) {
         // Strip empty / invalid rows — a row with no product picked
         // shouldn't make it to the server (Save would reject anyway).
@@ -158,8 +177,13 @@ export function CreateRecordModal({
           return;
         }
       }
-      const msg = e instanceof ApiError ? `HTTP ${e.status}` : String(e);
-      toast(t("crm.new_record_failed", { msg }), "error");
+      const detail = e instanceof ApiError ? e.detail : null;
+      const message = typeof detail === "string" ? detail
+        : detail && typeof detail === "object" && "message" in detail ? String(detail.message) : "";
+      const msg = e instanceof ApiError ? (message || `HTTP ${e.status}`) : String(e);
+      const error = t("crm.new_record_failed", { msg });
+      setSubmitError(error);
+      toast(error, "error");
     } finally {
       setSaving(false);
     }
@@ -184,37 +208,29 @@ export function CreateRecordModal({
       onChange={v => setVal(f.field_name, v)}
     />
   );
-  const groupHeading: React.CSSProperties = {
-    fontSize: 13, textTransform: "uppercase", letterSpacing: 0.5,
-    marginBottom: 4, paddingLeft: 4,
-  };
-  const grid: React.CSSProperties = {
-    display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 12,
-  };
-
   return (
     <>
       {/* 右侧抽屉式(与编辑「全部信息」一致),不再居中弹屏。 */}
       <div onClick={onClose} style={{
         position: "fixed", inset: 0, background: "var(--overlay)", zIndex: 70,
       }} />
-      <div role="dialog" aria-label={t("crm.new_record_title", { module: moduleTitleLabel })}
+      <div role="dialog" aria-modal="true"
+        className={`kacrm-create-drawer${expanded ? " is-expanded" : ""}`}
+        aria-labelledby="kacrm-create-title"
         style={{
           position: "fixed", top: 0, right: 0, bottom: 0,
           width: expanded
             ? "96vw"
-            : (hasProducts ? "min(1100px, 94vw)" : 720),
+            : (hasProducts ? "min(1100px, 94vw)" : "min(760px, 96vw)"),
           maxWidth: "96vw",
           background: "var(--bg)", borderLeft: "1px solid var(--border)",
           boxShadow: "var(--shadow-modal)",
           zIndex: 80, display: "flex", flexDirection: "column",
         }}>
-        <div style={{
-          padding: "12px 16px", borderBottom: "1px solid var(--border)",
-          display: "flex", justifyContent: "space-between", alignItems: "center",
-        }}>
-          <div style={{ fontWeight: 600, fontSize: 14 }}>
-            {t("crm.new_record_title", { module: moduleTitleLabel })}
+        <header className="kacrm-create-header">
+          <div>
+            <h2 id="kacrm-create-title">{t("crm.new_record_title", { module: moduleTitleLabel })}</h2>
+            <p>{t("crm.new_record_form_hint")}</p>
           </div>
           <div style={{ display: "flex", gap: 0, alignItems: "center" }}>
             <button
@@ -234,11 +250,14 @@ export function CreateRecordModal({
               </svg>
             </button>
             <button className="ghost icon-close" onClick={onClose}
-              style={{ fontSize: 18 }}>×</button>
+              aria-label={t("crm.new_record_cancel")} title={t("crm.new_record_cancel")}>
+              <CrmIcon name="close" size={18} />
+            </button>
           </div>
-        </div>
+        </header>
 
-        <div style={{ flex: 1, overflowY: "auto", padding: "8px 12px" }}>
+        <div ref={bodyRef} className="kacrm-create-body">
+          {submitError && <div role="alert" className="kacrm-create-submit-error">{submitError}</div>}
           {!fields && !loadErr && (
             <div className="muted small" style={{ padding: 12 }}>{t("common.loading")}</div>
           )}
@@ -246,16 +265,16 @@ export function CreateRecordModal({
             <div className="small" style={{ color: "var(--danger)", padding: 12 }}>{loadErr}</div>
           )}
           {fields && primaryFields.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <div className="muted small" style={groupHeading}>{t("allinfo.group.primary")}</div>
-              <div style={grid}>{primaryFields.map(renderField)}</div>
-            </div>
+            <section className="kacrm-create-section">
+              <h3>{t("allinfo.group.primary")}</h3>
+              <div className="kacrm-create-grid">{primaryFields.map(renderField)}</div>
+            </section>
           )}
           {fields && systemFields.length > 0 && (
-            <div style={{ marginBottom: 16 }}>
-              <div className="muted small" style={groupHeading}>{t("allinfo.group.system")}</div>
-              <div style={grid}>{systemFields.map(renderField)}</div>
-            </div>
+            <section className="kacrm-create-section is-system">
+              <h3>{t("allinfo.group.system")}</h3>
+              <div className="kacrm-create-grid">{systemFields.map(renderField)}</div>
+            </section>
           )}
           {fields && hasProducts && (
             <div style={{ marginTop: 20 }}>
@@ -273,17 +292,15 @@ export function CreateRecordModal({
           ))}
         </div>
 
-        <div style={{
-          padding: "10px 16px", borderTop: "1px solid var(--border)",
-          display: "flex", justifyContent: "flex-end", gap: 8,
-        }}>
+        <footer className="kacrm-create-footer">
+          <span>{t("crm.new_record_required_hint")}</span>
           <button className="ghost" onClick={onClose} disabled={saving}>
             {t("crm.new_record_cancel")}
           </button>
           <button className="primary" onClick={submit} disabled={saving || !fields}>
             {saving ? t("crm.new_record_saving") : t("crm.new_record_save")}
           </button>
-        </div>
+        </footer>
       </div>
     </>
   );
@@ -304,18 +321,15 @@ function FieldRow({
   const label =
     field.field_config?.label_i18n?.[locale] || fieldLabel(t, field, module);
   return (
-    <div style={{
-      display: "grid", gridTemplateColumns: "160px 1fr", gap: 12,
-      padding: "8px 0", alignItems: "center", minHeight: 40,
-    }}>
-      <div className="muted small" style={{ fontSize: 14 }}>
+    <div data-invalid={error ? "true" : undefined} className={`kacrm-create-field${["textarea", "richtext"].includes((field.field_type || "").toLowerCase()) ? " is-wide" : ""}`}>
+      <div className="kacrm-create-label">
         {label}
         {field.is_required && <span style={{ color: "var(--danger)", marginLeft: 4 }}>*</span>}
       </div>
       <div>
-        <FieldControl field={field} moduleCache={moduleCache} value={String(value ?? "")} onChange={onChange} />
+        <FieldControl field={field} label={label} error={error} moduleCache={moduleCache} value={String(value ?? "")} onChange={onChange} />
         {error && (
-          <div className="small" style={{ color: "var(--danger)", fontSize: 13, marginTop: 2 }}>
+          <div id={`kacrm-create-error-${field.field_name}`} role="alert" className="small" style={{ color: "var(--danger)", fontSize: 13, marginTop: 2 }}>
             {error}
           </div>
         )}
@@ -325,9 +339,11 @@ function FieldRow({
 }
 
 function FieldControl({
-  field, moduleCache, value, onChange,
+  field, label, error, moduleCache, value, onChange,
 }: {
   field: CrmFieldMeta;
+  label: string;
+  error?: string;
   moduleCache: { name: string; label: string }[] | null;
   value: string;
   onChange: (v: any) => void;
@@ -335,6 +351,11 @@ function FieldControl({
   const t = useT();
   const { locale } = useLocale();
   const ft = (field.field_type || "text").toLowerCase();
+  const controlA11y = {
+    "aria-label": label, "aria-required": field.is_required || undefined,
+    "aria-invalid": !!error,
+    "aria-describedby": error ? `kacrm-create-error-${field.field_name}` : undefined,
+  };
   const base: React.CSSProperties = { width: "100%", fontSize: 14, padding: "4px 8px" };
 
   if (isPicklistLike(ft)) {
@@ -345,7 +366,7 @@ function FieldControl({
     // "赢单" / "输单" — which was the SPA bug surfaced 2026-05-26.
     const opts = localizedSelectOptions(field.options, field.field_config, locale);
     return (
-      <select value={value} onChange={e => onChange(e.target.value)} style={base}>
+      <select {...controlA11y} value={value} onChange={e => onChange(e.target.value)} style={base}>
         <option value="">{t("allinfo.select_empty")}</option>
         {opts.map(o => <option key={o.value} value={o.value}>{o.text}</option>)}
       </select>
@@ -372,7 +393,7 @@ function FieldControl({
         {opts.map(o => (
           <label key={o.value}
             style={{ display: "flex", gap: 6, fontSize: 14, cursor: "pointer" }}>
-            <input type="checkbox" checked={selected.has(o.value)}
+            <input aria-label={`${label}: ${o.text}`} type="checkbox" checked={selected.has(o.value)}
               onChange={e => toggle(o.value, e.target.checked)} />
             {o.text}
           </label>
@@ -383,37 +404,40 @@ function FieldControl({
   if (ft === "boolean" || ft === "checkbox" || ft === "bool") {
     const checked = value === "true" || value === "1" || value === "是";
     return (
-      <input type="checkbox" checked={checked}
-        onChange={e => onChange(e.target.checked ? "true" : "false")} />
+      <label className="kacrm-create-checkbox">
+        <input {...controlA11y} type="checkbox" checked={checked}
+          onChange={e => onChange(e.target.checked ? "true" : "false")} />
+        {t("allinfo.bool.true")}
+      </label>
     );
   }
   if (ft === "date") {
-    return <input type="date" style={base} value={value}
+    return <input {...controlA11y} type="date" style={base} value={value}
       onChange={e => onChange(e.target.value)} />;
   }
   if (ft === "datetime" || ft === "timestamp") {
-    return <input type="datetime-local" style={base} value={value}
+    return <input {...controlA11y} type="datetime-local" style={base} value={value}
       onChange={e => onChange(e.target.value)} />;
   }
   if (["number", "int", "integer", "decimal",
        "currency", "money", "amount", "percent"].includes(ft)) {
-    return <input inputMode="decimal" style={base} value={value}
+    return <input {...controlA11y} inputMode="decimal" style={base} value={value}
       onChange={e => onChange(e.target.value)} />;
   }
   if (ft === "email") {
-    return <input type="email" style={base} value={value}
+    return <input {...controlA11y} type="email" style={base} value={value}
       onChange={e => onChange(e.target.value)} />;
   }
   if (ft === "url") {
-    return <input type="url" style={base} value={value}
+    return <input {...controlA11y} type="url" style={base} value={value}
       onChange={e => onChange(e.target.value)} />;
   }
   if (ft === "phone" || ft === "tel" || ft === "mobile") {
-    return <input type="tel" style={base} value={value}
+    return <input {...controlA11y} type="tel" style={base} value={value}
       onChange={e => onChange(e.target.value)} />;
   }
   if (ft === "textarea" || ft === "longtext" || ft === "richtext" || ft === "text_multi") {
-    return <textarea rows={3} style={{ ...base, resize: "vertical", minHeight: 60 }}
+    return <textarea {...controlA11y} rows={3} style={{ ...base, resize: "vertical", minHeight: 60 }}
       value={value} onChange={e => onChange(e.target.value)} />;
   }
   if (ft === "user" || ft === "ownerby") {
@@ -426,7 +450,7 @@ function FieldControl({
     // "pick…" button that opens the picker on demand.
     return <RelationField field={field} moduleCache={moduleCache} value={value} onChange={onChange} />;
   }
-  return <input style={base} value={value} onChange={e => onChange(e.target.value)} />;
+  return <input {...controlA11y} style={base} value={value} onChange={e => onChange(e.target.value)} />;
 }
 
 function RelationField({

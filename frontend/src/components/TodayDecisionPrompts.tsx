@@ -1,3 +1,4 @@
+import { CrmIcon } from "./CrmIcon";
 import { useEffect, useState } from "react";
 import { getListBrief, type ListBriefSuggestion } from "@/lib/api";
 import { useT } from "@/lib/i18n";
@@ -117,7 +118,7 @@ function PromptChip({ text, onAsk }: {
           : undefined
       }
     >
-      → {text}
+      <CrmIcon name="arrow" size={16} /> {text}
     </button>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "@/lib/router";
 import { getDailyFeed, DailyFeed as DailyFeedT, DailyFeedItem } from "@/lib/api";
 import { useT, type T, type DictKey } from "@/lib/i18n";
+import { CrmIcon, type CrmIconName } from "./CrmIcon";
 import { TodayPriorityTabs } from "@/components/TodayPriorityTabs";
 
 /**
@@ -40,26 +41,22 @@ function outcomeTypeKey(it: DailyFeedItem): TypeKey | null {
   return "daily.type.outcome.other";
 }
 
-function iconFor(item: DailyFeedItem): string {
-  if (item.item_type === "interaction") {
-    // Agent-driven interactions get the robot icon so 24h scans surface
-    // them at a glance.
-    if (typeof item.source === "string" && item.source.startsWith("agent:")) return "🤖";
-    if (item.kind === "email") return "📧";
-    if (item.kind === "call") return "📞";
-    if (item.kind === "meeting") return "📅";
-    if (item.kind === "chat") return "💬";
-    return "📌";
-  }
-  if (item.item_type === "coach_hint") return "🎓";
-  if (item.item_type === "outcome_event") {
-    if (item.event_type === "deal.won") return "🏆";
-    if (item.event_type === "stage.advanced") return "📈";
-    if (item.event_type === "record.first_touch") return "👋";
-    return "✨";
-  }
-  return "·";
+function iconFor(item: DailyFeedItem): CrmIconName {
+  if (isAgentInteraction(item)) return "sparkles";
+  if (item.item_type === "coach_hint") return "target";
+  if (item.event_type === "deal.won") return "trophy";
+  if (item.event_type === "stage.advanced") return "trend";
+  if (item.event_type === "record.first_touch") return "phone";
+  if (item.kind === "email") return "mail";
+  if (item.kind === "call") return "phone";
+  if (item.kind === "meeting") return "calendar";
+  return "message";
 }
+
+const SECTION_ICONS: Record<string, CrmIconName> = {
+  agent_recent: "sparkles", coach: "target", won: "trophy",
+  stages: "trend", first_touch: "phone",
+};
 
 function fmtMoney(t: T, n: number | null | undefined): string {
   if (!n && n !== 0) return t("daily.money.dash");
@@ -435,12 +432,9 @@ export function DailyFeed(
     : t("daily.heading.default");
 
   return (
-    <div style={{ height: "100%", overflow: "auto",
-                    padding: compact ? "12px 16px" : "16px 24px" }}>
-      <div className="row" style={{
-        justifyContent: "space-between", alignItems: "center",
-        marginBottom: compact ? 10 : 16,
-      }}>
+    <div className={`kacrm-daily-feed${compact ? " is-compact" : ""}`}>
+      <div className="kacrm-feed-content">
+      <header className="kacrm-feed-header">
         <div>
           <h2 style={{ margin: 0, fontSize: compact ? 16 : undefined }}>
             {heading}
@@ -455,7 +449,7 @@ export function DailyFeed(
             {t("daily.list_btn")}
           </button>
         )}
-      </div>
+      </header>
 
       {err && <div className="alert alert-error">{err}</div>}
       {!data && <div className="muted">{t("common.loading")}</div>}
@@ -479,18 +473,19 @@ export function DailyFeed(
                   - global (/crm) → cross-module top 5
                   - per-module    → that module's top 5
                 Same component, same UX, just a different scope. */}
-            <TodayPriorityTabs module={module} onAskCopilot={onAskCopilot} />
             <FocusedSnapshot
               data={data}
               statKeys={focus.stats}
               sectionKeys={new Set(focus.sections.map(s => s.key))}
             />
+            <TodayPriorityTabs module={module} onAskCopilot={onAskCopilot} />
 
             {focus.sections.map(sec => {
               const items = data.items.filter(sec.filter);
               return (
                 <Section key={sec.key}
                          id={`daily-section-${sec.key}`}
+                         icon={SECTION_ICONS[sec.key] || "message"}
                          title={t(sec.titleKey, { n: items.length })}
                          hint={t(sec.hintKey)}
                          emptyText={t(sec.emptyKey)}
@@ -499,11 +494,8 @@ export function DailyFeed(
               );
             })}
 
-            <div style={{ marginTop: 16 }}>
-              <div className="muted" style={{
-                fontSize: 13, fontWeight: 600, letterSpacing: 0.5,
-                textTransform: "uppercase", marginBottom: 6,
-              }}>{t("daily.timeline_label")}</div>
+            <details className="kacrm-activity-section kacrm-full-timeline">
+              <summary><CrmIcon name="clock" size={16} /><span>{t("daily.timeline_label")}</span><CrmIcon name="chevron" size={16} /></summary>
               <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                 {data.items.length === 0 ? (
                   <div className="muted" style={{ padding: 16, textAlign: "center" }}>
@@ -515,10 +507,11 @@ export function DailyFeed(
                   ))
                 )}
               </div>
-            </div>
+            </details>
           </>
         );
       })()}
+      </div>
     </div>
   );
 }
@@ -546,7 +539,8 @@ const _OUTCOME_AUTO: Partial<Record<StatKey, () => SectionDef>> = {
 function _flashSection(sectionKey: string) {
   const el = document.getElementById(`daily-section-${sectionKey}`);
   if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (el instanceof HTMLDetailsElement) el.open = true;
+  el.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
   el.classList.add("daily-section-flash");
   window.setTimeout(() => el.classList.remove("daily-section-flash"), 1400);
 }
@@ -564,15 +558,7 @@ function FocusedSnapshot(
   const t = useT();
   if (statKeys.length === 0) return null;
   return (
-    <div style={{
-      display: "grid",
-      gridTemplateColumns: `repeat(${statKeys.length}, 1fr)`,
-      gap: 12,
-      padding: 12,
-      border: "1px solid var(--border)",
-      borderRadius: 8,
-      background: "var(--panel-2)",
-    }}>
+    <div className="kacrm-snapshot">
       {/* theme-guard:ignore-start — keyframe animation literal inside JSX string */}
       <style>{`
         .daily-section-flash {
@@ -589,7 +575,7 @@ function FocusedSnapshot(
         const target = STAT_TO_SECTION_KEY[k];
         const isClickable = !!(target && sectionKeys.has(target));
         return (
-          <Stat key={k} label={s.label} value={s.value} sub={s.sub}
+          <Stat key={k} icon={SECTION_ICONS[STAT_TO_SECTION_KEY[k] || ""] || "activity"} label={s.label} value={s.value} sub={s.sub}
                 onClick={isClickable
                   ? () => _flashSection(target!)
                   : undefined} />
@@ -599,47 +585,33 @@ function FocusedSnapshot(
   );
 }
 
-function Section({ id, title, hint, items, emptyText, onOpen }: {
-  id?: string;
-  title: string;
-  hint?: string;
-  items: DailyFeedItem[];
-  emptyText: string;
-  onOpen: (it: DailyFeedItem) => void;
+function Section({ id, title, hint, items, emptyText, onOpen, icon }: {
+  id?: string; title: string; hint?: string; items: DailyFeedItem[];
+  emptyText: string; onOpen: (it: DailyFeedItem) => void; icon: CrmIconName;
 }) {
-  return (
-    <div id={id} style={{
-      marginTop: 16,
-      borderRadius: 6,
-      transition: "background 0.4s ease",
-    }}>
-      <div style={{ display: "flex", justifyContent: "space-between",
-                     alignItems: "baseline", marginBottom: 6 }}>
-        <div style={{ fontSize: 14, fontWeight: 600 }}>{title}</div>
-        {hint && <div className="muted" style={{ fontSize: 13 }}>{hint}</div>}
-      </div>
-      {items.length === 0 ? (
-        <div className="muted" style={{
-          fontSize: 14, padding: "8px 10px",
-          border: "1px dashed var(--border)", borderRadius: 6,
-        }}>{emptyText}</div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {items.map((it, i) => (
-            <FeedRow key={i} item={it} onOpen={() => onOpen(it)} />
-          ))}
-        </div>
-      )}
+  const heading = <><CrmIcon name={icon} size={18} /><span>{title}</span></>;
+  if (items.length === 0) {
+    return <details id={id} className="kacrm-activity-section is-empty">
+      <summary>{heading}<CrmIcon name="chevron" size={16} /></summary>
+      <p className="kacrm-empty-copy">{emptyText}</p>
+    </details>;
+  }
+  return <section id={id} className="kacrm-activity-section">
+    <div className="kacrm-section-heading">{heading}</div>
+    {hint && <p className="kacrm-section-hint">{hint}</p>}
+    <div className="col" style={{ gap: 6 }}>
+      {items.map((it, i) => <FeedRow key={i} item={it} onOpen={() => onOpen(it)} />)}
     </div>
-  );
+  </section>;
 }
 
-function Stat({ label, value, sub, onClick }: {
+function Stat({ label, value, sub, onClick, icon }: {
+  icon: CrmIconName;
   label: string; value: string; sub?: string;
   onClick?: () => void;
 }) {
   return (
-    <div
+    <div className="kacrm-stat"
       onClick={onClick}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
@@ -664,8 +636,8 @@ function Stat({ label, value, sub, onClick }: {
         (e.currentTarget as HTMLDivElement).style.background = "transparent";
       }) : undefined}
     >
-      <div className="muted" style={{ fontSize: 13 }}>{label}</div>
-      <div style={{ fontSize: 22, fontWeight: 700 }}>{value}</div>
+      <div className="kacrm-stat-label"><CrmIcon name={icon} size={16} />{label}</div>
+      <div className="kacrm-stat-value">{value}</div>
       {sub && <div className="muted" style={{ fontSize: 13 }}>{sub}</div>}
     </div>
   );
@@ -712,6 +684,11 @@ function FeedRow({ item, onOpen }: {
   }
   return (
     <div onClick={hasLink ? onOpen : undefined}
+         role={hasLink ? "button" : undefined}
+         tabIndex={hasLink ? 0 : undefined}
+         onKeyDown={hasLink ? e => {
+           if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onOpen(); }
+         } : undefined}
          style={{
            display: "grid",
            gridTemplateColumns: "50px 24px 1fr auto",
@@ -721,7 +698,7 @@ function FeedRow({ item, onOpen }: {
            cursor: hasLink ? "pointer" : "default",
          }}>
       <span className="muted" style={{ fontSize: 13 }}>{time}</span>
-      <span style={{ fontSize: 16 }}>{iconFor(item)}</span>
+      <CrmIcon name={iconFor(item)} />
       <div style={{ overflow: "hidden" }}>
         <div style={{ fontSize: 14 }}>
           {item.target?.name && (
@@ -744,7 +721,11 @@ function FeedRow({ item, onOpen }: {
         </div>
       </div>
       <span className="muted" style={{ fontSize: 13 }}>
-        {item.target?.module || ""}
+        {item.target?.module ? (() => {
+          const key = `crm.module.${item.target.module}`;
+          const label = t(key as DictKey);
+          return label === key ? item.target.module : label;
+        })() : ""}
       </span>
     </div>
   );

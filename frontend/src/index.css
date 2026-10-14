@@ -1,4 +1,5 @@
 :root {
+  color-scheme: dark;
   /* ── 身份变量(每个 [data-theme] 块覆盖这一组,其余全部派生)── */
   --accent: #3FE0D0;
   --accent-2: #9C8CFF;
@@ -7,22 +8,22 @@
      画布/面板/边框带极淡的方案色相 tint(由 --scheme-hue 推导),让内容区
      与边栏/顶栏同属一套主题,而非"有色边栏 + 中性灰内容"的割裂感。饱和度
      很低,保持深邃、不抢数据。自定义属性惰性求值,引用下方的 --scheme-hue OK。 */
-  --bg: hsl(var(--scheme-hue) 28% 7%);
-  --panel: hsl(var(--scheme-hue) 25% 11.5%);
-  --panel-2: hsl(var(--scheme-hue) 23% 16.5%);
-  --border: hsl(var(--scheme-hue) 21% 27%);
+  --bg: hsl(var(--scheme-hue) 8% 8%);
+  --panel: hsl(var(--scheme-hue) 8% 12%);
+  --panel-2: hsl(var(--scheme-hue) 9% 17%);
+  --border: hsl(var(--scheme-hue) 10% 29%);
   /* 方案色相(themes.css 每套覆盖;默认 = s1 品牌青 174)。侧栏/顶栏
      由它推导,深色模式深、浅色模式浅(见 html[data-mode="light"])。 */
   --scheme-hue: 174;
-  --sidebar-bg: hsl(var(--scheme-hue) 42% 13%);
+  --sidebar-bg: hsl(var(--scheme-hue) 14% 12%);
   --sidebar-active: color-mix(in srgb, var(--accent) 26%, transparent);
-  --topbar-bg: hsl(var(--scheme-hue) 34% 11%);
+  --topbar-bg: hsl(var(--scheme-hue) 10% 11%);
 
   /* ── 文字 ── */
   --fg: #EEF1FF;
   --fg-strong: #f4f6ff;
-  --muted: #7B85B0;
-  --muted-2: #5a648c;
+  --muted: #A0ADBE;
+  --muted-2: #8492A5;
   --fg-on-accent: #06121a;
   --link: var(--accent);
 
@@ -32,6 +33,7 @@
 
   /* ── accent 派生(全站染色的核心)── */
   --accent-hover: color-mix(in srgb, var(--accent) 82%, #ffffff);
+  --accent-ink: var(--accent);
   --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
   --accent-soft-strong: color-mix(in srgb, var(--accent) 20%, transparent);
   --accent-2-soft: color-mix(in srgb, var(--accent-2) 12%, transparent);
@@ -124,34 +126,39 @@
 }
 
 /* =========================================================
-   浅色模式 — 与 35 套 accent 正交的第二个维度。
-   只翻转【中性色 + 几个写死方向的派生】;accent/accent-soft/
-   card-header 等由 accent 派生的 token 自动跟随,无需重写。
-   侧栏/顶栏走"浅彩"(方案色的很浅 tint,kacrm 浅色系风格)。
+   浅色模式:白色面板、淡色背景与更深的强调色。
+   每套方案在 themes.css 中提供对应的浅色强调色;
+   accent-soft/card-header 等派生 token 自动跟随。
    ========================================================= */
 html[data-mode="light"] {
+  color-scheme: light;
+  --accent: #08786E;
+  --accent-2: #6556C7;
+  --fg-on-accent: #FFFFFF;
+  --accent-hover: color-mix(in srgb, var(--accent) 88%, #000000);
+  --accent-ink: color-mix(in srgb, var(--accent) 85%, #000000);
   /* 表面层级:白卡 + 页底 —— 带极淡方案色相 tint(随 --scheme-hue),
      与边栏/顶栏成套;卡片近白仍清爽,不影响读数据。 */
-  --bg: hsl(var(--scheme-hue) 34% 96.5%);
-  --panel: hsl(var(--scheme-hue) 40% 99.3%);
-  --panel-2: hsl(var(--scheme-hue) 30% 95%);
-  --border: hsl(var(--scheme-hue) 26% 88%);
+  --bg: hsl(var(--scheme-hue) 12% 97%);
+  --panel: #FFFFFF;
+  --panel-2: hsl(var(--scheme-hue) 14% 94.5%);
+  --border: hsl(var(--scheme-hue) 12% 84%);
 
   /* 文字:深字 */
   --fg: #232A3A;
   --fg-strong: #121826;
   --muted: #5C6678;
-  --muted-2: #939DB0;
+  --muted-2: #687487;
 
   /* 侧栏/顶栏:方案色的很浅 tint(白内容上的浅彩侧栏) */
-  --sidebar-bg: hsl(var(--scheme-hue) 52% 95%);
-  --topbar-bg: hsl(var(--scheme-hue) 48% 97%);
+  --sidebar-bg: hsl(var(--scheme-hue) 18% 95.5%);
+  --topbar-bg: #FFFFFF;
   --sidebar-active: color-mix(in srgb, var(--accent) 22%, transparent);
 
   /* 状态色:深色版,保证白底上对比 */
   --success: #2E9E54;
   --warning: #C2820B;
-  --danger: #D6425C;
+  --danger: #C12D49;
   --info: #2D6FE0;
 
   /* 数据状态色板:浅色模式整组压深(Tailwind-600/700 系),

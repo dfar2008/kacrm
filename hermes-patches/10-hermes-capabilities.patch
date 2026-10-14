@@ -7848,10 +7848,10 @@ index 0000000000..37b2862f52
 +    return _parse_brief(json.dumps(reply, ensure_ascii=False))
 diff --git a/crm/insights/coach_cards.py b/crm/insights/coach_cards.py
 new file mode 100644
-index 0000000000..e24cf69800
+index 0000000000..4576a38ec9
 --- /dev/null
 +++ b/crm/insights/coach_cards.py
-@@ -0,0 +1,270 @@
+@@ -0,0 +1,275 @@
 +"""Read and render ``coach.proposal`` Action Gateway rows.
 +
 +Coach proposals are written to ``gateway_actions`` (kind=
@@ -7916,6 +7916,10 @@ index 0000000000..e24cf69800
 +    " - interval '15 minutes', '-infinity'::timestamptz)"
 +)
 +
++# A daily proposal expires even when the scheduler has not produced a
++# newer run. This bounds the feed and badges without deleting audit history.
++_CURRENT_WINDOW_CLAUSE = "created_at > CURRENT_TIMESTAMP - interval '24 hours'"
++
 +
 +def read_coach_proposals(
 +    db,
@@ -7938,7 +7942,7 @@ index 0000000000..e24cf69800
 +    Returns rows in the legacy coach-hint shape so callers don't change:
 +    ``{id, module, record_id, severity, signal, hint, is_read, created_at}``.
 +    """
-+    clauses = ["kind = 'coach.proposal'", "params->>'user_id' = %s"]
++    clauses = ["kind = 'coach.proposal'", "params->>'user_id' = %s", _CURRENT_WINDOW_CLAUSE]
 +    args: List[Any] = [str(int(user_id))]
 +    if unread_only:
 +        clauses.append("state = 'pending_approval'")
@@ -8036,6 +8040,7 @@ index 0000000000..e24cf69800
 +        "kind = 'coach.proposal'",
 +        "params->>'user_id' = %s",
 +        "state = 'pending_approval'",
++        _CURRENT_WINDOW_CLAUSE,
 +    ]
 +    args: List[Any] = [str(int(user_id))]
 +    if module:

@@ -1,92 +1,74 @@
-import { useT } from "@/lib/i18n";
-import { useTheme, SCHEMES, accentOf, accent2Of, type ThemeMode } from "@/theme";
+import { useEffect, useState, type CSSProperties } from "react";
+import { useT, type DictKey } from "@/lib/i18n";
+import { useTheme, SCHEMES, RECOMMENDED_SCHEME_IDS, accentOf, accent2Of, type ThemeMode, type Scheme } from "@/theme";
+import { CrmIcon, type CrmIconName } from "./CrmIcon";
+import "./theme-picker.css";
 
 export function ThemePicker({ open, onClose }: { open: boolean; onClose: () => void }) {
   const t = useT();
-  const { theme, setTheme, mode, setMode } = useTheme();
+  const { theme, setTheme, mode, resolvedMode, setMode } = useTheme();
+  const [showAll, setShowAll] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [open, onClose]);
   if (!open) return null;
-  const MODES: { id: ThemeMode; label: string }[] = [
-    { id: "dark", label: t("theme.mode.dark") },
-    { id: "light", label: t("theme.mode.light") },
+
+  const modes: { id: ThemeMode; icon: CrmIconName; label: string }[] = [
+    { id: "system", icon: "monitor", label: t("theme.mode.system") },
+    { id: "light", icon: "sun", label: t("theme.mode.light") },
+    { id: "dark", icon: "moon", label: t("theme.mode.dark") },
   ];
-  return (
-    <div
-      role="dialog"
-      onClick={onClose}
-      style={{
-        position: "fixed", inset: 0, zIndex: 100,
-        background: "var(--overlay)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-      }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{
-          width: 520, maxHeight: "80vh", overflow: "auto",
-          background: "var(--popover-bg)", border: "1px solid var(--border)",
-          borderRadius: 12, padding: 18, boxShadow: "var(--shadow-modal)",
-        }}
-      >
-        <div style={{ fontSize: 15, fontWeight: 700, color: "var(--fg-strong)" }}>
-          {t("theme.panel.title")}
+  const recommended = RECOMMENDED_SCHEME_IDS.map(id => SCHEMES.find(s => s.id === id)!);
+  const others = SCHEMES.filter(s => !RECOMMENDED_SCHEME_IDS.includes(s.id));
+  const selected = SCHEMES.find(s => s.id === theme)!;
+  const card = (scheme: Scheme) => {
+    const active = scheme.id === theme;
+    return <button key={scheme.id} className="kacrm-scheme-card" aria-pressed={active}
+      aria-label={t(scheme.nameKey as DictKey)} title={t(scheme.nameKey as DictKey)}
+      onClick={() => setTheme(scheme.id)}
+      style={{ "--kacrm-swatch-accent": accentOf(scheme, resolvedMode),
+        "--kacrm-swatch-secondary": accent2Of(scheme, resolvedMode) } as CSSProperties}>
+      <span className="kacrm-scheme-preview" aria-hidden="true">
+        <span className="kacrm-scheme-preview-rail"><i /><i /><i /></span>
+        <span className="kacrm-scheme-preview-main"><i /><i /><i /></span>
+      </span>
+      <span className="kacrm-scheme-caption"><span>{t(scheme.nameKey as DictKey)}</span>
+        {active && <CrmIcon name="check" size={14} />}</span>
+    </button>;
+  };
+
+  return <div className="kacrm-theme-overlay" onClick={onClose}>
+    <section role="dialog" aria-modal="true" aria-labelledby="kacrm-theme-title"
+      className="kacrm-theme-picker" onClick={event => event.stopPropagation()}>
+      <header className="kacrm-theme-header">
+        <div><h2 id="kacrm-theme-title">{t("theme.panel.title")}</h2>
+          <p>{t("theme.panel.subtitle")}</p></div>
+        <button className="ghost icon-close" onClick={onClose} aria-label={t("theme.panel.close")}>
+          <CrmIcon name="close" size={18} />
+        </button>
+      </header>
+      <div className="kacrm-theme-content">
+        <h3>{t("theme.panel.appearance")}</h3>
+        <div className="kacrm-mode-control" role="group" aria-label={t("theme.panel.appearance")}>
+          {modes.map(item => <button key={item.id} aria-pressed={mode === item.id}
+            onClick={() => setMode(item.id)}><CrmIcon name={item.icon} size={17} />{item.label}</button>)}
         </div>
-        <div style={{ fontSize: 14, color: "var(--muted)", marginTop: 2, marginBottom: 14 }}>
-          {t("theme.panel.subtitle")}
-        </div>
-        {/* 深色 / 浅色 分段切换 —— 与下面的 accent 色卡正交 */}
-        <div style={{
-          display: "inline-flex", gap: 2, padding: 2, marginBottom: 14,
-          background: "var(--panel-2)", border: "1px solid var(--border)",
-          borderRadius: 9,
-        }}>
-          {MODES.map(m => {
-            const on = m.id === mode;
-            return (
-              <button
-                key={m.id}
-                onClick={() => setMode(m.id)}
-                style={{
-                  padding: "5px 16px", borderRadius: 7, border: "none", cursor: "pointer",
-                  fontSize: 13, fontWeight: on ? 600 : 400,
-                  background: on ? "var(--accent)" : "transparent",
-                  color: on ? "var(--fg-on-accent)" : "var(--muted)",
-                }}
-              >{m.label}</button>
-            );
-          })}
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10 }}>
-          {SCHEMES.map(s => {
-            const active = s.id === theme;
-            return (
-              <button
-                key={s.id}
-                title={t(s.nameKey)}
-                onClick={() => setTheme(s.id)}
-                style={{
-                  display: "flex", flexDirection: "column", gap: 6, padding: 8,
-                  background: "transparent",
-                  border: active ? "2px solid var(--accent)" : "1px solid var(--border)",
-                  borderRadius: 10, cursor: "pointer",
-                }}
-              >
-                <span style={{
-                  height: 34, borderRadius: 7, overflow: "hidden",
-                  display: "flex", border: "1px solid var(--border)",
-                }}>
-                  <i style={{ flex: 2, background: accentOf(s) }} />
-                  <i style={{ flex: 1, background: accent2Of(s) }} />
-                </span>
-                <span style={{
-                  fontSize: 13,
-                  color: active ? "var(--fg)" : "var(--muted)",
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                }}>{t(s.nameKey)}</span>
-              </button>
-            );
-          })}
-        </div>
+        <p className="kacrm-mode-hint">{mode === "system"
+          ? t("theme.panel.system_hint", { mode: t(resolvedMode === "dark" ? "theme.mode.dark" : "theme.mode.light") })
+          : t("theme.panel.manual_hint")}</p>
+        <div className="kacrm-theme-section-title"><h3>{t("theme.panel.accent")}</h3>
+          <span>{t(selected.nameKey as DictKey)}</span></div>
+        <div className="kacrm-scheme-grid">{recommended.map(card)}</div>
+        <button className="ghost kacrm-more-schemes" aria-expanded={showAll}
+          onClick={() => setShowAll(value => !value)}>
+          {t(showAll ? "theme.panel.less" : "theme.panel.more")}
+          <CrmIcon name="chevron" size={16} />
+        </button>
+        {showAll && <div className="kacrm-scheme-grid kacrm-other-schemes">{others.map(card)}</div>}
       </div>
-    </div>
-  );
+    </section>
+  </div>;
 }

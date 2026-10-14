@@ -83,16 +83,16 @@ export function GenericSubdetailEditor({
   };
 
   return (
-    <div style={{ marginTop: 8 }}>
+    <div className="kacrm-subdetail-editor" style={{ marginTop: 8 }}>
       <div style={{ fontSize: 14, color: "var(--muted)", marginBottom: 6 }}>
         {def.title || def.name}
       </div>
       <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+        <table className="kacrm-subdetail-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
           <thead>
             <tr>
               {cols.map(c => (
-                <th key={c.field_name} style={th}>{c.field_label || c.field_name}</th>
+                <th key={c.field_name} scope="col" style={th}>{c.field_label || c.field_name}</th>
               ))}
               <th style={{ ...th, width: 32 }} />
             </tr>
@@ -105,8 +105,8 @@ export function GenericSubdetailEditor({
                   const cur = r[c.field_name];
                   if (ft === "picklist") {
                     return (
-                      <td key={c.field_name} style={td}>
-                        <select value={String(cur ?? "")}
+                      <td key={c.field_name} data-label={c.field_label || c.field_name} style={td}>
+                        <select aria-label={c.field_label || c.field_name} value={String(cur ?? "")}
                           onChange={e => setCell(i, c.field_name, e.target.value)}
                           style={cell}>
                           <option value="" />
@@ -118,8 +118,8 @@ export function GenericSubdetailEditor({
                   }
                   if (USER_TYPES.includes(ft)) {
                     return (
-                      <td key={c.field_name} style={td}>
-                        <select value={String(cur ?? "")}
+                      <td key={c.field_name} data-label={c.field_label || c.field_name} style={td}>
+                        <select aria-label={c.field_label || c.field_name} value={String(cur ?? "")}
                           onChange={e => setCell(i, c.field_name,
                             e.target.value === "" ? null : Number(e.target.value))}
                           style={cell}>
@@ -132,8 +132,8 @@ export function GenericSubdetailEditor({
                   }
                   if (ft === "boolean") {
                     return (
-                      <td key={c.field_name} style={{ ...td, textAlign: "center" }}>
-                        <input type="checkbox" checked={!!cur}
+                      <td key={c.field_name} data-label={c.field_label || c.field_name} style={{ ...td, textAlign: "center" }}>
+                        <input aria-label={c.field_label || c.field_name} type="checkbox" checked={!!cur}
                           onChange={e => setCell(i, c.field_name, e.target.checked)} />
                       </td>
                     );
@@ -142,8 +142,8 @@ export function GenericSubdetailEditor({
                     // 公式列只读:显示实时预览值(ƒ 提示),不可编辑。
                     const fv = formulaValue(c, r);
                     return (
-                      <td key={c.field_name} style={td}>
-                        <input type="text" readOnly tabIndex={-1}
+                      <td key={c.field_name} data-label={c.field_label || c.field_name} style={td}>
+                        <input aria-label={c.field_label || c.field_name} type="text" readOnly tabIndex={-1}
                           value={fv === null ? "" : fmtNum(fv)}
                           title={c.field_config?.formula?.expression || ""}
                           style={{ ...cell, ...roCell }} />
@@ -153,15 +153,15 @@ export function GenericSubdetailEditor({
                   if (c.is_readonly) {
                     // 系统/只读字段:展示但不可改(如服务端算出的列)。
                     return (
-                      <td key={c.field_name} style={td}>
-                        <input type={inputType(c.field_type)} readOnly tabIndex={-1}
+                      <td key={c.field_name} data-label={c.field_label || c.field_name} style={td}>
+                        <input aria-label={c.field_label || c.field_name} type={inputType(c.field_type)} readOnly tabIndex={-1}
                           value={String(cur ?? "")} style={{ ...cell, ...roCell }} />
                       </td>
                     );
                   }
                   return (
-                    <td key={c.field_name} style={td}>
-                      <input type={inputType(c.field_type)}
+                    <td key={c.field_name} data-label={c.field_label || c.field_name} style={td}>
+                      <input aria-label={c.field_label || c.field_name} type={inputType(c.field_type)}
                         value={String(cur ?? "")}
                         onChange={e => {
                           const it = inputType(c.field_type);
@@ -179,7 +179,7 @@ export function GenericSubdetailEditor({
                   );
                 })}
                 <td style={{ ...td, textAlign: "center" }}>
-                  <button type="button" onClick={() => rmRow(i)} style={rmBtn}>×</button>
+                  <button type="button" aria-label={t("common.delete")} onClick={() => rmRow(i)} style={rmBtn}>×</button>
                 </td>
               </tr>
             ))}
@@ -202,10 +202,10 @@ export function GenericSubdetailEditor({
                         : (Number(r[c.field_name]) || 0);
                       return s + v;
                     }, 0);
-                    return <td key={c.field_name} style={footTd}>{fmtNum(sum)}</td>;
+                    return <td key={c.field_name} data-label={c.field_label || c.field_name} style={footTd}>{fmtNum(sum)}</td>;
                   }
                   // 第一列(非数值)放「合计」标签
-                  return <td key={c.field_name} style={footTd}>
+                  return <td key={c.field_name} data-label={c.field_label || c.field_name} style={footTd}>
                     {ci === 0 ? t("crm.subdetail.total") : ""}
                   </td>;
                 })}

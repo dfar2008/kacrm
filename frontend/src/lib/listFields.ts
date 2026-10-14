@@ -109,6 +109,13 @@ export function formatListFieldValue(
   t: T, field: CrmFieldMeta, record: CrmRecord,
 ): string {
   const fn = field.field_name;
+  // Unit prices must stay exact; older API display siblings round to integers.
+  const price = record[fn];
+  if (["price", "cost_price", "reference_price"].includes(fn)
+      && price !== null && price !== undefined && price !== ""
+      && Number.isFinite(Number(price))) {
+    return `¥${Number(price).toLocaleString("en-US", { maximumFractionDigits: 20 })}`;
+  }
   // FK display sibling takes precedence (backend-localized).
   const disp = record[fn + "_display"];
   if (disp !== undefined && disp !== null && String(disp).trim()) {

@@ -157,7 +157,7 @@ export function RelatedEntities({ module, recordId, refreshKey }: Props) {
   if (!loading && filtered.length === 0) return null;
 
   return (
-    <div className="col" style={{ gap: 8, marginBottom: 12 }}>
+    <div className="col kacrm-detail-related" style={{ gap: 8, marginBottom: 12 }}>
       {filtered.map(([mod, items]) => (
         <div key={mod} style={{
           border: "1px solid var(--border)",
@@ -185,7 +185,7 @@ export function RelatedEntities({ module, recordId, refreshKey }: Props) {
             {items.map(r => {
               const summary = summarizeRow(t, mod, r);
               return (
-                <button key={r.id} className="ghost"
+                <button key={r.id} className="ghost kacrm-related-record"
                         onClick={() => navigate(`/crm/${mod}/${r.id}`)}
                         style={{
                           display: "flex", alignItems: "baseline", gap: 8,

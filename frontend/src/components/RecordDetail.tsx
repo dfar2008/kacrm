@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   getRecord, getEntityFacts, getSubgraph,
   getCoachHintUnreadCount, deleteRecord,
@@ -15,16 +16,18 @@ import { InteractionTimeline } from "./InteractionTimeline";
 import { RelatedEntities } from "./RelatedEntities";
 import { AIFocus } from "./AIFocus";
 import { NoteForm } from "./NoteForm";
-import { AllInfoDrawer } from "./AllInfoDrawer";
+import { AllInfoDrawer, isSystemField } from "./AllInfoDrawer";
 import { HeadlineCustomizer } from "./HeadlineCustomizer";
 import { TeamFootprintCard } from "./TeamFootprintCard";
 import { resolveHeadlineFields, headlineLabelOverride, getPersonalHeadline } from "@/lib/moduleHeadlines";
 import AiConfidenceDot from "./AiConfidenceDot";
 import HoverTip from "./HoverTip";
-import { resolveFieldLabel, selectValueLabel } from "@/lib/crmLabels";
+import { moduleLabel, resolveFieldLabel, selectValueLabel } from "@/lib/crmLabels";
 import { usePermissions } from "@/lib/permissions";
 import { useCurrentUser } from "@/lib/currentUser";
 import { ShareRecordModal } from "./ShareRecordModal";
+import { CrmIcon } from "./CrmIcon";
+import "./record-detail.css";
 
 const STATS_KEYS = [
   "latest_contact_date", "next_contact_date",
@@ -141,7 +144,8 @@ function renderFieldValue(
   // No display sibling — render raw by type.
   if (raw === null || raw === undefined || raw === "") return { display: dash };
   switch (field.field_type) {
-    case "datetime": case "date": return { display: formatDateTime(t, raw) };
+    case "date": return { display: /^\d{4}-\d{2}-\d{2}/.test(String(raw)) ? String(raw).slice(0, 10) : String(raw) };
+    case "datetime": return { display: formatDateTime(t, raw) };
     case "currency": case "money": case "number": {
       if ([
         "amount", "grand_total", "annual_revenue", "price", "total",
@@ -169,11 +173,11 @@ function renderFieldValue(
 }
 
 export function RecordDetail({
-  module, recordId, onAskCopilot, refreshNonce = 0,
+  module, recordId, moduleTitle, onAskCopilot, refreshNonce = 0,
   headlineOverride, canCustomizeHeadline = false, onHeadlineSaved,
   onDeleted,
 }: {
-  module: string; recordId: number;
+  module: string; recordId: number; moduleTitle?: string;
   // Parent owns Copilot prefill state; we push natural-language drafts
   // into it when the user invokes "让 Copilot 改这项" from the drawer.
   onAskCopilot?: (prefillText: string) => void;
@@ -193,6 +197,7 @@ export function RecordDetail({
   const t = useT();
   const { locale } = useLocale();
   const [record, setRecord] = useState<CrmRecord | null>(null);
+  const [loadedIdentity, setLoadedIdentity] = useState<string | null>(null);
   const [fields, setFields] = useState<CrmFieldMeta[]>([]);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   // generic 子明细(如费用报销的费用明细):def 来自 listSubdetails,行来自 getRecord.details。
@@ -216,6 +221,9 @@ export function RecordDetail({
   // re-resolves from localStorage.
   const [headlineNonce, setHeadlineNonce] = useState(0);
   const [deleting, setDeleting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  useEffect(() => { setDeleteOpen(false); setDeleteError(null); }, [module, recordId]);
   // Record sharing modal.
   const [shareOpen, setShareOpen] = useState(false);
   // AI 补全 button busy state — disables the trigger while the fill runs.
@@ -253,6 +261,7 @@ export function RecordDetail({
         const r = await getRecord(module, recordId);
         if (!cancelled) {
           setRecord(r.data);
+          setLoadedIdentity(`${module}:${recordId}`);
           setFields(r.fields || []);
           setLineItems(r.products || []);
           setDetailRows(r.details || {});
@@ -285,10 +294,19 @@ export function RecordDetail({
   // pinned to the top. Everything else lives behind "全部信息".
   const headlineFields = useMemo<CrmFieldMeta[]>(() => {
     if (!record || fields.length === 0) return [];
-    const names = resolveHeadlineFields(module, headlineOverride, getPersonalHeadline(module));
+    const personal = getPersonalHeadline(module);
+    const names = resolveHeadlineFields(module, headlineOverride, personal);
     const byName = new Map(fields.filter(f => !f.is_hidden).map(f => [f.field_name, f]));
     const out: CrmFieldMeta[] = [];
     names.forEach(n => { const f = byName.get(n); if (f) out.push(f); });
+    // Custom modules have no built-in headline list. Use metadata for a small
+    // business overview, while respecting explicit empty/custom selections.
+    if (!names.length && headlineOverride == null && personal == null) {
+      return fields.filter(f => !f.is_hidden && !isSystemField(f)
+        && f.field_name !== "name" && !f.field_name.endsWith("_name")
+        && !["textarea", "longtext", "richtext", "text_multi"].includes(f.field_type || ""))
+        .sort((a, b) => (a.sort_order ?? 999) - (b.sort_order ?? 999)).slice(0, 4);
+    }
     return out;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [record, fields, module, headlineOverride, headlineNonce]);
@@ -320,9 +338,13 @@ export function RecordDetail({
     }
   }
 
-  if (loading) return <div className="muted" style={{ padding: 16 }}>{t("common.loading")}</div>;
-  if (err) return <div style={{ padding: 16, color: "var(--danger)" }}>{err}</div>;
-  if (!record) return <div className="muted" style={{ padding: 16 }}>{t("rdetail.no_record")}</div>;
+  // Refresh the current record in place: replacing the whole subtree with a
+  // loading screen unmounts open drawers and discards their editing/scroll state.
+  // A different record still gets an initial loading screen, never stale details.
+  const hasCurrentRecord = loadedIdentity === `${module}:${recordId}` && !!record;
+  if (loading && !hasCurrentRecord) return <div className="muted" style={{ padding: 16 }}>{t("common.loading")}</div>;
+  if (err && !hasCurrentRecord) return <div style={{ padding: 16, color: "var(--danger)" }}>{err}</div>;
+  if (!record || !hasCurrentRecord) return <div className="muted" style={{ padding: 16 }}>{t("rdetail.no_record")}</div>;
 
   const hasStats = STATS_KEYS.some(k => record[k] !== undefined);
   const topStats = (["latest_contact_date", "next_contact_date", "contact_count", "latest_kind"] as const)
@@ -356,15 +378,30 @@ export function RecordDetail({
     return null;
   })();
 
+  const customizeButton = (<button
+          onClick={() => setCustomizeOpen(true)}
+          title={t("rdetail.customize_title")}
+          aria-label={t("rdetail.customize_title")}
+          className="ghost kacrm-headline-customize"
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: "8px 12px", minWidth: 44, minHeight: 36,
+            background: "transparent",
+            border: "1px dashed var(--border)", borderRadius: 6,
+            color: "var(--muted)", fontSize: 18, lineHeight: 1,
+          }}
+        ><CrmIcon name="settings" size={18} />{t("rdetail.customize_title")}</button>);
+
   return (
-    <div className="col" style={{ gap: 14, padding: 16, overflowY: "auto", height: "100%" }}>
+    <div className="col kacrm-record-detail" style={{ gap: 14, padding: 16, overflowY: "auto", height: "100%" }}>
+      {err && <div role="alert" style={{ color: "var(--danger)" }}>{err}</div>}
       {/* Header — Law 4: module-aware; Law 6: provenance chip shown inline.
           Title row now carries the "全部信息" entry point on the right
           (§168 — user-facing copy is "信息", not "字段"). */}
-      <div>
-        <div className="row" style={{ gap: 8, alignItems: "center" }}>
+      <header className="kacrm-detail-header">
+        <div className="row kacrm-detail-meta" style={{ gap: 8, alignItems: "center" }}>
           <div className="muted small" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-            {module} · #{record.id}
+            {moduleTitle || moduleLabel(module, null)} · #{record.id}
             {unreadHints > 0 && (
               <span
                 title={t("rdetail.unread_title", { n: unreadHints })}
@@ -380,7 +417,7 @@ export function RecordDetail({
             )}
           </div>
           {record.owner_by_display && (
-            <span className="chip" title={t("rdetail.owner_title")}>👤 {record.owner_by_display}</span>
+            <span className="chip" title={t("rdetail.owner_title")}><CrmIcon name="user" size={14} /> {record.owner_by_display}</span>
           )}
           {record.created_by_display && record.created_by_display !== record.owner_by_display && (
             <span className="chip muted small" title={t("rdetail.created_by_title")}>
@@ -388,10 +425,12 @@ export function RecordDetail({
             </span>
           )}
         </div>
-        <div className="row" style={{
+        <div className="kacrm-detail-title-row" style={{
           justifyContent: "space-between", alignItems: "center", gap: 8,
         }}>
           <h2 style={{ margin: "4px 0", flex: 1 }}>{headline}</h2>
+          <div className="kacrm-detail-actions">
+          {headlineFields.length === 0 && customizeButton}
           {hasAiFields && (
             <button
               className="ghost"
@@ -408,7 +447,7 @@ export function RecordDetail({
                 opacity: aiBusy ? 0.6 : 1,
                 cursor: aiBusy ? "wait" : "pointer",
               }}
-            >✨ {aiBusy ? t("record.aiField.filling") : t("record.aiField.fill")}</button>
+            ><CrmIcon name="sparkles" size={16} /> {aiBusy ? t("record.aiField.filling") : t("record.aiField.fill")}</button>
           )}
           {canShare && (
             <button
@@ -423,7 +462,7 @@ export function RecordDetail({
                 border: "1px solid var(--border)", borderRadius: 6,
                 fontSize: 15, lineHeight: 1,
               }}
-            >🔗</button>
+            ><CrmIcon name="share" size={16} />{t("crm.share.button")}</button>
           )}
           <button
             className="ghost"
@@ -447,27 +486,12 @@ export function RecordDetail({
               <line x1="3" y1="12" x2="3.01" y2="12"/>
               <line x1="3" y1="18" x2="3.01" y2="18"/>
             </svg>
+            {t("rdetail.info_btn", { n: visibleFieldCount })}
           </button>
           {onDeleted && (
             <button
               className="ghost"
-              onClick={async () => {
-                if (deleting) return;
-                const label = headline || `${module}#${recordId}`;
-                if (!window.confirm(t("rdetail.delete_confirm", { name: label }))) return;
-                setDeleting(true);
-                try {
-                  await deleteRecord(module, recordId);
-                  onDeleted();
-                } catch (e) {
-                  const msg = e instanceof ApiError
-                    ? `${e.status}: ${typeof e.detail === "string" ? e.detail : JSON.stringify(e.detail)}`
-                    : String(e);
-                  window.alert(t("rdetail.delete_failed", { msg }));
-                } finally {
-                  setDeleting(false);
-                }
-              }}
+              onClick={() => { setDeleteError(null); setDeleteOpen(true); }}
               disabled={deleting}
               title={deleting ? t("rdetail.delete_btn_busy") : t("rdetail.delete_btn_title")}
               aria-label={t("rdetail.delete_btn")}
@@ -490,6 +514,7 @@ export function RecordDetail({
               </svg>
             </button>
           )}
+          </div>
         </div>
         {activityHint && (
           <div className={"small"} style={{
@@ -498,29 +523,18 @@ export function RecordDetail({
             {activityHint.text}
           </div>
         )}
-      </div>
+      </header>
 
       {/* Headline chips — the ≤5 business-language facts. No card wrapper,
           no grid — just a compact wrap row. Clicking a chip opens
           "全部信息" focused on that field (future; for now opens drawer). */}
-      <div className="row" style={{ gap: 10, flexWrap: "wrap", alignItems: "stretch" }}>
+      {headlineFields.length > 0 && <div className={`kacrm-headline-grid${headlineFields.length <= 4 ? " is-compact" : ""}${module === "contacts" || module === "leads" ? " is-people" : ""}${module === "contacts" ? " is-contact" : ""}`} style={{ gap: 10, flexWrap: "wrap", alignItems: "stretch" }}>
         {headlineFields.map(f => (
           <HeadlineChip key={f.field_name} field={f} record={record}
             onClick={() => setInfoOpen(true)} />
         ))}
-        <button
-          className="ghost"
-          onClick={() => setCustomizeOpen(true)}
-          title={t("rdetail.customize_title")}
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            padding: "8px 12px", minWidth: 44, minHeight: 36,
-            background: "transparent",
-            border: "1px dashed var(--border)", borderRadius: 6,
-            color: "var(--muted)", fontSize: 18, lineHeight: 1,
-          }}
-        >⚙</button>
-      </div>
+        {customizeButton}
+      </div>}
 
       {/* 系统记忆面板 — 第一性原理：客户详情自带「AI 记住的关于这个客户的事」。
           仅当该 CRM 记录已绑定 memory_entity_id 时展示（迁移 0018 已 backfill 全部存活记录）。 */}
@@ -538,6 +552,57 @@ export function RecordDetail({
           (other modules get this in a follow-up); auto-skips empty
           groups; closed/lost rows filtered out client-side. */}
       <RelatedEntities module={module} recordId={recordId} refreshKey={refreshKey} />
+
+      {/* Line items — for quotes / salesorders. Product 必填 per user charter. */}
+      {lineItems.length > 0 && (
+        <section className="card kacrm-detail-lineitems" style={{ padding: 12 }}>
+          <div style={{
+            fontSize: 14, fontWeight: 600, marginBottom: 8,
+            display: "flex", justifyContent: "space-between", alignItems: "baseline",
+          }}>
+            <span>{t("rdetail.li.title")}</span>
+            <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 400 }}>
+              {t("rdetail.li.count", { n: lineItems.length })}
+            </span>
+          </div>
+          <div className="kacrm-detail-table-scroll" style={{ overflowX: "auto" }}>
+            <table className="kacrm-lineitems-table" style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
+              <thead>
+                <tr style={{ textAlign: "left", color: "var(--muted)", fontSize: 13 }}>
+                  <th scope="col" style={{ padding: "6px 8px", fontWeight: 500 }}>{t("rdetail.li.col.product")}</th>
+                  <th scope="col" style={{ padding: "6px 8px", fontWeight: 500 }}>{t("rdetail.li.col.spec")}</th>
+                  <th scope="col" style={{ padding: "6px 8px", fontWeight: 500, textAlign: "right" }}>{t("rdetail.li.col.qty")}</th>
+                  <th scope="col" style={{ padding: "6px 8px", fontWeight: 500, textAlign: "right" }}>{t("rdetail.li.col.price")}</th>
+                  <th scope="col" style={{ padding: "6px 8px", fontWeight: 500, textAlign: "right" }}>{t("rdetail.li.col.subtotal")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lineItems.map(li => (
+                  <tr key={li.line_id} style={{ borderTop: "1px solid var(--border)" }}>
+                    <td data-label={t("rdetail.li.col.product")} style={{ padding: "8px" }}>
+                      <div style={{ fontWeight: 500 }}>{li.products_name}</div>
+                      {li.productno && (
+                        <div style={{ fontSize: 13, color: "var(--muted)" }}>{li.productno}</div>
+                      )}
+                    </td>
+                    <td data-label={t("rdetail.li.col.spec")} style={{ padding: "8px", color: "var(--muted)", fontSize: 14 }}>
+                      {li.specifications || li.model || t("rdetail.dash")}
+                    </td>
+                    <td data-label={t("rdetail.li.col.qty")} style={{ padding: "8px", textAlign: "right" }}>{li.quantity ?? 1}</td>
+                    <td data-label={t("rdetail.li.col.price")} style={{ padding: "8px", textAlign: "right" }}>
+                      {li.price != null ? `¥${Number(li.price).toLocaleString()}` : t("rdetail.dash")}
+                    </td>
+                    <td data-label={t("rdetail.li.col.subtotal")} style={{ padding: "8px", textAlign: "right", fontWeight: 500 }}>
+                      {li.total != null ? `¥${Number(li.total).toLocaleString()}` : t("rdetail.dash")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
 
       <SourceFiles module={module} recordId={recordId} refreshKey={refreshKey} />
 
@@ -564,7 +629,7 @@ export function RecordDetail({
               fontSize: 14, color: "var(--muted)",
             }}
           >
-            {t("rdetail.note.open")} <span style={{ opacity: 0.6, marginLeft: 6 }}>
+            <CrmIcon name="edit" size={16} /> {t("rdetail.note.open")} <span style={{ opacity: 0.6, marginLeft: 6 }}>
               {t("rdetail.note.hint_tail")}
             </span>
           </button>
@@ -601,56 +666,6 @@ export function RecordDetail({
         />
       )}
 
-      {/* Line items — for quotes / salesorders. Product 必填 per user charter. */}
-      {lineItems.length > 0 && (
-        <div className="card" style={{ padding: 12 }}>
-          <div style={{
-            fontSize: 14, fontWeight: 600, marginBottom: 8,
-            display: "flex", justifyContent: "space-between", alignItems: "baseline",
-          }}>
-            <span>{t("rdetail.li.title")}</span>
-            <span style={{ fontSize: 13, color: "var(--muted)", fontWeight: 400 }}>
-              {t("rdetail.li.count", { n: lineItems.length })}
-            </span>
-          </div>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
-              <thead>
-                <tr style={{ textAlign: "left", color: "var(--muted)", fontSize: 13 }}>
-                  <th style={{ padding: "6px 8px", fontWeight: 500 }}>{t("rdetail.li.col.product")}</th>
-                  <th style={{ padding: "6px 8px", fontWeight: 500 }}>{t("rdetail.li.col.spec")}</th>
-                  <th style={{ padding: "6px 8px", fontWeight: 500, textAlign: "right" }}>{t("rdetail.li.col.qty")}</th>
-                  <th style={{ padding: "6px 8px", fontWeight: 500, textAlign: "right" }}>{t("rdetail.li.col.price")}</th>
-                  <th style={{ padding: "6px 8px", fontWeight: 500, textAlign: "right" }}>{t("rdetail.li.col.subtotal")}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lineItems.map(li => (
-                  <tr key={li.line_id} style={{ borderTop: "1px solid var(--border)" }}>
-                    <td style={{ padding: "8px" }}>
-                      <div style={{ fontWeight: 500 }}>{li.products_name}</div>
-                      {li.productno && (
-                        <div style={{ fontSize: 13, color: "var(--muted)" }}>{li.productno}</div>
-                      )}
-                    </td>
-                    <td style={{ padding: "8px", color: "var(--muted)", fontSize: 14 }}>
-                      {li.specifications || li.model || t("rdetail.dash")}
-                    </td>
-                    <td style={{ padding: "8px", textAlign: "right" }}>{li.quantity ?? 1}</td>
-                    <td style={{ padding: "8px", textAlign: "right" }}>
-                      {li.price != null ? `¥${Number(li.price).toLocaleString()}` : t("rdetail.dash")}
-                    </td>
-                    <td style={{ padding: "8px", textAlign: "right", fontWeight: 500 }}>
-                      {li.total != null ? `¥${Number(li.total).toLocaleString()}` : t("rdetail.dash")}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
       {/* Generic 子明细(费用明细等)—— 只读表格,元数据驱动。
           编辑走「全部信息」抽屉;此处只展示。 */}
       {genericSubs.map(sub => {
@@ -668,7 +683,7 @@ export function RecordDetail({
                 {t("rdetail.li.count", { n: rows.length })}
               </span>
             </div>
-            <div style={{ overflowX: "auto" }}>
+            <div className="kacrm-detail-table-scroll" style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
                 <thead>
                   <tr style={{ textAlign: "left", color: "var(--muted)", fontSize: 13 }}>
@@ -757,6 +772,7 @@ export function RecordDetail({
         open={infoOpen}
         onClose={() => setInfoOpen(false)}
         module={module}
+        moduleTitle={moduleTitle}
         recordId={recordId}
         record={record}
         fields={fields}
@@ -769,6 +785,30 @@ export function RecordDetail({
         }}
       />
 
+      {deleteOpen && onDeleted && (
+        <DeleteRecordDialog
+          name={headline || `${module}#${recordId}`}
+          busy={deleting}
+          error={deleteError}
+          onCancel={() => { if (!deleting) setDeleteOpen(false); }}
+          onConfirm={async () => {
+            if (deleting) return;
+            setDeleting(true);
+            setDeleteError(null);
+            try {
+              await deleteRecord(module, recordId);
+              setDeleteOpen(false);
+              onDeleted();
+            } catch (e) {
+              const msg = e instanceof ApiError
+                ? `${e.status}: ${typeof e.detail === "string" ? e.detail : JSON.stringify(e.detail)}`
+                : String(e);
+              setDeleteError(t("rdetail.delete_failed", { msg }));
+            } finally { setDeleting(false); }
+          }}
+        />
+      )}
+
       {shareOpen && (
         <ShareRecordModal
           module={module}
@@ -778,6 +818,45 @@ export function RecordDetail({
         />
       )}
     </div>
+  );
+}
+
+function DeleteRecordDialog({ name, busy, error, onCancel, onConfirm }: {
+  name: string; busy: boolean; error: string | null;
+  onCancel: () => void; onConfirm: () => void;
+}) {
+  const t = useT();
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    dialogRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    return () => { if (previous?.isConnected) previous.focus(); };
+  }, []);
+  return createPortal(
+    <div className="kacrm-delete-overlay" onClick={busy ? undefined : onCancel}>
+      <div className="kacrm-delete-dialog" ref={dialogRef} role="alertdialog" aria-modal="true"
+        aria-labelledby="kacrm-delete-title" aria-describedby="kacrm-delete-description"
+        onClick={e => e.stopPropagation()}
+        onKeyDown={e => {
+          if (e.key === "Escape") { e.preventDefault(); if (!busy) onCancel(); }
+          if (e.key === "Tab") {
+            const buttons = Array.from(dialogRef.current?.querySelectorAll<HTMLButtonElement>("button:not(:disabled)") || []);
+            if (!buttons.length) { e.preventDefault(); return; }
+            if (e.shiftKey && document.activeElement === buttons[0]) { e.preventDefault(); buttons[buttons.length - 1].focus(); }
+            else if (!e.shiftKey && document.activeElement === buttons[buttons.length - 1]) { e.preventDefault(); buttons[0].focus(); }
+          }
+        }}>
+        <h2 id="kacrm-delete-title">{t("rdetail.delete_dialog_title")}</h2>
+        <p id="kacrm-delete-description">{t("rdetail.delete_confirm", { name })}</p>
+        {error && <p className="kacrm-delete-error" role="alert">{error}</p>}
+        <div className="kacrm-delete-actions">
+          <button className="ghost" disabled={busy} onClick={onCancel}>{t("common.cancel")}</button>
+          <button className="kacrm-delete-confirm" disabled={busy} onClick={onConfirm}>
+            {t(busy ? "rdetail.delete_btn_busy" : "common.delete")}
+          </button>
+        </div>
+      </div>
+    </div>, document.body,
   );
 }
 
@@ -924,7 +1003,7 @@ function HeadlineChip({
   return (
     <button
       onClick={onClick}
-      className="ghost"
+      className="ghost kacrm-headline-card"
       title={t("rdetail.chip.title", { label })}
       style={{
         display: "flex", flexDirection: "column", alignItems: "flex-start",
@@ -949,8 +1028,8 @@ function HeadlineChip({
           <span style={{
             fontSize: 14, fontWeight: 600,
             padding: "2px 9px", borderRadius: 999,
-            background: accent.bg, color: accent.fg,
-            border: `1px solid ${accent.fg}33`,
+            background: accent.bg, color: `color-mix(in srgb, ${accent.fg} 88%, var(--fg-strong))`,
+            border: `1px solid color-mix(in srgb, ${accent.fg} 24%, transparent)`,
             whiteSpace: "nowrap",
           }}>{display}</span>
         );

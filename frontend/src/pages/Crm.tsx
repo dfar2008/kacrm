@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import "./crm.css";
+import { CrmIcon } from "@/components/CrmIcon";
 import { RecordList } from "@/components/RecordList";
 import { RecordDetail } from "@/components/RecordDetail";
 import { AgentWorkbench } from "@/components/AgentWorkbench";
@@ -25,7 +27,7 @@ const DEFAULT_MODULES: Array<{ name: string; labelKey: DictKey }> = [
 function ModuleIcon({ name }: { name: string }) {
   const common = {
     width: 18, height: 18, viewBox: "0 0 24 24", fill: "none",
-    stroke: "currentColor", strokeWidth: 2,
+    stroke: "currentColor", strokeWidth: 1.8,
     strokeLinecap: "round" as const, strokeLinejoin: "round" as const,
     "aria-hidden": true,
   };
@@ -95,8 +97,8 @@ export function CrmPage({ onUnauth: _onUnauth }: { onUnauth: () => void }) {
   // outer grid's gridTemplateColumns is what we mutate; during a drag we
   // poke the DOM directly (gridRef) and only commit to state + storage on
   // mouse-up, so we don't re-render the (up-to-200-row) list every frame.
-  const DEFAULT_LIST_W = 260, DEFAULT_COPILOT_W = 340;
-  const MIN_LIST_W = 200, MIN_COPILOT_W = 280;
+  const DEFAULT_LIST_W = 340, DEFAULT_COPILOT_W = 300;
+  const MIN_LIST_W = 260, MIN_COPILOT_W = 260;
   const readWidth = (key: string, def: number) => {
     try {
       const v = Number(localStorage.getItem(key));
@@ -105,12 +107,12 @@ export function CrmPage({ onUnauth: _onUnauth }: { onUnauth: () => void }) {
   };
   const gridRef = useRef<HTMLDivElement>(null);
   const [listWidth, setListWidth] = useState(() =>
-    readWidth(`crm_list_width_${initModule}`, DEFAULT_LIST_W));
+    readWidth(`kacrm_list_width_${initModule}`, DEFAULT_LIST_W));
   const [copilotWidth, setCopilotWidth] = useState(() =>
-    readWidth(`crm_copilot_width_${initModule}`, DEFAULT_COPILOT_W));
+    readWidth(`kacrm_copilot_width_${initModule}`, DEFAULT_COPILOT_W));
   useEffect(() => {
-    setListWidth(readWidth(`crm_list_width_${module}`, DEFAULT_LIST_W));
-    setCopilotWidth(readWidth(`crm_copilot_width_${module}`, DEFAULT_COPILOT_W));
+    setListWidth(readWidth(`kacrm_list_width_${module}`, DEFAULT_LIST_W));
+    setCopilotWidth(readWidth(`kacrm_copilot_width_${module}`, DEFAULT_COPILOT_W));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [module]);
   // Distinguish 401 (auth — most common cause is stale session cookie after
@@ -145,6 +147,7 @@ export function CrmPage({ onUnauth: _onUnauth }: { onUnauth: () => void }) {
   // Per-module admin-curated list-item field layout (migration 0099).
   const [listFieldsMap, setListFieldsMap] = useState<Record<string, import("@/lib/api").ListFieldsConfig | null>>({});
   const [isAdmin, setIsAdmin] = useState(false);
+  const [copilotOpen, setCopilotOpen] = useState(false);
 
   // Keep URL in sync with selection, so the back button and direct links work.
   useEffect(() => {
@@ -231,13 +234,17 @@ export function CrmPage({ onUnauth: _onUnauth }: { onUnauth: () => void }) {
   // floating "Copilot" button that flips it into a slide-in overlay
   // pinned to the right edge. Same pattern Slack / Linear use for
   // their info panels on small screens.
-  const [copilotOpen, setCopilotOpen] = useState(false);
   const showCopilotRail = !compactTabs;             // pinned right column
   const showCopilotOverlay = compactTabs && copilotOpen; // slide-in panel
   const colsWith = (lw: number, cw: number) => showCopilotRail
-    ? (feedMode ? `1fr ${cw}px` : `${lw}px 1fr ${cw}px`)
-    : (feedMode ? "1fr"          : `${lw}px 1fr`);
+    ? (feedMode ? `minmax(0, 1fr) clamp(260px, ${cw}px, 25%)` : `clamp(260px, ${lw}px, 30%) minmax(0, 1fr) clamp(260px, ${cw}px, 25%)`)
+    : (feedMode ? "minmax(0, 1fr)" : `clamp(260px, ${lw}px, 40%) minmax(0, 1fr)`);
   const cols = colsWith(listWidth, copilotWidth);
+  const moduleLabelKey = `crm.module.${module}`;
+  const translatedModule = t(moduleLabelKey as DictKey);
+  const moduleLabel = translatedModule === moduleLabelKey
+    ? modules.find(m => m.name === module)?.label || module
+    : translatedModule;
 
   // Generic horizontal drag. ``edge`` says which side of the panel the
   // handle sits on, so we know the sign of the delta.
@@ -254,10 +261,10 @@ export function CrmPage({ onUnauth: _onUnauth }: { onUnauth: () => void }) {
     const onMove = (ev: MouseEvent) => {
       const dx = ev.clientX - startX;
       if (which === "list") {
-        nextList = Math.max(MIN_LIST_W, startList + dx);
+        nextList = Math.min(480, Math.max(MIN_LIST_W, startList + dx));
       } else {
         // Copilot handle is on its LEFT edge: drag left → wider.
-        nextCopilot = Math.max(MIN_COPILOT_W, startCopilot - dx);
+        nextCopilot = Math.min(420, Math.max(MIN_COPILOT_W, startCopilot - dx));
       }
       if (gridRef.current) {
         gridRef.current.style.gridTemplateColumns = colsWith(nextList, nextCopilot);
@@ -269,10 +276,10 @@ export function CrmPage({ onUnauth: _onUnauth }: { onUnauth: () => void }) {
       document.body.style.userSelect = "";
       if (which === "list") {
         setListWidth(nextList);
-        try { localStorage.setItem(`crm_list_width_${module}`, String(Math.round(nextList))); } catch { /* ignore */ }
+        try { localStorage.setItem(`kacrm_list_width_${module}`, String(Math.round(nextList))); } catch { /* ignore */ }
       } else {
         setCopilotWidth(nextCopilot);
-        try { localStorage.setItem(`crm_copilot_width_${module}`, String(Math.round(nextCopilot))); } catch { /* ignore */ }
+        try { localStorage.setItem(`kacrm_copilot_width_${module}`, String(Math.round(nextCopilot))); } catch { /* ignore */ }
       }
     };
     document.addEventListener("mousemove", onMove);
@@ -281,10 +288,10 @@ export function CrmPage({ onUnauth: _onUnauth }: { onUnauth: () => void }) {
   function resetWidth(which: "list" | "copilot") {
     if (which === "list") {
       setListWidth(DEFAULT_LIST_W);
-      try { localStorage.removeItem(`crm_list_width_${module}`); } catch { /* ignore */ }
+      try { localStorage.removeItem(`kacrm_list_width_${module}`); } catch { /* ignore */ }
     } else {
       setCopilotWidth(DEFAULT_COPILOT_W);
-      try { localStorage.removeItem(`crm_copilot_width_${module}`); } catch { /* ignore */ }
+      try { localStorage.removeItem(`kacrm_copilot_width_${module}`); } catch { /* ignore */ }
     }
   }
   const areas = showCopilotRail
@@ -294,10 +301,10 @@ export function CrmPage({ onUnauth: _onUnauth }: { onUnauth: () => void }) {
                 : `"tabs tabs" "list detail"`);
 
   return (
-    <div ref={gridRef} style={{
+    <div ref={gridRef} className={`kacrm-workspace${feedMode ? " is-feed" : ""}${recordId !== null ? " has-selection" : ""}`} style={{
       position: "relative",
       display: "grid",
-      gridTemplateRows: "44px 1fr",
+      gridTemplateRows: "56px minmax(0, 1fr)",
       gridTemplateColumns: cols,
       gridTemplateAreas: areas,
       height: "100%",
@@ -327,7 +334,7 @@ export function CrmPage({ onUnauth: _onUnauth }: { onUnauth: () => void }) {
               emoji which looked dated; SVG renders consistently across
               Mac/Win/Linux). */}
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" strokeWidth="2"
+               stroke="currentColor" strokeWidth="1.8"
                strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
           </svg>
@@ -369,8 +376,8 @@ export function CrmPage({ onUnauth: _onUnauth }: { onUnauth: () => void }) {
           } />
         </div>
       ) : (<>
-      <div style={{ gridArea: "list", borderRight: "1px solid var(--border)", overflow: "hidden", position: "relative" }}>
-        <RecordList module={module} selectedId={recordId} onSelect={setRecordId}
+      <div className="kacrm-list-panel" style={{ gridArea: "list", borderRight: "1px solid var(--border)", overflow: "hidden", position: "relative" }}>
+        <RecordList module={module} moduleLabel={moduleLabel} selectedId={recordId} onSelect={setRecordId}
           refreshNonce={recordRefreshNonce}
           isAdmin={isAdmin}
           orgListFields={listFieldsMap[module] ?? null}
@@ -387,12 +394,16 @@ export function CrmPage({ onUnauth: _onUnauth }: { onUnauth: () => void }) {
           }}
         />
       </div>
-      <div style={{ gridArea: "detail", overflow: "hidden" }}>
+      <div className="kacrm-detail-panel" style={{ gridArea: "detail", overflow: "hidden" }}>
+        {recordId !== null && <button className="ghost kacrm-back-to-list" onClick={() => setRecordId(null)}>
+          <CrmIcon name="back" size={16} />{t("crm.list.back", { module: moduleLabel })}
+        </button>}
         {recordId === null
           ? <DailyFeed module={module} compact onAskCopilot={(text) =>
               setCopilotPrefill({ text, nonce: Date.now() })
             } />
           : <RecordDetail
+              moduleTitle={moduleLabel}
               module={module}
               recordId={recordId}
               refreshNonce={recordRefreshNonce}
@@ -416,7 +427,7 @@ export function CrmPage({ onUnauth: _onUnauth }: { onUnauth: () => void }) {
       </div>
       </>)}
       {showCopilotRail && (
-        <div style={{ gridArea: "copilot", borderLeft: "1px solid var(--border)", overflow: "hidden", position: "relative" }}>
+        <div className="kacrm-copilot-panel" style={{ gridArea: "copilot", borderLeft: "1px solid var(--border)", overflow: "hidden", position: "relative" }}>
           <div
             onMouseDown={(e) => startResize(e, "copilot")}
             onDoubleClick={() => resetWidth("copilot")}
@@ -452,7 +463,7 @@ export function CrmPage({ onUnauth: _onUnauth }: { onUnauth: () => void }) {
           }}
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" strokeWidth="2"
+               stroke="currentColor" strokeWidth="1.8"
                strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
           </svg>

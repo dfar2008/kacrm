@@ -1,3 +1,4 @@
+import { CrmIcon } from "./CrmIcon";
 /**
  * TeamBriefSection — Phase 5.2.C
  *
@@ -49,16 +50,16 @@ export function TeamBriefSection({ isManager }: Props) {
   if (!tick) {
     return (
       <div style={{
-        background: "linear-gradient(135deg, var(--accent-soft-strong), var(--accent-soft))",
-        border: "1px solid var(--accent)",
-        borderRadius: 8, padding: 12, marginBottom: 12,
+        background: "var(--surface-hover)",
+        border: "1px solid var(--border-subtle)",
+        borderRadius: 8, padding: 12,
         fontSize: 14,
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 18 }}>🌅</span>
+          <CrmIcon name="sunrise" />
           <div style={{ flex: 1 }}>
             <div style={{ fontWeight: 600 }}>{t("team_brief.title")}</div>
-            <div style={{ fontSize: 14, color: "var(--mute)", marginTop: 2 }}>
+            <div style={{ fontSize: 14, color: "var(--muted)", marginTop: 2 }}>
               {t("team_brief.empty")}
             </div>
           </div>
@@ -68,7 +69,7 @@ export function TeamBriefSection({ isManager }: Props) {
             title={t("team_brief.dismiss")}
             style={{
               background: "transparent", border: "none",
-              color: "var(--mute)", cursor: "pointer", fontSize: 14,
+              color: "var(--muted)", cursor: "pointer", fontSize: 14,
             }}
           >×</button>
         </div>
@@ -84,13 +85,13 @@ export function TeamBriefSection({ isManager }: Props) {
 
   return (
     <div style={{
-      background: "linear-gradient(135deg, var(--accent-soft-strong), var(--accent-soft))",
-      border: "1px solid var(--accent)",
-      borderRadius: 8, padding: 12, marginBottom: 12,
+      background: "var(--surface-hover)",
+      border: "1px solid var(--border-subtle)",
+      borderRadius: 8, padding: 12,
       fontSize: 14,
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ fontSize: 18 }}>🌅</span>
+        <CrmIcon name="sunrise" />
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 600 }}>
             {t("team_brief.title")}
@@ -98,13 +99,13 @@ export function TeamBriefSection({ isManager }: Props) {
               <span style={{
                 marginLeft: 8, padding: "2px 6px",
                 background: "var(--surface-soft)", borderRadius: 4,
-                fontSize: 13, color: "var(--mute)",
+                fontSize: 13, color: "var(--muted)",
               }}>
                 dry-run
               </span>
             )}
           </div>
-          <div style={{ fontSize: 14, color: "var(--mute)", marginTop: 2 }}>
+          <div style={{ fontSize: 14, color: "var(--muted)", marginTop: 2 }}>
             {t("team_brief.summary", {
               members: String(memberCount),
               actions: String(actionsPlanned),
@@ -117,7 +118,7 @@ export function TeamBriefSection({ isManager }: Props) {
           style={{
             background: "transparent", border: "1px solid var(--border)",
             borderRadius: 4, padding: "4px 8px", fontSize: 14,
-            color: "var(--text)", cursor: "pointer",
+            color: "var(--fg)", cursor: "pointer",
           }}
         >
           {expanded ? t("team_brief.collapse") : t("team_brief.expand")}
@@ -128,13 +129,13 @@ export function TeamBriefSection({ isManager }: Props) {
           title={t("team_brief.dismiss")}
           style={{
             background: "transparent", border: "none",
-            color: "var(--mute)", cursor: "pointer", fontSize: 14,
+            color: "var(--muted)", cursor: "pointer", fontSize: 14,
           }}
         >×</button>
       </div>
 
       {expanded && (
-        <div style={{ marginTop: 12, fontSize: 14, color: "var(--mute)" }}>
+        <div style={{ marginTop: 12, fontSize: 14, color: "var(--muted)" }}>
           <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "4px 12px" }}>
             <div>{t("team_brief.generated_at")}</div>
             <div>{tick.occurred_at?.replace("T", " ").slice(0, 16) || t("team_brief.unknown_time")}</div>
@@ -145,7 +146,7 @@ export function TeamBriefSection({ isManager }: Props) {
           </div>
           <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
             <CronHealthLine mode="compact" />
-            <span style={{ fontSize: 13, color: "var(--mute)" }}>
+            <span style={{ fontSize: 13, color: "var(--muted)" }}>
               <a
                 href="/app/ai-audit"
                 style={{ color: "var(--accent)" }}

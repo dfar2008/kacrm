@@ -205,7 +205,7 @@ export function LineItemsEditor({ value, onChange, def }: Props) {
   };
 
   return (
-    <div style={{
+    <div className="kacrm-lineitems-editor" style={{
       marginTop: 14, border: "1px solid var(--border)", borderRadius: 6,
       background: "var(--surface-soft, transparent)",
     }}>
@@ -222,9 +222,9 @@ export function LineItemsEditor({ value, onChange, def }: Props) {
 
       {/* 表头 + 行:列多时整体横向滚动 */}
       <div style={{ overflowX: "auto" }}>
-        <div style={{ minWidth: minW }}>
+        <div className="kacrm-lineitems-grid" style={{ minWidth: minW }}>
           {/* Column headers — metadata-driven */}
-          <div style={{
+          <div className="kacrm-lineitems-head" style={{
             display: "grid", gridTemplateColumns: GRID,
             gap: 6, padding: "6px 12px",
             fontSize: 13, color: "var(--muted)",
@@ -246,14 +246,14 @@ export function LineItemsEditor({ value, onChange, def }: Props) {
             </div>
           )}
           {rows.map((r, i) => (
-            <div key={i} style={{
+            <div key={i} className="kacrm-lineitems-edit-row" style={{
               display: "grid", gridTemplateColumns: GRID,
               gap: 6, padding: "6px 12px",
               borderBottom: i < rows.length - 1 ? "1px solid var(--border)" : "none",
               alignItems: "center", fontSize: 14,
             }}>
               {cols.map(f => (
-                <div key={f.field_name} style={{ minWidth: 0 }}>{renderCell(f, r, i)}</div>
+                <div key={f.field_name} className="kacrm-lineitems-edit-cell" data-label={f.field_label || f.field_name} style={{ minWidth: 0 }}>{renderCell(f, r, i)}</div>
               ))}
               <button
                 type="button"
@@ -349,7 +349,11 @@ function ProductPicker({
     if (!open) return;
     const recompute = () => {
       const r = anchorRef.current?.getBoundingClientRect();
-      if (r) setPos({ left: r.left, top: r.bottom + 2, width: Math.max(r.width, 280) });
+      if (r) {
+        const width = Math.min(Math.max(r.width, 280), window.innerWidth - 24);
+        setPos({ left: Math.max(12, Math.min(r.left, window.innerWidth - width - 12)),
+          top: Math.max(12, Math.min(r.bottom + 2, window.innerHeight - 292)), width });
+      }
     };
     recompute();
     window.addEventListener("scroll", recompute, true);
@@ -389,7 +393,7 @@ function ProductPicker({
         {value ? (label || `#${value}`) : t("crm.line_items.pick_product")}
       </button>
       {open && pos && createPortal(
-        <div ref={popupRef} style={{
+        <div ref={popupRef} className="kacrm-product-picker-popup" style={{
           position: "fixed", left: pos.left, top: pos.top, width: pos.width,
           maxHeight: 300, overflowY: "auto",
           background: "var(--bg)", border: "1px solid var(--border)",
@@ -401,7 +405,7 @@ function ProductPicker({
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder={t("crm.line_items.search_product")}
-            style={{ width: "calc(100% - 16px)", margin: 8, padding: "4px 8px", fontSize: 14 }}
+            style={{ width: "calc(100% - 16px)", boxSizing: "border-box", margin: 8, padding: "4px 8px", fontSize: 14 }}
           />
           {loading && (
             <div style={{ padding: "6px 10px", opacity: 0.6, fontSize: 14 }}>

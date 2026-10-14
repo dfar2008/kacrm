@@ -1,3 +1,4 @@
+import { CrmIcon } from "./CrmIcon";
 import { useEffect, useState } from "react";
 import { getListBrief, type ListBrief } from "@/lib/api";
 import { useT } from "@/lib/i18n";
@@ -77,7 +78,7 @@ export function CopilotListBrief({ module, onAsk }: Props) {
         display: "flex", alignItems: "center", gap: 6,
         fontSize: 14, color: "var(--muted)",
       }}>
-        <span style={{ fontSize: 14 }}>🤖</span>
+        <CrmIcon name="sparkles" size={16} />
         <span>{t("brief.seen")}</span>
       </div>
 
@@ -115,7 +116,7 @@ export function CopilotListBrief({ module, onAsk }: Props) {
               onMouseEnter={e => (e.currentTarget.style.background = "var(--accent-soft-strong)")}
               onMouseLeave={e => (e.currentTarget.style.background = "var(--accent-soft)")}
             >
-              → {s.text}
+              <CrmIcon name="arrow" size={14} /> {s.text}
             </button>
           ))}
         </div>
@@ -130,11 +131,11 @@ function NoticedRow({ item }: { item: ListBrief["ai_noticed"][number] }) {
     item.severity === "medium" ? "var(--warning)" :
                                  "var(--muted)";
   const icon =
-    item.signal.includes("silent")     ? "⏳" :
-    item.signal.includes("uncontact")  ? "👋" :
-    item.signal.includes("repeat")     ? "✏️" :
-    item.signal.includes("unread")     ? "🔔" :
-    "•";
+    item.signal.includes("silent")     ? "clock" :
+    item.signal.includes("uncontact")  ? "phone" :
+    item.signal.includes("repeat")     ? "edit" :
+    item.signal.includes("unread")     ? "bell" :
+    "activity";
   return (
     <div style={{
       display: "grid", gridTemplateColumns: "20px 1fr", gap: 8,
@@ -145,7 +146,7 @@ function NoticedRow({ item }: { item: ListBrief["ai_noticed"][number] }) {
       borderRadius: 4,
       fontSize: 14, lineHeight: 1.5,
     }}>
-      <span style={{ fontSize: 14 }}>{icon}</span>
+      <CrmIcon name={icon} size={16} />
       <span>{item.text}</span>
     </div>
   );
@@ -172,7 +173,7 @@ function Skeleton({ t }: { t: ReturnType<typeof useT> }) {
         display: "flex", alignItems: "center", gap: 6,
         fontSize: 14, color: "var(--muted)",
       }}>
-        <span style={{ fontSize: 14 }}>🤖</span>
+        <CrmIcon name="sparkles" size={16} />
         <span>{t("brief.thinking")}</span>
       </div>
       {bar("85%")}

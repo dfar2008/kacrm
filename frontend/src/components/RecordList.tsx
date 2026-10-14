@@ -1,3 +1,4 @@
+import { CrmIcon } from "./CrmIcon";
 import { useEffect, useMemo, useState } from "react";
 import {
   listRecords, listSegments, undoLastUpdate, getMe, fetchTeamMembers,
@@ -7,7 +8,7 @@ import {
   ApiError,
 } from "@/lib/api";
 import { toast } from "@/lib/toast";
-import { useT, enumLabel, type T } from "@/lib/i18n";
+import { useT, enumLabel, type T, type DictKey } from "@/lib/i18n";
 import {
   getPersonalListFields, resolveListFields, formatListFieldValue,
   listPrimaryText,
@@ -27,6 +28,7 @@ import type { ViewType, ViewFilter } from "@/lib/api";
 
 interface Props {
   module: string;
+  moduleLabel?: string;
   selectedId: number | null;
   onSelect: (id: number) => void;
   /** Bump to force a list refetch — wired to Copilot's
@@ -268,12 +270,7 @@ function SortControl({
           color: value ? "var(--accent)" : "var(--muted)",
         }}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" strokeWidth="2"
-             strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M3 6h12M3 12h9M3 18h6" />
-          <path d="M18 9l3-3 3 3M21 6v12" transform="translate(-3 0)" />
-        </svg>
+        <CrmIcon name="sort" size={16} />
       </button>
       {open && (
         <>
@@ -349,10 +346,13 @@ function SortControl({
 }
 
 export function RecordList({
-  module, selectedId, onSelect, refreshNonce, onCreated,
+  module, moduleLabel, selectedId, onSelect, refreshNonce, onCreated,
   isAdmin = false, orgListFields = null, onOrgListFieldsSaved,
 }: Props) {
   const t = useT();
+  const labelKey = `crm.module.${module}`;
+  const translatedLabel = t(labelKey as DictKey);
+  const listLabel = moduleLabel || (translatedLabel === labelKey ? module : translatedLabel);
   const [records, setRecords] = useState<CrmRecord[]>([]);
   const [total, setTotal] = useState(0);
   const [pageSize, setPageSize] = useState(50);
@@ -631,7 +631,16 @@ export function RecordList({
   }
 
   return (
-    <div className="col" style={{ height: "100%", gap: 8, padding: 8 }}>
+    <div className="col kacrm-record-list">
+      <div className="kacrm-list-heading">
+        <h2>{listLabel}</h2>
+        <span aria-live="polite">
+          {loading ? t("common.loading") : err ? "—" :
+            segment !== "all" || viewId != null || adhocFilters.length > 0
+              ? t("crm.list.showing", { n: records.length })
+              : t("crm.list.count", { n: total })}
+        </span>
+      </div>
       {/* Charter v2 §定律 5: the old "Copilot 排优先级" / "从对话捕获"
           buttons that used to live here were removed (2026-05-08). Both
           asked the user to ask the AI to do something the AI should be
@@ -644,8 +653,8 @@ export function RecordList({
           above the existing event-driven segments so manager's first
           decision is "whose records am I looking at" before the slice. */}
       {(me?.is_manager || me?.is_admin) && (
-        <div style={{
-          display: "flex", flexWrap: "nowrap", alignItems: "center",
+        <div className="kacrm-list-scope" style={{
+          display: "flex", flexWrap: "wrap", alignItems: "center",
           gap: 4, padding: 4,
           background: "var(--surface-soft)", borderRadius: 6,
           alignSelf: "flex-start",
@@ -692,7 +701,7 @@ export function RecordList({
       )}
 
       {/* Unified view bar — built-in segments + custom views in one row. */}
-      <div className="row" style={{ gap: 4, flexWrap: "wrap", alignItems: "center" }}>
+      <div className="row kacrm-list-views" style={{ gap: 4, flexWrap: "wrap", alignItems: "center" }}>
         {segments.map(s => (
           <button
             key={`seg-${s.id}`}
@@ -731,13 +740,13 @@ export function RecordList({
                   onClick={() => { setEditingView(v); setViewBuilderSeed(null); setShowViewBuilder(true); }}
                   title={t("views.edit")}
                   style={{ fontSize: 13, padding: "3px 5px", lineHeight: 1 }}
-                >✎</button>
+                ><CrmIcon name="edit" size={14} /></button>
                 <button
                   className="ghost"
                   onClick={() => handleDeleteView(v)}
                   title={t("views.delete")}
                   style={{ fontSize: 13, padding: "3px 5px", lineHeight: 1, color: "var(--danger)" }}
-                >✕</button>
+                ><CrmIcon name="close" size={14} /></button>
               </span>
             )}
           </span>
@@ -757,9 +766,7 @@ export function RecordList({
               color: "var(--muted)",
             }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/>
-            </svg>
+            <CrmIcon name="more" size={16} />
           </button>
           {viewMenuOpen && (
             <>
@@ -775,13 +782,13 @@ export function RecordList({
                   className="ghost"
                   onClick={() => { setEditingView(null); setViewBuilderSeed(null); setShowViewBuilder(true); setViewMenuOpen(false); }}
                   style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 12px", fontSize: 14, border: "none", borderRadius: 0 }}
-                >＋ {t("views.new_btn")}</button>
+                ><CrmIcon name="plus" size={14} /> {t("views.new_btn")}</button>
                 {isAdmin && (
                   <button
                     className="ghost"
                     onClick={() => { setShowSegCfg(true); setViewMenuOpen(false); }}
                     style={{ display: "block", width: "100%", textAlign: "left", padding: "9px 12px", fontSize: 14, border: "none", borderRadius: 0, borderTop: "1px solid var(--border)" }}
-                  >⚙ {t("views.manage_segments")}</button>
+                  ><CrmIcon name="settings" size={14} /> {t("views.manage_segments")}</button>
                 )}
               </div>
             </>
@@ -789,13 +796,17 @@ export function RecordList({
         </div>
       </div>
 
-      <div className="row" style={{ gap: 6, alignItems: "stretch" }}>
-        <input
-          placeholder={t("record.search_ph")}
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{ flex: 1 }}
-        />
+      <div className="kacrm-list-tools">
+        <label className="kacrm-list-search">
+          <CrmIcon name="search" size={16} />
+          <input
+            placeholder={t("record.search_ph")}
+            aria-label={t("record.search_ph")}
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ flex: 1 }}
+          />
+        </label>
         <button
           className="ghost"
           onClick={() => setAdvOpen(o => !o)}
@@ -811,11 +822,7 @@ export function RecordList({
             color: adhocFilters.length ? "var(--accent)" : "var(--muted)",
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" strokeWidth="2"
-               strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
-          </svg>
+          <CrmIcon name="filter" size={16} />
           {adhocFilters.length > 0 && (
             <span style={{
               position: "absolute", top: -6, right: -6, minWidth: 14, height: 14,
@@ -845,18 +852,13 @@ export function RecordList({
             color: "var(--muted)",
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" strokeWidth="2"
-               strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-          </svg>
+          <CrmIcon name="settings" size={16} />
         </button>
         <button
           className="ghost"
           onClick={() => setShowCreate(true)}
-          title={t("crm.new_record_title", { module })}
-          aria-label={t("crm.new_record_title", { module })}
+          title={t("crm.new_record_title", { module: listLabel })}
+          aria-label={t("crm.new_record_title", { module: listLabel })}
           style={{
             display: "inline-flex", alignItems: "center", justifyContent: "center",
             padding: "4px 8px", lineHeight: 1, opacity: 0.7,
@@ -864,12 +866,7 @@ export function RecordList({
             color: "var(--muted)",
           }}
         >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" strokeWidth="2"
-               strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
+          <CrmIcon name="plus" size={16} />
         </button>
       </div>
 
@@ -886,6 +883,7 @@ export function RecordList({
       {showCreate && (
         <CreateRecordModal
           module={module}
+          moduleTitle={listLabel}
           onClose={() => setShowCreate(false)}
           onCreated={(id) => {
             setShowCreate(false);
@@ -896,7 +894,7 @@ export function RecordList({
         />
       )}
 
-      <div style={{ flex: 1, overflowY: "auto" }} className="col">
+      <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }} className="col kacrm-list-results">
         {loading && <div className="muted small" style={{ padding: 8 }}>{t("common.loading")}</div>}
         {err && <div className="small" style={{ color: "var(--danger)", padding: 8 }}>{err}</div>}
         {/* Non-table view types render their own component (Spec 3). */}
@@ -922,7 +920,7 @@ export function RecordList({
             {segment === "all" ? t("record.empty_all") : t("record.empty_segment")}
           </div>
         )}
-        {activeType === "table" && records.map((r, idx) => {
+        {!loading && !err && activeType === "table" && records.map((r) => {
           // Row 1 — primary title from configured row1 fields (falls back
           // to a name key, then #id). Row 2 — configured row2 fields as
           // chips, skipping missing/empty values.
@@ -944,6 +942,8 @@ export function RecordList({
           return (
             <button
               key={r.id}
+              className="kacrm-record-row"
+              aria-pressed={selectedId === r.id}
               onClick={() => onSelect(r.id)}
               style={{
                 textAlign: "left",
@@ -955,7 +955,6 @@ export function RecordList({
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
                 <div style={{ fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
-                  <span className="muted" style={{ marginRight: 6, fontWeight: 400, fontVariantNumeric: "tabular-nums" }}>{idx + 1}.</span>
                   {primary}
                 </div>
                 {editedRecently && (
@@ -980,7 +979,7 @@ export function RecordList({
                   flexWrap: "wrap", marginTop: 2,
                 }}>
                   {row2Chips.map(c => (
-                    <span key={c.key} style={{
+                    <span className="kacrm-record-meta" key={c.key} style={{
                       padding: "1px 6px", borderRadius: 4,
                       background: "var(--panel-2)",
                       fontSize: 13,
@@ -997,7 +996,7 @@ export function RecordList({
                   whiteSpace: "nowrap",
                   opacity: 0.75,
                 }}>
-                  💬 {progress}
+                  <CrmIcon name="message" size={14} /> {progress}
                 </div>
               )}
             </button>
