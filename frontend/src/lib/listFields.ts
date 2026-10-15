@@ -15,6 +15,7 @@ import { enumLabel, type T } from "./i18n";
 
 const NAME_KEYS = [
   "accounts_name", "contacts_name", "leads_name", "potentials_name",
+  "receivables_name", "payments_name",
   "account_name", "contact_name", "lead_name", "potential_name",
   "deal_name", "name", "subject", "title", "full_name",
 ];
@@ -34,8 +35,8 @@ export const DEFAULT_MODULE_LIST_FIELDS: Record<string, ListFieldsConfig> = {
   salesorders: { row1: ["subject"], row2: ["final_amount", "status", "orderdate"] },
   tasks: { row1: ["subject"], row2: ["priority", "status", "enddate"] },
   products: { row1: ["products_name"], row2: ["productno", "price", "stock"] },
-  receivables: { row1: ["accounts_id"], row2: ["dueamount", "duedate", "receivablesstatus"] },
-  payments: { row1: ["receivables_id"], row2: ["payamount", "paydate"] },
+  receivables: { row1: ["receivables_name"], row2: ["dueamount", "duedate", "receivablesstatus"] },
+  payments: { row1: ["payments_name"], row2: ["payamount", "paydate"] },
 };
 
 export function defaultListFields(module: string): ListFieldsConfig {

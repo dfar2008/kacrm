@@ -17,3 +17,19 @@ test('fractional monetary amounts override rounded display siblings', () => {
     expect(formatListFieldValue(t, field, { [name]: '25.50', [name + '_display']: '26' } as CrmRecord)).toBe('¥25.5');
   }
 });
+
+test('cashflow lists identify the actual receipt or payment, not its related ID', async () => {
+  const { defaultListFields, listPrimaryText, resolveListFields } = await import('./listFields');
+  for (const [module, relation] of [['receivables', 'accounts_id'], ['payments', 'receivables_id']]) {
+    const name = `${module}_name`;
+    const record = { id: 16, [name]: '本轮测试记录', [relation]: 34 } as CrmRecord;
+    const fields = Object.fromEntries([
+      { field_name: name, field_type: 'text' },
+      { field_name: relation, field_type: 'relation' },
+    ].map(f => [f.field_name, f as CrmFieldMeta]));
+    expect(listPrimaryText(t, defaultListFields(module).row1, fields, record)).toBe('本轮测试记录');
+    expect(listPrimaryText(t, [], {}, record)).toBe('本轮测试记录');
+    const custom = { row1: [relation], row2: [] };
+    expect(resolveListFields(module, custom, null)).toEqual(custom);
+  }
+});
