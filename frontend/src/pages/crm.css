@@ -68,6 +68,14 @@
 .kacrm-record-meta { font-size:12px !important; line-height:1.6; background:transparent !important; padding:0 !important; color:var(--kacrm-secondary); }
 .kacrm-record-meta + .kacrm-record-meta::before { content:" / "; color:var(--muted); margin-right:6px; }
 .kacrm-workspace .kacrm-copilot-panel { background:var(--panel); border-left-color:var(--border-subtle) !important; }
+.kacrm-copilot-compose-actions { position:relative; display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:6px 8px; }
+.kacrm-copilot-compose-tools { min-width:0; }
+.kacrm-copilot-compose-tools > button { flex-shrink:0; }
+.kacrm-copilot-compose-tools > div { position:static !important; flex:1; min-width:0; }
+.kacrm-copilot-compose-tools > div > button { max-width:100% !important; }
+.kacrm-copilot-compose-tools > div > div { width:100%; min-width:0 !important; max-width:100% !important; box-sizing:border-box; }
+.kacrm-copilot-send { min-width:56px; min-height:40px; white-space:nowrap; }
+.kacrm-copilot-send-hint { grid-column:1 / -1; text-align:right; white-space:nowrap; font-size:12px; }
 .kacrm-copilot-panel > .col { padding:18px 14px !important; gap:16px !important; }
 .kacrm-copilot-panel > .col > .row:first-child { color:var(--accent); padding-bottom:12px; border-bottom:1px solid var(--border-subtle); }
 .kacrm-back-to-list { display:none; }

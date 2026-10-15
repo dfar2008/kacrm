@@ -454,7 +454,8 @@ export function CrmPage({ onUnauth: _onUnauth }: { onUnauth: () => void }) {
           aria-label="Copilot"
           title="Copilot"
           style={{
-            position: "fixed", right: 16, bottom: 24, zIndex: 50,
+            // Keep the shortcut below record dialogs and their backdrops.
+            position: "fixed", right: 16, bottom: 24, zIndex: 30,
             width: 44, height: 44, borderRadius: "50%",
             background: "var(--accent)",
             color: "var(--fg-on-accent)", border: "none", cursor: "pointer",

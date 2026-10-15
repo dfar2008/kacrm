@@ -443,8 +443,8 @@ export function CopilotPanel({ module, recordId, prefill, onRecordUpdated, hideI
           }}
           style={{ minHeight: 60 }}
         />
-        <div className="row" style={{ justifyContent: "space-between", alignItems: "center" }}>
-          <div className="row" style={{ gap: 8, alignItems: "center" }}>
+        <div className="kacrm-copilot-compose-actions">
+          <div className="row kacrm-copilot-compose-tools" style={{ gap: 8, alignItems: "center" }}>
             <input ref={attachInputRef} type="file" multiple
               accept="image/*,.pdf,.xlsx,.xlsm,.docx,.csv,.tsv,.txt"
               style={{ display: "none" }}
@@ -462,14 +462,12 @@ export function CopilotPanel({ module, recordId, prefill, onRecordUpdated, hideI
               style={{ padding: "4px 8px", fontSize: 16, lineHeight: 1 }}><CrmIcon name="paperclip" size={16} /></button>
             <ModelPicker persistKey="copilot" onChange={setModel} maxWidth={200} />
           </div>
-          <div className="row" style={{ gap: 8, alignItems: "center" }}>
-            <div className="muted small">{t("copilot.send_hint")}</div>
-            <button className="primary"
+            <button className="primary kacrm-copilot-send"
                     disabled={busy || (!input.trim() && files.length === 0) || !model}
                     onClick={() => send()}>
               {busy ? t("copilot.send_wait") : t("copilot.send")}
             </button>
-          </div>
+          <div className="muted small kacrm-copilot-send-hint">{t("copilot.send_hint")}</div>
         </div>
       </div>
     </div>
