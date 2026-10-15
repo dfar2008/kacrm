@@ -24,7 +24,19 @@ KaCRM 是基于 [Hermes Agent](https://github.com/NousResearch/hermes-agent) 的
 
 ## 产品导览
 
-以下配图来自项目已有的品牌素材，展示历史版本的界面与配置方式；模型名称、页面细节和可用功能以当前版本及实际配置为准。
+以下界面截图于 2026-10-15 使用 Codex 内置浏览器采集，展示新版 KaCRM 的实际界面。截图数据仅用于说明布局，不代表业务成效；具体功能和模型取决于部署配置。中英文界面分别实拍，来源见[截图说明](assets/user-guide/SOURCES.md)。
+
+### 围绕客户安排每天的工作
+
+CRM 首页集中展示销售进展、优先跟进事项和 AI 动作；客户详情统一展示业务摘要、关联记录、互动时间线与 Copilot。
+
+![KaCRM 新版 CRM 首页](assets/user-guide/screens/22-crm-overview.png)
+
+![KaCRM 新版客户列表、详情与 Copilot](assets/user-guide/screens/03-crm-records.png)
+
+新增记录采用分组表单，支持关系选择和小数金额；外观可跟随系统，也可固定为浅色或深色。
+
+![KaCRM 新版新增客户弹窗](assets/user-guide/screens/23-create-record.png)
 
 ### 配置适合团队的业务字段
 

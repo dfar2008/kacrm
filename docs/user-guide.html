@@ -1,10 +1,10 @@
-<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"/><title>Kacrm 使用指南</title><style>
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"/><title>KaCRM 使用指南</title><style>
   @page{size:A4;margin:16mm 15mm}
   *{box-sizing:border-box}
   html{font-family:"Hiragino Sans GB","PingFang SC","Microsoft YaHei",sans-serif;color:#1f2330;font-size:11pt;line-height:1.72}
   body{margin:0}
   h2{font-size:17pt;color:#0e1733;margin:0 0 12px;padding-bottom:7px;border-bottom:2px solid #16b8a6;display:flex;align-items:center;gap:10px}
-  h2 .n{display:inline-grid;place-items:center;min-width:30px;height:30px;border-radius:8px;background:#0A0E27;color:#3FE0D0;font-size:12.5pt;font-weight:800;padding:0 6px}
+  h2 .n{display:inline-grid;place-items:center;min-width:30px;height:30px;border-radius:8px;background:#101513;color:#3FE0D0;font-size:12.5pt;font-weight:800;padding:0 6px}
   h3{font-size:12.5pt;margin:15px 0 5px;color:#16554e}
   h4{font-size:11pt;margin:11px 0 3px;color:#1b2b52}
   p{margin:6px 0}
@@ -18,9 +18,9 @@
   .note{background:#f4f1ff;border-left:4px solid #8b76f0;border-radius:6px;padding:9px 13px;margin:11px 0;font-size:10pt;color:#3a2f6b}
   table{border-collapse:collapse;width:100%;margin:9px 0;font-size:10pt}
   th,td{border:1px solid #dfe3ea;padding:6px 9px;text-align:left;vertical-align:top}
-  th{background:#0A0E27;color:#d6fcf6;font-weight:700}
+  th{background:#101513;color:#d6fcf6;font-weight:700}
   tr:nth-child(even) td{background:#f7f9fc}
-  .fig{border:1px solid #cfd5e0;border-radius:8px;overflow:hidden;margin:11px 0;background:#0A0E27}
+  .fig{border:1px solid #cfd5e0;border-radius:8px;overflow:hidden;margin:11px 0;background:#101513}
   .fig img{width:100%;display:block}
   .fig.portrait{max-width:58%;margin:11px auto}
   .figcap{font-size:9pt;color:#8893a4;text-align:center;margin:-3px 0 11px}
@@ -32,15 +32,16 @@
   .toc b{color:#0a9b8b}
   /* cover */
   .cover{height:262mm;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
-    background:#0A0E27;color:#EEF1FF;margin:-16mm -15mm 0;padding:0 26mm;page-break-after:always;position:relative;overflow:hidden}
+    background:#101513;color:#f2f6f4;margin:-16mm -15mm 0;padding:0 26mm;page-break-after:always;position:relative;overflow:hidden}
   .cover .ring{position:absolute;border-radius:50%;border:1px solid #21305e}
   .cover .r1{width:340px;height:340px;right:-70px;top:60px}.cover .r2{width:480px;height:480px;right:-150px;top:-10px}
   .cover .mk{width:92px;height:92px;border-radius:23px;background:#121833;display:grid;place-items:center;border:1px solid #2B3566;margin-bottom:26px;position:relative;z-index:2}
   .cover .kick{font-size:11pt;font-weight:700;letter-spacing:3px;color:#3FE0D0;margin-bottom:14px}
   .cover h1{color:#3FE0D0;font-size:46pt;margin:0;line-height:1}
-  .cover .t2{font-size:26pt;font-weight:800;margin:8px 0 14px;color:#EEF1FF}
+  .cover .t2{font-size:26pt;font-weight:800;margin:8px 0 14px;color:#f2f6f4}
   .cover .tag{font-size:13pt;color:#C3C9EC;letter-spacing:2px}
   .cover .meta{margin-top:40px;font-size:10pt;color:#7B85B0;line-height:1.9}
+img{max-width:100%;height:auto;display:block;margin:14px auto;border:1px solid #d3ddd7;border-radius:10px} body{max-width:1100px;margin:auto;padding:28px} @media print{body{max-width:none;padding:0} img{break-inside:avoid} .cover{height:262mm}}
 </style></head><body>
 <div class="cover">
 <div class="ring r2"></div><div class="ring r1"></div>
@@ -52,12 +53,12 @@
 <path d="M62 40 A20 20 0 0 1 18 40" stroke-width="4.3"></path><path d="M18 40 A15 15 0 0 1 52 40" stroke-width="3.1"></path>
 <path d="M52 40 A10 10 0 0 1 26 40" stroke-width="2.2"></path></g></svg></div>
 <div class="kick">■ 为销售型组织打造的下一代 CRM</div>
-<h1>Kacrm</h1>
+<h1>KaCRM</h1>
 <div class="t2">使用指南</div>
 <div class="tag">对话即数据 · AI 驱动 · 越用越懂你的销售打法</div>
-<div class="meta">整理日期 2026-10-13　·　Kacrm 使用指南<br/>本手册覆盖核心界面功能:对话、CRM、看板、AI Agent、任务与系统管理</div>
+<div class="meta">整理日期 2026-10-15　·　KaCRM 使用指南<br/>本手册覆盖核心界面功能:对话、CRM、看板、AI Agent、任务与系统管理</div>
 </div>
-<h1 id="kacrm-使用指南">Kacrm 使用指南</h1>
+<h1 id="kacrm-使用指南">KaCRM 使用指南</h1>
 <p><a href="user-guide.en.md">English</a> · <strong>简体中文</strong></p>
 <p>本 Markdown 文档为使用指南的主要维护版本，可在 GitHub 直接阅读。<a href="user-guide.html">HTML 打印版</a> 保留当前排版快照，供浏览器打印或另存为 PDF。后续内容更新以本文件为准。</p>
 <p>本文仅描述当前源码部署的使用方式。模型调用、外部渠道、技能写入、定时投递和审批行为取决于所配置的服务、工具及权限；示例图和演示对话不代表当前部署已通过验收。</p>
@@ -74,9 +75,9 @@
 <li><a href="#个人设置">个人设置</a></li>
 <li><a href="#常见问题与支持">常见问题与支持</a></li>
 </ul>
-<p>本指南整理自项目已有使用手册。截图为历史版本示例，截图中的旧模型及页面细节以当前 Kacrm 实际界面为准。部署与升级请参阅仓库的部署文档；本仓库不附带界面导览视频。</p>
+<p>本指南截图于 2026-10-15 使用 Codex 内置浏览器从当前 KaCRM 界面采集，覆盖桌面、手机、浅色和深色；中英文界面分别实拍。架构图由仓库中的 HTML 源文件渲染。图片中的数据仅用于说明界面，不代表业务成效或渠道投递成功，来源与页面清单见<a href="../assets/user-guide/SOURCES.md">截图说明</a>。部署与升级请参阅仓库的部署文档；本仓库不附带界面导览视频。</p>
 <h2 id="产品简介与核心理念">产品简介与核心理念</h2>
-<p>Kacrm 是一款<strong>会进化的对话式 AI CRM</strong>。传统 CRM 为「管理层填报」设计,要求销售把客户关系压缩进冰冷字段;Kacrm 反过来为「销售成交」设计——每位销售拥有专属智能体,用自然语言即可完成记录、跟进与商机管理,在已配置的渠道、工具权限和定时任务范围内，将沟通关联到客户记录，并提供跟进提醒。</p>
+<p>KaCRM 是一款<strong>会进化的对话式 AI CRM</strong>。传统 CRM 为「管理层填报」设计,要求销售把客户关系压缩进冰冷字段;KaCRM 反过来为「销售成交」设计——每位销售拥有专属智能体,用自然语言即可完成记录、跟进与商机管理,在已配置的渠道、工具权限和定时任务范围内，将沟通关联到客户记录，并提供跟进提醒。</p>
 <h3 id="五大根本转变">五大根本转变</h3>
 <table>
 <thead>
@@ -108,12 +109,12 @@
 </tr>
 </tbody>
 </table>
-<p><img alt="图 1-1　Kacrm 产品架构:触点层 → AI Agent 核心 → CRM 数据资产 → 洞察与教练" src="../assets/readme/architecture.png" /></p>
-<p>图 1-1　Kacrm 产品架构:触点层 → AI Agent 核心 → CRM 数据资产 → 洞察与教练</p>
+<p><img alt="图 1-1　KaCRM 产品架构:触点层 → AI Agent 核心 → CRM 数据资产 → 洞察与教练" src="../assets/readme/architecture.png" /></p>
+<p>图 1-1　KaCRM 产品架构:触点层 → AI Agent 核心 → CRM 数据资产 → 洞察与教练</p>
 <h2 id="快速开始与界面总览">快速开始与界面总览</h2>
 <h3 id="21-登录">2.1 登录</h3>
 <ol>
-<li>打开 Kacrm 访问地址,进入登录页。</li>
+<li>打开 KaCRM 访问地址,进入登录页。</li>
 <li>输入管理员分配的<strong>邮箱 / 用户名</strong>与<strong>密码</strong>,点击「登录」。</li>
 <li>首次登录后,系统自动为你创建专属的 AI 工作档案(Profile)。</li>
 </ol>
@@ -122,7 +123,7 @@
 <p>账号由管理员在「用户管理」中创建并分配角色权限;忘记密码请联系管理员重置。界面右下角账号菜单可随时<strong>切换中文 / English</strong>。</p>
 <h3 id="22-首次设置向导3-步">2.2 首次设置向导(3 步)</h3>
 <p>首次登录后,系统会自动带你进入<strong>「先完成 3 步设置」向导</strong>(也可随时访问 <code>/app/setup</code>)。配好后即可在网页和聊天软件里与你的 Agent 对话。</p>
-<p>向导页顶部有<strong>三个标签</strong>:<strong>「快速设置」</strong>(默认,即下方三步)、<strong>「对话演示」</strong>、<strong>「CRM 界面导览」</strong>——先在「快速设置」配好,再随时点另两个标签看 Kacrm 怎么用。</p>
+<p>向导页顶部有<strong>三个标签</strong>:<strong>「快速设置」</strong>(默认,即下方三步)、<strong>「对话演示」</strong>、<strong>「CRM 界面导览」</strong>——先在「快速设置」配好,再随时点另两个标签看 KaCRM 怎么用。</p>
 <p><img alt="图 2-2　首次设置向导「快速设置」标签:① 模型 ② 通道 ③ 快捷操作(顶部可切「对话演示 / CRM 界面导览」)" src="../assets/user-guide/screens/19-setup-wizard.png" /></p>
 <p>图 2-2　首次设置向导「快速设置」标签:① 模型 ② 通道 ③ 快捷操作(顶部可切「对话演示 / CRM 界面导览」)</p>
 <table>
@@ -177,7 +178,7 @@
 </table>
 <p>后两项是管理操作:<strong>没有相应权限时按钮自动隐藏</strong>,普通成员通常只看到「设置主题」和「切换语言」。</p>
 <p>页头右上角:「<strong>进入对话 →</strong>」可随时跳过向导直接开始;有 CRM 权限的用户还会看到「<strong>进入 CRM →</strong>」,一键直达客户管理主界面。通道也能稍后在「我的 Agent」里补。</p>
-<p><strong>「对话演示」标签</strong>——自动播放的模拟对话导览,8 步讲完 Kacrm 的核心用法:</p>
+<p><strong>「对话演示」标签</strong>——自动播放的模拟对话导览,8 步讲完 KaCRM 的核心用法:</p>
 <table>
 <thead>
 <tr>
@@ -220,10 +221,10 @@
 </tr>
 </tbody>
 </table>
-<p>演示顶部有 <strong>7 个章节圆点</strong>,点哪一步就跳到哪一步,也可随时「暂停 / 重播」;看完点「进入对话试试 →」即可亲手体验。</p>
+<p>演示顶部有 <strong>8 个章节圆点</strong>,点哪一步就跳到哪一步,也可随时「暂停 / 重播」;看完点「进入对话试试 →」即可亲手体验。</p>
 <p><img alt="图 2-3　「对话演示」八步导览(图为第 3 步:AI 字段联网调研自动填,含置信度与来源)" src="../assets/user-guide/screens/20-setup-demo.png" /></p>
 <p>图 2-3　「对话演示」八步导览(图为第 3 步:AI 字段联网调研自动填,含置信度与来源)</p>
-<p><strong>「CRM 界面导览」标签</strong>——一段约两分半的<strong>真实操作录屏</strong>(带中英章节字幕,随界面语言切换),让你在动手前先看到:对话之外,Kacrm 还有一整套顺手的管理界面。八个章节依次演示:</p>
+<p><strong>「CRM 界面导览」标签</strong>——一段约两分半的<strong>真实操作录屏</strong>(带中英章节字幕,随界面语言切换),让你在动手前先看到:对话之外,KaCRM 还有一整套顺手的管理界面。八个章节依次演示:</p>
 <table>
 <thead>
 <tr>
@@ -266,9 +267,9 @@
 </tr>
 </tbody>
 </table>
-<p><img alt="图 2-4　「CRM 界面导览」录屏(图为第 3 章:商机看板,卡片可拖拽换阶段)" src="../assets/user-guide/screens/21-crm-tour.jpg" /></p>
-<p>图 2-4　「CRM 界面导览」录屏(图为第 3 章:商机看板,卡片可拖拽换阶段)</p>
-<h3 id="23-快速导航--怎么找到每个功能">2.3 快速导航 —— 怎么找到每个功能</h3>
+<p><img alt="图 2-4　新版客户列表与记录详情" src="../assets/user-guide/screens/21-crm-tour.png" /></p>
+<p>图 2-4　当前客户列表与详情实拍。界面导览录屏不随本仓库分发；以上图片展示当前页面，而非旧录屏截帧。</p>
+<h3 id="23-快速导航-怎么找到每个功能">2.3 快速导航 —— 怎么找到每个功能</h3>
 <p>登录后,界面<strong>最左侧是一条导航栏</strong>。它分两部分:上方三个<strong>主模块图标</strong>,底部一个<strong>账号头像</strong>——点头像会弹出<strong>账号菜单</strong>,系统的其余功能入口都在这里(菜单项按你的权限自动显示/隐藏)。</p>
 <p><img alt="图 2-5　左侧导航栏(主模块)+ 点头像弹出的账号菜单(全部功能入口)" src="../assets/user-guide/screens/18-nav-menu.png" /></p>
 <p>图 2-5　左侧导航栏(主模块)+ 点头像弹出的账号菜单(全部功能入口)</p>
@@ -298,16 +299,16 @@
 </tr>
 </tbody>
 </table>
-<p>导航栏顶部的 Kacrm 图标显示你的 Agent 进程状态:<strong>绿点</strong>=运行正常,<strong>红点</strong>=未运行(点击进入设置)。</p>
+<p>导航栏顶部的 KaCRM 图标显示你的 Agent 进程状态:<strong>绿点</strong>=运行正常,<strong>红点</strong>=未运行(点击进入设置)。</p>
 <h3 id="24-不会用直接问-ai内置使用助手">2.4 不会用?直接问 AI(内置使用助手)</h3>
-<p>Kacrm 内置了<strong>「使用助手」</strong>——遇到任何"怎么用 / 在哪里 / 为什么"的问题,<strong>不用翻手册,直接问 AI 即可</strong>。在网页「对话」里,或在你已接入的<strong>飞书 / 微信</strong>等渠道里,直接发问:</p>
+<p>KaCRM 内置了<strong>「使用助手」</strong>——遇到任何"怎么用 / 在哪里 / 为什么"的问题,<strong>不用翻手册,直接问 AI 即可</strong>。在网页「对话」里,或在你已接入的<strong>飞书 / 微信</strong>等渠道里,直接发问:</p>
 <ul>
 <li>「怎么在看板上加一个图表?」</li>
 <li>「飞书怎么接进来?」</li>
 <li>「改了技能为什么没生效?」</li>
 </ul>
 <p>AI 会即时给出操作步骤。可以把它理解成<strong>这份指南的"活版本"</strong>:随产品更新、随时可问、所有渠道通用。</p>
-<p>而且它会<strong>自我成长</strong>:遇到手册暂时没覆盖的问题,它会查证后把通用答案沉淀进自己的知识里——<strong>问的人越多、它越全</strong>,和 Kacrm 的技能一样越用越懂。</p>
+<p>而且它会<strong>自我成长</strong>:遇到手册暂时没覆盖的问题,它会查证后把通用答案沉淀进自己的知识里——<strong>问的人越多、它越全</strong>,和 KaCRM 的技能一样越用越懂。</p>
 <h2 id="对话工作台首页">对话工作台(首页)</h2>
 <p>「对话」是你与 AI 助手协作的主场。用自然语言告诉它要做什么,它会完成对应的 CRM 操作并把完整对话留档;首页还汇集了 AI 为你准备的「今日该做什么」。</p>
 <p><img alt="图 3-1　对话工作台" src="../assets/user-guide/screens/02-chat-crm.png" /></p>
@@ -338,6 +339,8 @@
 <p>当无进行中的会话时,首页中央显示上周 AI 替你完成的工作总结(成交 N 单、推进 M 单、新增线索等),并附最多 3 条教练提示,点击可直达对应记录。</p>
 <h2 id="客户与-crm">客户与 CRM</h2>
 <p>「客户(CRM)」提供完整的销售业务模块。所有沟通与操作都汇入统一的<strong>互动时间线</strong>,字段与视图可按企业需要配置。</p>
+<p>「今日概览」集中展示销售进展、优先跟进事项和 AI 动作。先在概览安排工作，再进入模块查看列表与记录详情。</p>
+<p><img alt="新版 CRM 今日概览" src="../assets/user-guide/screens/22-crm-overview.png" /></p>
 <p><img alt="图 4-1　CRM 记录 · 互动时间线 + Copilot 侧栏" src="../assets/user-guide/screens/03-crm-records.png" /></p>
 <p>图 4-1　CRM 记录 · 互动时间线 + Copilot 侧栏</p>
 <h3 id="41-业务模块">4.1 业务模块</h3>
@@ -363,7 +366,7 @@
 </tr>
 </tbody>
 </table>
-<p>顶部还有「互动时间线」标签,展示全公司层面的互动快照。</p>
+<p>顶部「今日概览」入口可返回销售工作概览，页面中的互动区展示权限范围内的活动。</p>
 <h3 id="42-记录列表">4.2 记录列表</h3>
 <ul>
 <li><strong>搜索 / 分段筛选</strong>:按名称、备注搜索,或用业务分段快速查看。</li>
@@ -371,15 +374,17 @@
 <li><strong>列表信息</strong>:每行显示记录名、模块特定指标(商机金额 / 阶段、任务优先级 / 截止、报价订单金额等)、联系次数、最近联系、下次联系(逾期标红)。</li>
 <li><strong>快速撤销</strong>:最近修改 120 秒内出现「↶ 刚改」标签,一键撤销。</li>
 <li><strong>列表视图</strong>:除默认表格外,同一模块还能切<strong>卡片 / 看板(Kanban,按状态列拖拽)/ 时间线 / 日历</strong>视图;在列表上方视图栏切换,视图由「自定义视图」按名称保存。</li>
-<li><strong>新建记录</strong>:「+」按钮打开新建窗,支持文本 / 日期 / 数字金额 / 下拉 / 复选 / 用户 / 关联等字段类型,金额支持「60万」等口语输入。</li>
+<li><strong>新建记录</strong>:「+」按钮打开分组表单，必填字段带星号，支持文本、日期、小数金额、下拉、用户及关联选择。数字字段直接填写数值，例如 <code>12.75</code>；底部「创建」提交，「取消」关闭。</li>
 </ul>
+<p><img alt="新版客户新增记录弹窗" src="../assets/user-guide/screens/23-create-record.png" /></p>
 <h3 id="43-记录详情">4.3 记录详情</h3>
 <ul>
-<li><strong>业务信息芯片</strong>:头部一行展示最重要的几个字段(阶段、金额、截止等),选项值自动彩色标注;管理员可用「⚙ 自定义」配置展示哪些字段。</li>
+<li><strong>业务摘要</strong>:标题区下方以卡片展示阶段、金额、日期、负责人等关键字段；管理员可通过「自定义概览」配置展示内容。</li>
 <li><strong>全部信息抽屉</strong>:点「全部信息」展开所有字段,点击即改;支持 1 列 / 2 列切换,每个字段旁的「🤖」可让 Copilot 用自然语言改值。</li>
 <li><strong>互动时间线</strong>:倒序展示邮件 / 电话 / 会议 / 消息 / 笔记 / 系统操作等全部事件;系统操作可「查看原始事件」审计、120 秒内可撤销。</li>
 <li><strong>手工记一笔</strong>:快速记录联系内容、进展与下次联系日期,自动并入时间线。</li>
 <li><strong>产品明细</strong>:报价 / 订单可编辑产品行(数量、单价、折扣、税率),自动算小计与总额。</li>
+<li><strong>回款联动与恢复</strong>:回款新增、金额编辑、更换应收关联或删除后，相关应收的实付额、余额、状态及订单汇总同步更新。自己删除的回款可在 120 秒内通过页面提示「恢复回款」还原，恢复后仍为原记录。</li>
 <li><strong>记录共享</strong>:所有者 / 管理员可「🔗 共享」给同事,分别授予可查看 / 可编辑。</li>
 <li><strong>AI 记忆面板</strong>:显示 AI 从往来中自动记住的事实与关联人物,可跳转记忆库。</li>
 </ul>
@@ -412,7 +417,7 @@
 <h3 id="52-图表类型">5.2 图表类型</h3>
 <p>指标卡、柱状图、堆叠柱状图、横向条形图、折线图、柱线复合图（双轴）、饼图、环形图、漏斗图、数据表格、透视表与文本块。</p>
 <p>点击任意图表的数据点可<strong>钻取</strong>查看明细,明细面板支持导出 CSV。鼠标悬停图表卡片可<strong>刷新 / 删除 / 调整大小</strong>。</p>
-<h3 id="53-用-ai-助手加--改图表">5.3 用 AI 助手加 / 改图表</h3>
+<h3 id="53-用-ai-助手加-改图表">5.3 用 AI 助手加 / 改图表</h3>
 <p>点右上「✨ AI 助手」,用自然语言描述需求,AI 当场生成并加入看板。内置丰富示例提示词分组:</p>
 <table>
 <thead>
@@ -487,7 +492,7 @@
 </table>
 <p>可将某渠道设为「主渠道」作为定时推送默认投递地址。微信若长时间无对话,清晨推送可能被平台拦截,建议同时绑定飞书或每天主动发一条消息保活。</p>
 <h4 id="接入后怎么用重点">接入后怎么用(重点)</h4>
-<p>接通后,这个渠道就成了你的「随身 Kacrm」—— 不打开网页也能干活:</p>
+<p>接通后,这个渠道就成了你的「随身 KaCRM」—— 不打开网页也能干活:</p>
 <ul>
 <li><strong>直接对话办事</strong>:在飞书 / 微信里像聊天一样发指令,如「给腾讯这条商机加条跟进」「本周该跟进哪些客户」「把江南精密阶段改成方案确认」,Agent 当场完成对应 CRM 操作并回复你(关键操作遵循配置的审批策略)。</li>
 <li><strong>客户消息自动归档</strong>:客户在该渠道找你,往来对话自动沉淀进对应客户档案、汇入互动时间线,不用手动记。</li>
@@ -495,9 +500,8 @@
 <li><strong>顺手安排 / 教学</strong>:直接说「每天 9 点发我跟进清单」即可建定时任务;说「把这个做法记成技能」它会沉淀成新技能(见 6.2 / 6.5)。</li>
 </ul>
 <p>同一个 Agent 贯通网页对话、飞书、微信等所有渠道——在哪个渠道说都一样懂你、一样能办事。</p>
-<p><img alt="图 6-2　在飞书里收到 Agent 的「每日 Coach」主动推送(也可在此直接对话办事)" src="../assets/user-guide/screens/05-feishu-chat.png" /></p>
-<p>图 6-2　在飞书里收到 Agent 的「每日 Coach」主动推送(也可在此直接对话办事)</p>
-<h3 id="62-技能--查看增减与演化">6.2 技能 —— 查看、增减与演化</h3>
+<p>连接与投递状态请以当前「频道」页面及目标平台的实际消息为准。旧版飞书聊天配图已移除，避免将历史推送内容误认为当前部署的结果；配置入口见图 6-1。</p>
+<h3 id="62-技能-查看增减与演化">6.2 技能 —— 查看、增减与演化</h3>
 <p>技能是 Agent 在对话中可调用的能力(写邮件、查资料、各类销售方法论等)。分两类:<strong>🧠 私有技能</strong>(Agent 自学、专属于你)与 <strong>🏢 组织技能</strong>(来自组织共享库)。</p>
 <p><img alt="图 6-3　技能管理:开关 / 搜索 / 批量启用" src="../assets/user-guide/screens/13-agent-skills.png" /></p>
 <p>图 6-3　技能管理:开关 / 搜索 / 批量启用</p>
@@ -520,7 +524,7 @@
 <p>编辑 Agent 的<strong>个性(Personality / 系统提示词)</strong>与上下文文件(身份 SOUL.md、记忆 MEMORY.md、用户画像 USER.md 等 Markdown),定义它的语气、角色与记住的内容。改动在下次新对话生效。</p>
 <h3 id="64-模型">6.4 模型</h3>
 <p>配置模型提供商(OpenAI / Anthropic / DeepSeek 等)的 API Key、Base URL 与 API 格式;设置默认模型、增删可用模型、测试连接,并支持导入 / 导出模型配置 JSON。</p>
-<h3 id="65-定时任务--让-agent-按时自动干活">6.5 定时任务 —— 让 Agent 按时自动干活</h3>
+<h3 id="65-定时任务-让-agent-按时自动干活">6.5 定时任务 —— 让 Agent 按时自动干活</h3>
 <p>定时任务可以周期性执行指令，如每日跟进清单或每周业绩总结。需要正确配置调度、保持 Agent 网关运行，并设置可用的结果投递渠道；不需要保持网页打开。</p>
 <p><img alt="图 6-4　定时任务列表:调度 / 上次 · 下次运行 / 状态 / 操作" src="../assets/user-guide/screens/14-agent-scheduling.png" /></p>
 <p>图 6-4　定时任务列表:调度 / 上次 · 下次运行 / 状态 / 操作</p>
@@ -557,7 +561,7 @@
 <h4 id="管理与结果投递">管理与结果投递</h4>
 <ul>
 <li><strong>操作</strong>:每行可「▶ 运行」(立即执行一次,不影响定时)、「暂停 / 恢复」、「删除」;列表显示上次 / 下次运行与状态(Active / 已暂停 / 错误,鼠标悬停看错误详情)。</li>
-<li><strong>结果投递</strong>:任务结果可主动推送到 IM(微信 / 飞书),效果见 <strong>图 6-2</strong>。需先在「频道」接好渠道并指定<strong>主渠道</strong>作为投递地址,否则会提示「无投递目标」或投递失败;内部类任务(如话术蒸馏)只在系统内沉淀、不对外推送。</li>
+<li><strong>结果投递</strong>:任务结果可主动推送到 IM(微信 / 飞书)。需先在「频道」（见图 6-1）接好渠道并指定<strong>主渠道</strong>作为投递地址；实际投递结果以任务状态和目标平台消息为准。没有可用投递目标时会报配置或投递错误；内部类任务(如话术蒸馏)只在系统内沉淀、不对外推送。</li>
 </ul>
 <h2 id="任务">任务</h2>
 <p>「任务」汇总由 Coach / 专家 Agent 提出的下一步动作。可按 待办 / 已完成 / 全部 筛选,标记「✓ 完成」或撤销(软删除,不影响审计),点击任务可跳转关联的 CRM 记录;支持截止日期显示。访问取决于角色权限与数据范围。</p>
@@ -585,7 +589,7 @@
 <p>为新增用户预设默认的身份(SOUL.md)、个性(Personality)、技能、定时任务与模型配置,新用户自动继承;已有用户可在「用户管理」手动应用。各标签页改完点右上「保存模板」生效。</p>
 <p><img alt="图 8-3　新用户模板:预设身份 / 个性 / 技能 / 定时任务 / 模型" src="../assets/user-guide/screens/16-onboarding.png" /></p>
 <p>图 8-3　新用户模板:预设身份 / 个性 / 技能 / 定时任务 / 模型</p>
-<h3 id="86-用量统计--导出审计">8.6 用量统计 / 导出审计</h3>
+<h3 id="86-用量统计-导出审计">8.6 用量统计 / 导出审计</h3>
 <p><strong>用量统计</strong>:按模型 / 日期统计 token 用量、会话数与估算成本(可选 7 / 30 / 90 / 180 天窗口),顶部为汇总指标卡,下方按模型、按日明细。<strong>导出审计</strong>:记录所有看板钻取 CSV 导出的元数据(操作人、范围、行列数等),可按人和时间查询。</p>
 <p><img alt="图 8-4　用量统计:汇总指标卡 + 按模型 / 按日明细" src="../assets/user-guide/screens/17-admin-usage.png" /></p>
 <p>图 8-4　用量统计:汇总指标卡 + 按模型 / 按日明细</p>
@@ -594,11 +598,16 @@
 <li><strong>用户信息</strong>:编辑姓名 / 手机 / 描述,修改登录密码,查看自己的权限清单(CRM / Admin),查看与启停个人 Agent 进程。</li>
 <li><strong>Profile 设置</strong>:直达当前用户的 Agent 详情(个性 / 渠道 / 技能 / 工作区 / 模型 / 定时任务)。</li>
 <li><strong>切换语言</strong>:中文 ↔ English,立即生效并记住偏好。</li>
+<li><strong>主题</strong>:在账号菜单打开「主题」。外观可选「跟随系统」「浅色」「深色」；跟随系统会响应操作系统外观变化，强调色独立选择并保留。</li>
 <li><strong>注销登录</strong>:退出当前会话(需确认)。</li>
 </ul>
+<p><img alt="新版外观与强调色设置" src="../assets/user-guide/screens/24-appearance.png" /></p>
+<p>手机端的详情抽屉采用单列字段，新增记录使用全屏表单，底部保留操作按钮。</p>
+<p><img src="../assets/user-guide/screens/25-mobile-detail.png" alt="手机端浅色客户详情" width="300" /></p>
+<p><img src="../assets/user-guide/screens/26-mobile-create-dark.png" alt="手机端深色新增记录" width="300" /></p>
 <h2 id="常见问题与支持">常见问题与支持</h2>
 <h3 id="业务数据可以保留在自己的基础设施上吗">业务数据可以保留在自己的基础设施上吗？</h3>
-<p>Kacrm 支持源码自托管，业务数据存储在配置的数据库和 profile 目录。模型提供商与消息平台可能接收其服务所需的数据，请按业务要求配置。权限、审批和审计日志用于控制业务操作。</p>
+<p>KaCRM 支持源码自托管，业务数据存储在配置的数据库和 profile 目录。模型提供商与消息平台可能接收其服务所需的数据，请按业务要求配置。权限、审批和审计日志用于控制业务操作。</p>
 <h3 id="销售需要学习复杂系统吗">销售需要学习复杂系统吗？</h3>
 <p>自然语言聊天是主要交互方式之一。可从简单请求开始，并通过 CRM 视图检查和核对记录。</p>
 <h3 id="如何控制-ai-对数据的修改">如何控制 AI 对数据的修改？</h3>

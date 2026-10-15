@@ -16,6 +16,8 @@ See the [Deployment Guide](../docs/deployment.en.md) for installation and local 
 | `sync-profile-skills.sh` | Update existing copies of built-in skills in profiles during deployment. |
 | `push_skill_to_active_profiles.sh` | Synchronize a selected skill to profiles; dry-run by default, with backup support. |
 | `sync-kacrm-guide.sh` | Capture the usage-guide skill in the patch and synchronize it to profiles. |
+| `render-user-guide.py` | Generate the Chinese HTML guide from Markdown and its print template; requires the Markdown package. |
+| `check-doc-images.py` | Check image references, dimensions, SHA-256, synchronized copies, and historical-image leftovers; standard library only. |
 | `sync-onboarding-persona.py` | Synchronize the onboarding persona and profile SOUL/system instructions. |
 | `dump-style-portrait.sh` | Export a profile's writing-style and sales-methodology portrait for comparison. |
 | `purge_polluted_memories.py` | Remove memories polluted by older execution traces; dry-run by default. |

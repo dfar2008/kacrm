@@ -1,0 +1,62 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"/><title>KaCRM 使用指南</title><style>
+  @page{size:A4;margin:16mm 15mm}
+  *{box-sizing:border-box}
+  html{font-family:"Hiragino Sans GB","PingFang SC","Microsoft YaHei",sans-serif;color:#1f2330;font-size:11pt;line-height:1.72}
+  body{margin:0}
+  h2{font-size:17pt;color:#0e1733;margin:0 0 12px;padding-bottom:7px;border-bottom:2px solid #16b8a6;display:flex;align-items:center;gap:10px}
+  h2 .n{display:inline-grid;place-items:center;min-width:30px;height:30px;border-radius:8px;background:#101513;color:#3FE0D0;font-size:12.5pt;font-weight:800;padding:0 6px}
+  h3{font-size:12.5pt;margin:15px 0 5px;color:#16554e}
+  h4{font-size:11pt;margin:11px 0 3px;color:#1b2b52}
+  p{margin:6px 0}
+  ul,ol{margin:6px 0 6px 2px;padding-left:20px}
+  li{margin:4px 0}
+  .lead{color:#3a4258}
+  b{color:#10233f}
+  code,.kbd{background:#eef1f6;border-radius:4px;padding:1px 6px;font-size:10pt;color:#0a7d70}
+  .cyan{color:#0a9b8b;font-weight:700}.violet{color:#6b54e0;font-weight:700}.warm{color:#d8693f;font-weight:700}
+  .tip{background:#eafbf8;border-left:4px solid #16b8a6;border-radius:6px;padding:9px 13px;margin:11px 0;font-size:10pt;color:#0d4f48}
+  .note{background:#f4f1ff;border-left:4px solid #8b76f0;border-radius:6px;padding:9px 13px;margin:11px 0;font-size:10pt;color:#3a2f6b}
+  table{border-collapse:collapse;width:100%;margin:9px 0;font-size:10pt}
+  th,td{border:1px solid #dfe3ea;padding:6px 9px;text-align:left;vertical-align:top}
+  th{background:#101513;color:#d6fcf6;font-weight:700}
+  tr:nth-child(even) td{background:#f7f9fc}
+  .fig{border:1px solid #cfd5e0;border-radius:8px;overflow:hidden;margin:11px 0;background:#101513}
+  .fig img{width:100%;display:block}
+  .fig.portrait{max-width:58%;margin:11px auto}
+  .figcap{font-size:9pt;color:#8893a4;text-align:center;margin:-3px 0 11px}
+  .pagebreak{page-break-before:always}
+  .sec{page-break-inside:avoid}
+  .chips span{display:inline-block;background:#eef1f6;border:1px solid #d8dde6;border-radius:999px;padding:2px 10px;font-size:9pt;color:#3a4258;margin:3px 4px 3px 0}
+  .toc{columns:2;column-gap:30px;font-size:10.5pt}
+  .toc div{margin:5px 0;break-inside:avoid}
+  .toc b{color:#0a9b8b}
+  /* cover */
+  .cover{height:262mm;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;
+    background:#101513;color:#f2f6f4;margin:-16mm -15mm 0;padding:0 26mm;page-break-after:always;position:relative;overflow:hidden}
+  .cover .ring{position:absolute;border-radius:50%;border:1px solid #21305e}
+  .cover .r1{width:340px;height:340px;right:-70px;top:60px}.cover .r2{width:480px;height:480px;right:-150px;top:-10px}
+  .cover .mk{width:92px;height:92px;border-radius:23px;background:#121833;display:grid;place-items:center;border:1px solid #2B3566;margin-bottom:26px;position:relative;z-index:2}
+  .cover .kick{font-size:11pt;font-weight:700;letter-spacing:3px;color:#3FE0D0;margin-bottom:14px}
+  .cover h1{color:#3FE0D0;font-size:46pt;margin:0;line-height:1}
+  .cover .t2{font-size:26pt;font-weight:800;margin:8px 0 14px;color:#f2f6f4}
+  .cover .tag{font-size:13pt;color:#C3C9EC;letter-spacing:2px}
+  .cover .meta{margin-top:40px;font-size:10pt;color:#7B85B0;line-height:1.9}
+img{max-width:100%;height:auto;display:block;margin:14px auto;border:1px solid #d3ddd7;border-radius:10px} body{max-width:1100px;margin:auto;padding:28px} @media print{body{max-width:none;padding:0} img{break-inside:avoid} .cover{height:262mm}}
+</style></head><body>
+<div class="cover">
+<div class="ring r2"></div><div class="ring r1"></div>
+<div class="mk"><svg fill="none" height="62" viewbox="3 3 74 74" width="62">
+<defs><lineargradient gradientunits="userSpaceOnUse" id="g" x1="14" x2="66" y1="14" y2="66">
+<stop offset="0" stop-color="#3FE0D0"></stop><stop offset="1" stop-color="#9C8CFF"></stop></lineargradient></defs>
+<g fill="none" stroke="url(#g)" stroke-linecap="round">
+<path d="M70 40 A30 30 0 0 1 12 40" stroke-width="7"></path><path d="M12 40 A25 25 0 0 1 62 40" stroke-width="5.6"></path>
+<path d="M62 40 A20 20 0 0 1 18 40" stroke-width="4.3"></path><path d="M18 40 A15 15 0 0 1 52 40" stroke-width="3.1"></path>
+<path d="M52 40 A10 10 0 0 1 26 40" stroke-width="2.2"></path></g></svg></div>
+<div class="kick">■ 为销售型组织打造的下一代 CRM</div>
+<h1>KaCRM</h1>
+<div class="t2">使用指南</div>
+<div class="tag">对话即数据 · AI 驱动 · 越用越懂你的销售打法</div>
+<div class="meta">整理日期 2026-10-15　·　KaCRM 使用指南<br/>本手册覆盖核心界面功能:对话、CRM、看板、AI Agent、任务与系统管理</div>
+</div>
+{{ content }}
+</body></html>

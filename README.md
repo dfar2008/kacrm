@@ -24,7 +24,19 @@ KaCRM is a conversational AI CRM powered by [Hermes Agent](https://github.com/No
 
 ## Product Tour
 
-These English illustrations were localized from existing screenshots with image-editing tools; they show earlier interface examples rather than captures of the current live English UI. Model names, screen details, and available features depend on the current version and configuration. The user guide, deployment guide, upgrade notes, and script reference are available in English and Chinese; the application supports both languages.
+These screenshots were captured from the current KaCRM interface with the Codex in-app browser on October 15, 2026. Chinese and English interfaces were captured separately. Record content, configured chart titles, and agent-generated text retain their stored language. Screen data illustrates the interface rather than business results; features and models depend on deployment configuration. See the [screenshot sources](assets/user-guide/en/SOURCES.md).
+
+### Organize your day around customers
+
+The CRM overview brings sales progress, follow-up priorities, and AI activity together. Record details combine business summaries, related records, an interaction timeline, and Copilot.
+
+![Current KaCRM CRM overview](assets/user-guide/en/22-crm-overview.png)
+
+![Current KaCRM account list, details, and Copilot](assets/user-guide/en/03-crm-records.png)
+
+Grouped creation forms support relationship selection and decimal amounts. Appearance can follow the operating system or stay in light or dark mode.
+
+![Current KaCRM account creation drawer](assets/user-guide/en/23-create-record.png)
 
 ### Shape your customer records around your business
 

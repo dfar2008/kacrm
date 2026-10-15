@@ -1,4 +1,4 @@
-# Kacrm User Guide
+# KaCRM User Guide
 
 **English** · [简体中文](user-guide.md)
 
@@ -19,11 +19,11 @@ This guide describes source-deployed installations. Model calls, external channe
 - [Personal Settings](#personal-settings)
 - [Frequently Asked Questions and Support](#frequently-asked-questions-and-support)
 
-This guide was adapted from the existing product manual. All illustrations in this English guide use English text and are stored separately from the Chinese guide's images. They were localized from historical screenshots with image-editing tools and are not live captures of the current English UI. Model names, interface details, and available capabilities depend on the version and configuration. See the [Deployment Guide](deployment.en.md) for installation and upgrades. The interface-tour video is not bundled with this repository.
+The interface screenshots were captured with the Codex in-app browser on October 15, 2026, covering desktop, mobile, light, and dark appearances. English and Chinese interfaces were captured separately; stored record content, chart titles, and agent-generated text retain their configured language. Architecture diagrams are rendered from versioned HTML sources. Screen data illustrates the interface, not business results or successful message delivery. See [screenshot sources](../assets/user-guide/en/SOURCES.md) and the [Deployment Guide](deployment.en.md). The interface-tour video is not bundled with this repository.
 
 ## Product Overview
 
-Kacrm is a conversational AI CRM that connects customer records, interactions, and sales work with a personal agent. Use natural language to record information, follow up with customers, and manage opportunities. Configured channels and scheduled tasks can bring communication history and follow-up reminders into the same workspace.
+KaCRM is a conversational AI CRM that connects customer records, interactions, and sales work with a personal agent. Use natural language to record information, follow up with customers, and manage opportunities. Configured channels and scheduled tasks can bring communication history and follow-up reminders into the same workspace.
 
 ### Five core ideas
 
@@ -35,7 +35,7 @@ Kacrm is a conversational AI CRM that connects customer records, interactions, a
 | Reusable knowledge | Retain writing preferences, sales playbooks, fields, and skills, and refine them with feedback. |
 | Scheduled assistance | Run configured coaching and follow-up tasks and deliver results through connected channels. |
 
-![Kacrm product architecture: channels, agents, customer data, insights, and customization](../assets/user-guide/en/architecture.png)
+![KaCRM product architecture: channels, agents, customer data, insights, and customization](../assets/user-guide/en/architecture.png)
 
 *Figure 1-1. English product architecture illustration.*
 
@@ -43,11 +43,11 @@ Kacrm is a conversational AI CRM that connects customer records, interactions, a
 
 ### 2.1 Sign in
 
-1. Open your Kacrm installation's URL and go to the sign-in page.
+1. Open your KaCRM installation's URL and go to the sign-in page.
 2. Enter the **email or username** and **password** provided by your administrator, then select **Sign in**.
 3. Your first sign-in initializes your personal AI workspace, called a profile.
 
-![Kacrm sign-in page](../assets/user-guide/en/01-login.png)
+![KaCRM sign-in page](../assets/user-guide/en/01-login.png)
 
 *Figure 2-1. Sign-in page.*
 
@@ -110,9 +110,9 @@ The **CRM Interface Tour** introduces these eight parts of the interface through
 | Record Copilot | Read summaries and suggested questions, select a model, and work with the current record. |
 | Approvals | Review critical agent actions and approve or reject them. |
 
-![CRM interface tour showing an opportunity board](../assets/user-guide/en/21-crm-tour.png)
+![Current account list and record details](../assets/user-guide/en/21-crm-tour.png)
 
-*Figure 2-4. Interface-tour example. The recording is not included in this repository.*
+*Figure 2-4. A current capture of the account list and details, replacing the old recording frame. The recording is not included in this repository.*
 
 ### 2.3 Find your way around
 
@@ -180,6 +180,10 @@ When there is no active conversation, a weekly report may summarize the agent's 
 
 CRM modules organize sales records and their relationships. Communication and operations feed into interaction timelines; fields and views can be configured for your business.
 
+Start with Overview to review sales progress, follow-up priorities, and AI activity, then open a module to inspect its list and records.
+
+![Current CRM overview](../assets/user-guide/en/22-crm-overview.png)
+
 ![CRM interaction timeline and Copilot panel](../assets/user-guide/en/03-crm-records.png)
 
 *Figure 4-1. CRM records and interaction history.*
@@ -192,7 +196,7 @@ CRM modules organize sales records and their relationships. Communication and op
 | Sales transactions | Opportunities, Quotes, and Sales Orders. |
 | Execution and payments | Tasks, Receivables, Payments, and Products. |
 
-The Interaction Timeline tab provides a broader view of recent interactions.
+The Overview entry returns to the sales work overview. Its interaction section shows activity within your permitted scope.
 
 ### 4.2 Record lists
 
@@ -201,15 +205,18 @@ The Interaction Timeline tab provides a broader view of recent interactions.
 - **Row information:** Inspect names, module-specific indicators, interaction counts, and recent or next contact dates. Overdue dates are highlighted.
 - **Undo:** Eligible recent changes may display a quick undo action within the configured window, described in the original interface as 120 seconds.
 - **Views:** Switch between table, cards, kanban, timeline, and calendar. Save named custom views. Kanban can support dragging cards between stages.
-- **Create:** Select the plus button and complete text, date, number, currency, dropdown, checkbox, user, and relationship fields as needed. Supported currency inputs depend on the field parser.
+- **Create:** Select the plus button to open a grouped form. Required fields are marked with an asterisk. Enter numeric values directly, such as `12.75`, and use the relationship pickers to link records. Create submits the form; Cancel closes it.
+
+![Current account creation form](../assets/user-guide/en/23-create-record.png)
 
 ### 4.3 Record details
 
-- **Summary chips:** Key fields such as stage, amount, or deadline appear at the top. Administrators can configure the displayed fields.
+- **Business summary:** Cards beneath the title show key fields such as stage, amount, dates, and owner. Administrators can configure them through Customize overview.
 - **All Information:** Open the full-field drawer, switch between one and two columns, and edit values. Field-level AI controls can prefill a Copilot request.
 - **Interaction timeline:** Inspect email, calls, meetings, messages, notes, and system actions in reverse chronological order. System events can include audit details and eligible undo actions.
 - **Manual notes:** Record contact details, progress, and the next follow-up date.
 - **Product lines:** Edit quantities, unit prices, discounts, and taxes on quotes or orders; calculated subtotals and totals are shown.
+- **Payment rollups and recovery:** Creating, editing, reassigning, or deleting payments updates the linked receivable's paid amount, balance, and status, plus the order totals. After deleting your own payment, use Restore payment within 120 seconds to recover the original record.
 - **Sharing:** Owners or administrators can grant colleagues view or edit access.
 - **AI memory:** Inspect remembered facts and related people, with links to the memory library.
 
@@ -236,9 +243,9 @@ Where available, open **Account menu → Unclaimed Messages**. Messages that cou
 
 Dashboards display business charts and let you ask the AI assistant to create or modify charts in natural language.
 
-![English illustration of the business dashboard and AI assistant](../assets/user-guide/en/04-dashboards.png)
+![Current business dashboard and AI assistant](../assets/user-guide/en/04-dashboards.png)
 
-*Figure 5-1. Localized English dashboard illustration.*
+*Figure 5-1. Current dashboard and AI assistant, captured with personal scope selected.*
 
 ### 5.1 Dashboard tabs
 
@@ -298,17 +305,15 @@ Set a **primary channel** for default scheduled delivery. Some platforms restric
 
 The same profile's agent can serve web chat and its connected channels.
 
-![A daily coaching message delivered through Feishu](../assets/user-guide/en/05-feishu-chat.png)
-
-*Figure 6-2. Example of a coaching notification in a connected channel.*
+Check the current Channels page and the destination platform for connection and delivery status. The historical Feishu conversation image has been removed so it cannot be mistaken for a current delivery result; see Figure 6-1 for the configuration entry point.
 
 ### 6.2 Skills: inspect, enable, and extend
 
 Skills package capabilities such as email drafting, research, and sales playbooks. The interface distinguishes **private skills** from **organization skills** shared with the team.
 
-![English illustration of agent skill management](../assets/user-guide/en/13-agent-skills.png)
+![Current agent skill management](../assets/user-guide/en/13-agent-skills.png)
 
-*Figure 6-3. Localized English skills illustration.*
+*Figure 6-3. Current English skill-management interface.*
 
 #### Inspect and enable skills
 
@@ -338,9 +343,9 @@ Configure provider API keys, base URLs, and API formats. Choose the default mode
 
 Scheduled tasks run recurring instructions, such as daily follow-up lists or weekly sales summaries, without requiring you to keep the web interface open. The runtime and delivery channel must be configured and running.
 
-![English illustration of agent scheduled tasks](../assets/user-guide/en/14-agent-scheduling.png)
+![Current agent scheduled tasks](../assets/user-guide/en/14-agent-scheduling.png)
 
-*Figure 6-4. Localized English scheduled-task illustration.*
+*Figure 6-4. Current English scheduled-task interface; delivery depends on configured channels.*
 
 #### Create a scheduled task
 
@@ -397,9 +402,9 @@ Create, edit, clone, or remove roles. Use the module-by-operation permission mat
 - **Proposals:** Review field or option proposals generated by the agent, then approve or reject them.
 - **Change log:** Inspect who changed modules or fields, when, why, and the before-and-after values, subject to access permissions.
 
-![English illustration of the module and field builder](../assets/user-guide/en/10-schema-hub.png)
+![Current module and field builder](../assets/user-guide/en/10-schema-hub.png)
 
-*Figure 8-2. Localized English schema-builder illustration.*
+*Figure 8-2. Current English module and field builder.*
 
 ### 8.5 Onboarding template
 
@@ -424,13 +429,22 @@ Configure defaults for new users: identity in `SOUL.md`, personality, skills, sc
 - **User Info:** Edit your name, phone, or description; change your password; review permissions and personal agent status.
 - **Profile Settings:** Open the agent's personality, channel, skill, workspace, model, and schedule settings.
 - **Language:** Switch between Chinese and English; the preference takes effect immediately and is remembered.
+- **Theme:** Open Theme from the account menu. Choose System, Light, or Dark; System follows operating-system appearance changes. Accent color is selected independently.
 - **Sign out:** End the current session using the account-menu action.
+
+![Current appearance and accent-color settings](../assets/user-guide/en/24-appearance.png)
+
+On mobile, record details use a single-column drawer. Creation forms fill the screen and keep their action buttons at the bottom.
+
+<img src="../assets/user-guide/en/25-mobile-detail.png" alt="Mobile account details in light mode" width="300" />
+
+<img src="../assets/user-guide/en/26-mobile-create-dark.png" alt="Mobile record creation in dark mode" width="300" />
 
 ## Frequently Asked Questions and Support
 
 ### Can I keep business data on my infrastructure?
 
-Kacrm supports self-hosting. Business data is stored in the configured database and profile directories. Model providers and messaging platforms may receive data needed for their services; configure them according to your requirements. Permissions, approvals, and audit logs help control business operations.
+KaCRM supports self-hosting. Business data is stored in the configured database and profile directories. Model providers and messaging platforms may receive data needed for their services; configure them according to your requirements. Permissions, approvals, and audit logs help control business operations.
 
 ### Do salespeople need to learn a complex system?
 

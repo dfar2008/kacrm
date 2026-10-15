@@ -17,6 +17,8 @@
 | `sync-profile-skills.sh` | 部署时更新 profile 中已有的内置技能副本 |
 | `push_skill_to_active_profiles.sh` | 按指定技能同步 profile；默认 dry-run，支持备份 |
 | `sync-kacrm-guide.sh` | 将使用指南技能写入补丁并同步到 profile |
+| `render-user-guide.py` | 从中文 Markdown 和打印模板生成 HTML 使用指南；需要 Markdown 包 |
+| `check-doc-images.py` | 检查文档图片路径、截图尺寸与 SHA-256、重复配图同步及旧图残留；仅使用标准库 |
 | `sync-onboarding-persona.py` | 同步 onboarding persona 与 profile 的 SOUL/系统提示词 |
 | `dump-style-portrait.sh` | 导出 profile 的话术风格与方法论画像，便于比较 |
 | `purge_polluted_memories.py` | 清理旧执行轨迹污染的记忆；默认 dry-run |

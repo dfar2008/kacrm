@@ -1,0 +1,95 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1600px;height:900px;background:#101513;
+    font-family:"Hiragino Sans GB","PingFang SC","Microsoft YaHei",sans-serif;color:#f2f6f4;overflow:hidden;position:relative}
+  /* 背景装饰圆,呼应 PPT */
+  .blob{position:absolute;border-radius:50%}
+  .b1{width:560px;height:560px;right:-120px;top:-160px;background:#3FE0D0;opacity:.05}
+  .b2{width:480px;height:480px;left:-160px;bottom:-200px;background:#9C8CFF;opacity:.05}
+  .wrap{position:relative;padding:44px 64px;height:900px;display:flex;flex-direction:column;justify-content:center}
+  .kick{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .kick .sq{width:14px;height:14px;background:#3FE0D0}
+  .kick span{font-size:13px;font-weight:700;letter-spacing:3px;color:#3FE0D0}
+  .head{display:flex;align-items:center;gap:18px;margin-bottom:6px}
+  .head .ttl{font-size:40px;font-weight:800;letter-spacing:.5px}
+  .head .mk{width:58px;height:58px;border-radius:15px;background:#1a201e;display:grid;place-items:center;border:1px solid #38453f}
+  .flow{display:flex;align-items:stretch;margin-top:28px}
+  .col{flex:1;background:#1a201e;border:1px solid #38453f;border-radius:16px;padding:24px 18px;display:flex;flex-direction:column;min-height:360px;position:relative}
+  .col.core{background:#17342e;border:2px solid #3FE0D0}
+  /* 第5列:对话即定制(差异化,品牌紫) */
+  .col.mold{background:#24212e;border:2px solid #9C8CFF}
+  .col .k{font-size:11.5px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;color:#94a59c}
+  .col.core .k{color:#3FE0D0}
+  .col.mold .k{color:#B6A8FF}
+  .col h3{font-size:20px;font-weight:800;margin-bottom:18px;line-height:1.25}
+  .col.mold h3{color:#C8BCFF}
+  .col ul{list-style:none;display:flex;flex-direction:column;gap:13px;margin-top:auto}
+  .col li{font-size:14px;color:#c4cfc9;padding-left:18px;position:relative;line-height:1.4}
+  .col li::before{content:"";position:absolute;left:0;top:7px;width:8px;height:8px;border-radius:50%;background:#9C8CFF}
+  .col.core li::before{background:#3FE0D0}
+  .col.core li{color:#f2f6f4}
+  .col.mold li::before{background:#9C8CFF}
+  .col.mold li{color:#f2f6f4}
+  .col.mold li b{color:#C8BCFF;font-weight:700}
+  .num{position:absolute;top:16px;right:18px;font-size:36px;font-weight:800;color:#577264;opacity:.6}
+  .arrow{flex:0 0 34px;display:flex;align-items:center;justify-content:center;color:#94a59c;font-size:26px}
+  .arrow.loop{color:#9C8CFF;font-size:30px}
+  .band{display:flex;gap:24px;margin-top:22px}
+  .pill{flex:1;background:#1a201e;border:1px solid #38453f;border-radius:14px;padding:20px 26px;display:flex;align-items:center;gap:18px;border-left:4px solid #3FE0D0}
+  .pill.v{border-left-color:#9C8CFF}
+  .pill .pk{font-size:18px;font-weight:800;white-space:nowrap}
+  .pill .pk.c{color:#3FE0D0}.pill .pk.p{color:#9C8CFF}
+  .pill .pv{font-size:14px;color:#c4cfc9}
+</style></head><body>
+<div class="blob b1"></div><div class="blob b2"></div>
+<div class="wrap">
+  <div class="kick"><div class="sq"></div><span>PRODUCT ARCHITECTURE</span></div>
+  <div class="head">
+    <div class="mk"><svg width="40" height="40" viewBox="3 3 74 74" fill="none">
+      <defs><linearGradient id="g" x1="14" y1="14" x2="66" y2="66" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#3FE0D0"/><stop offset="1" stop-color="#9C8CFF"/></linearGradient></defs>
+      <g stroke="url(#g)" stroke-linecap="round" fill="none">
+        <path d="M70 40 A30 30 0 0 1 12 40" stroke-width="7"/><path d="M12 40 A25 25 0 0 1 62 40" stroke-width="5.6"/>
+        <path d="M62 40 A20 20 0 0 1 18 40" stroke-width="4.3"/><path d="M18 40 A15 15 0 0 1 52 40" stroke-width="3.1"/>
+        <path d="M52 40 A10 10 0 0 1 26 40" stroke-width="2.2"/></g></svg></div>
+    <div class="ttl">KaCRM Architecture</div>
+  </div>
+
+  <div class="flow">
+    <div class="col">
+      <div class="num">01</div><div class="k">CHANNELS · INPUT</div><h3>Connected channels</h3>
+      <ul><li>WeChat · WeCom</li><li>Feishu · DingTalk</li><li>Email · IMAP / SMTP</li><li>Telegram · Slack</li><li>Extensible integrations</li></ul>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col core">
+      <div class="num" style="color:#2A6A60">02</div><div class="k">CORE · AI AGENT</div><h3>An evolving agent</h3>
+      <ul><li>Conversation into CRM data</li><li>Human review &amp; approvals</li><li>Sales skills &amp; writing style</li><li>Customer memory &amp; search</li><li>Research with sources</li></ul>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col">
+      <div class="num">03</div><div class="k">CRM · DATA</div><h3>Customer records</h3>
+      <ul><li>Leads · Accounts · Contacts</li><li>Opportunities · Quotes · Orders</li><li>Tasks · Receivables · Payments</li><li>Products · Price lists</li><li>Adaptable fields &amp; skills</li></ul>
+    </div>
+    <div class="arrow">→</div>
+    <div class="col">
+      <div class="num">04</div><div class="k">INSIGHTS · OUTPUT</div><h3>Insights &amp; coaching</h3>
+      <ul><li>Daily coaching briefings</li><li>Pipeline &amp; opportunity views</li><li>Stalled deals &amp; risk signals</li><li>Weekly sales digest</li><li>Individual &amp; team views</li></ul>
+    </div>
+    <div class="arrow loop">⟲</div>
+    <div class="col mold">
+      <div class="num" style="color:#4a3c7a">05</div><div class="k">CUSTOMIZATION</div><h3>Built for your business</h3>
+      <ul>
+        <li><b>Fields &amp; modules</b> Schema</li>
+        <li><b>AI fields</b> · Research &amp; autofill</li>
+        <li><b>Rollup rules</b> · Linked records</li>
+        <li><b>Workflows</b> · Event automation</li>
+        <li><b>Charts</b> · Schedules · Skills</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="band">
+    <div class="pill"><span class="pk c">Team controls</span><span class="pv">Roles · Approvals · Schema review · Audit trail · Chinese / English</span></div>
+    <div class="pill v"><span class="pk p">Your infrastructure</span><span class="pv">Self-hosted · Your data stays under your control</span></div>
+  </div>
+</div></body></html>
