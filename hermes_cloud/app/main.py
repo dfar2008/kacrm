@@ -3491,6 +3491,8 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     # ------------------------------------------------------------------
     # Personality (agent.system_prompt) — per-profile config.yaml entry
     # ------------------------------------------------------------------
+    app.state.sync_config_to_profile = _sync_config_to_profile
+
     def _read_profile_config(profile_id: str) -> dict:
         import yaml as _yaml
         path = _profile_dir(profile_id) / "config.yaml"

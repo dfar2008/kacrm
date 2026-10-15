@@ -59,6 +59,7 @@ def _make_fake_app(
     profile_manager = MagicMock()
     profile_manager.ensure_running = AsyncMock(return_value=port)
     profile_manager.touch = MagicMock()
+    profile_manager.mux_path_prefix.return_value = ""
 
     http_client = MagicMock()
     http_client.post = AsyncMock(return_value=response)
@@ -340,3 +341,19 @@ async def test_dispatch_record_usage_can_be_disabled(monkeypatch):
     await dispatch_to_hermes(app=app, envelope=envelope, record_usage=False)
 
     assert captured == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('prefix', ['', '/p/admin'])
+async def test_dispatch_syncs_profile_before_start_and_routes_mux(prefix):
+    app = _make_fake_app(profile_id='admin')
+    calls = []
+    app.state.sync_config_to_profile.side_effect = lambda uid, pid: calls.append(('sync', uid, pid))
+    async def start(pid, *, user_id):
+        calls.append(('start', user_id, pid))
+        return 9999
+    app.state.profile_manager.ensure_running.side_effect = start
+    app.state.profile_manager.mux_path_prefix.return_value = prefix
+    await dispatch_to_hermes(app=app, envelope=_envelope_for(user_id=7), profile_id='admin')
+    assert calls == [('sync', '7', 'admin'), ('start', '7', 'admin')]
+    assert app.state.http_client.post.call_args.args[0] == f'http://127.0.0.1:9999{prefix}/v1/chat/completions'

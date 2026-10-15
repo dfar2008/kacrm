@@ -80,8 +80,9 @@ async def dispatch_to_hermes(
         default = profile_store.ensure_default_profile(user_id=str(envelope.user_id))
         profile_id = default.id
     try:
-        from hermes_cloud.app.main import _sync_config_to_profile  # local
-        _sync_config_to_profile(str(envelope.user_id), profile_id)
+        sync_config = getattr(app.state, "sync_config_to_profile", None)
+        if sync_config is not None:
+            sync_config(str(envelope.user_id), profile_id)
     except Exception as exc:
         logger.debug("dispatch_to_hermes: config sync skipped: %s", exc)
 
@@ -90,7 +91,8 @@ async def dispatch_to_hermes(
     )
     profile_manager.touch(profile_id)
 
-    url = f"http://127.0.0.1:{port}/v1/chat/completions"
+    prefix = profile_manager.mux_path_prefix(profile_id)
+    url = f"http://127.0.0.1:{port}{prefix}/v1/chat/completions"
 
     # Build OpenAI-format body. Caller's body_extras may add ``tools``,
     # ``temperature``, ``model``, etc. — but ``messages`` always come

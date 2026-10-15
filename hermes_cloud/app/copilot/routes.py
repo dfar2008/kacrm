@@ -86,6 +86,24 @@ def _bearer(app: Any) -> str:
         return ""
 
 
+def _copilot_profile_id(request: Request, user_id: str) -> str:
+    """Match the model picker's owned-profile resolution for credentials and execution."""
+    store = getattr(request.app.state, "profile_store", None)
+    requested = request.headers.get("X-Profile-Id", "").strip()
+    if requested:
+        profile = store.get_profile(requested) if store is not None else None
+        if profile is None or profile.user_id != user_id or not profile.is_active:
+            raise HTTPException(status_code=403, detail={"error": {
+                "message": "Invalid or inaccessible profile.",
+                "type": "forbidden", "code": "invalid_profile",
+            }})
+        return requested
+    # Minimal standalone route consumers may have no profile store.
+    if store is None:
+        return user_id
+    return store.ensure_default_profile(user_id=user_id).id
+
+
 def register_routes(app) -> None:
     @router.post("/crm/send")
     async def copilot_crm_send(
@@ -131,6 +149,7 @@ def register_routes(app) -> None:
         # profile default model is used by the downstream hermes proxy.
         # If invalid for this user's active list, we surface a 400 here
         # rather than letting the agent fall back silently.
+        profile_id = _copilot_profile_id(request, str(user["id"]))
         model_override = payload.get("model")
         from hermes_cloud.app.llm_creds import (
             resolve_for_user, NoProfileModelConfigured, ModelNotInActiveList,
@@ -140,6 +159,7 @@ def register_routes(app) -> None:
                 request.app.state.config_store,
                 str(user["id"]),
                 model_override=model_override,
+                profile_id=profile_id,
             )
         except (NoProfileModelConfigured, ModelNotInActiveList) as exc:
             raise HTTPException(
@@ -208,9 +228,12 @@ def register_routes(app) -> None:
         )
         try:
             result = await dispatch_to_hermes(
-                app=request.app, envelope=envelope,
+                app=request.app, envelope=envelope, profile_id=profile_id,
                 bearer_key=_bearer(request.app),
                 body_extras={"model": creds.model},
+                # Multi-step CRM writes regularly exceed the generic 60s budget.
+                # Stay below the production reverse proxy's 300s timeout.
+                timeout_sec=240.0,
             )
         except Exception as exc:
             logger.exception("copilot_dispatch_failed: %s", exc)
@@ -355,6 +378,7 @@ def register_routes(app) -> None:
 
         # Resolve LLM creds exactly like /crm/send (model override → 400
         # on invalid; else profile default downstream).
+        profile_id = _copilot_profile_id(request, str(user["id"]))
         model_override = payload.get("model")
         from hermes_cloud.app.llm_creds import (
             resolve_for_user, NoProfileModelConfigured, ModelNotInActiveList,
@@ -364,6 +388,7 @@ def register_routes(app) -> None:
                 request.app.state.config_store,
                 str(user["id"]),
                 model_override=model_override,
+                profile_id=profile_id,
             )
         except (NoProfileModelConfigured, ModelNotInActiveList) as exc:
             raise HTTPException(
@@ -408,9 +433,12 @@ def register_routes(app) -> None:
         )
         try:
             result = await dispatch_to_hermes(
-                app=request.app, envelope=envelope,
+                app=request.app, envelope=envelope, profile_id=profile_id,
                 bearer_key=_bearer(request.app),
                 body_extras={"model": creds.model},
+                # Multi-step CRM writes regularly exceed the generic 60s budget.
+                # Stay below the production reverse proxy's 300s timeout.
+                timeout_sec=240.0,
             )
         except Exception as exc:
             logger.exception("copilot_scoped_dispatch_failed: %s", exc)
