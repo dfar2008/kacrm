@@ -46,6 +46,24 @@ def main():
         registered.add(item["file"])
         if (root / item["file"]).read_bytes() != (root / item["source"]).read_bytes():
             errors.append(f"Stale image copy: {item['file']}")
+    # Images served from GitHub's raw/main URLs can outlive the commit that
+    # replaced their bytes. Changed content must therefore get a new URL.
+    for name in registered:
+        suffix = sha256((root / name).read_bytes()).hexdigest()[:8]
+        if not Path(name).stem.endswith("-" + suffix):
+            errors.append(f"Image filename must end in content hash -{suffix}: {name}")
+
+    readme_images = []
+    for name in ["README.md", "README.zh-CN.md"]:
+        source = (root / name).read_text(encoding="utf-8")
+        targets = re.findall(r"!\[[^\]]*\]\(([^\s)]+)(?:\s+[^)]*)?\)", source)
+        targets += re.findall(r"<img\b[^>]*\bsrc=[\"']([^\"']+)[\"']", source, re.I)
+        readme_images.append([
+            re.sub(r"-[a-f0-9]{8}(?=\.[^.]+$)", "", Path(urlsplit(target).path).name)
+            for target in targets
+        ])
+    if readme_images[0] != readme_images[1]:
+        errors.append("English and Chinese README image sections differ in content or order")
     for folder in ["assets/readme", "assets/user-guide"]:
         for path in (root / folder).rglob("*"):
             if path.suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp", ".gif"}:

@@ -35,7 +35,7 @@ KaCRM is a conversational AI CRM that connects customer records, interactions, a
 | Reusable knowledge | Retain writing preferences, sales playbooks, fields, and skills, and refine them with feedback. |
 | Scheduled assistance | Run configured coaching and follow-up tasks and deliver results through connected channels. |
 
-![KaCRM product architecture: channels, agents, customer data, insights, and customization](../assets/user-guide/en/architecture.png)
+![KaCRM product architecture: channels, agents, customer data, insights, and customization](../assets/user-guide/en/architecture-99ebbb9e.png)
 
 *Figure 1-1. English product architecture illustration.*
 
@@ -47,7 +47,7 @@ KaCRM is a conversational AI CRM that connects customer records, interactions, a
 2. Enter the **email or username** and **password** provided by your administrator, then select **Sign in**.
 3. Your first sign-in initializes your personal AI workspace, called a profile.
 
-![KaCRM sign-in page](../assets/user-guide/en/01-login.png)
+![KaCRM sign-in page](../assets/user-guide/en/01-login-1e34a79a.png)
 
 *Figure 2-1. Sign-in page.*
 
@@ -57,7 +57,7 @@ Administrators create accounts and assign roles in **User Management**. Contact 
 
 On first sign-in, the setup wizard helps configure your workspace. You can also visit `/app/setup`. It has three tabs: **Quick Setup**, **Conversation Demo**, and **CRM Interface Tour**. Complete Quick Setup first, then explore the demonstrations.
 
-![Initial setup wizard](../assets/user-guide/en/19-setup-wizard.png)
+![Initial setup wizard](../assets/user-guide/en/19-setup-wizard-93ae581a.png)
 
 *Figure 2-2. Quick Setup: model, channel, and shortcuts.*
 
@@ -93,7 +93,7 @@ The **Conversation Demo** illustrates eight common interactions:
 
 Use the chapter controls to jump between steps, pause, or replay, then select **Try Chat** to begin.
 
-![Conversation demonstration](../assets/user-guide/en/20-setup-demo.png)
+![Conversation demonstration](../assets/user-guide/en/20-setup-demo-f4507a36.png)
 
 *Figure 2-3. Conversation demo showing an AI-assisted research field.*
 
@@ -110,7 +110,7 @@ The **CRM Interface Tour** introduces these eight parts of the interface through
 | Record Copilot | Read summaries and suggested questions, select a model, and work with the current record. |
 | Approvals | Review critical agent actions and approve or reject them. |
 
-![Current account list and record details](../assets/user-guide/en/21-crm-tour.png)
+![Current account list and record details](../assets/user-guide/en/21-crm-tour-c82fbffa.png)
 
 *Figure 2-4. A current capture of the account list and details, replacing the old recording frame. The recording is not included in this repository.*
 
@@ -118,7 +118,7 @@ The **CRM Interface Tour** introduces these eight parts of the interface through
 
 The left navigation bar has three main module icons and an account avatar at the bottom. Select the avatar to open the account menu. Entries appear according to your permissions.
 
-![Navigation bar and account menu](../assets/user-guide/en/18-nav-menu.png)
+![Navigation bar and account menu](../assets/user-guide/en/18-nav-menu-db6c9b3b.png)
 
 *Figure 2-5. Main modules and account-menu shortcuts.*
 
@@ -145,7 +145,7 @@ The agent can consult its usage-guide skill and explain the steps. It may resear
 
 Chat is the main workspace for collaborating with your agent. Describe what you want in natural language, inspect its responses and tool calls, and retain the conversation history. Configured coaching features may also surface suggested work for today.
 
-![Chat workspace with CRM tool calls](../assets/user-guide/en/02-chat-crm.png)
+![Chat workspace with CRM tool calls](../assets/user-guide/en/02-chat-crm-d10abd90.png)
 
 *Figure 3-1. Chat workspace.*
 
@@ -182,9 +182,9 @@ CRM modules organize sales records and their relationships. Communication and op
 
 Start with Overview to review sales progress, follow-up priorities, and AI activity, then open a module to inspect its list and records.
 
-![Current CRM overview](../assets/user-guide/en/22-crm-overview.png)
+![Current CRM overview](../assets/user-guide/en/22-crm-overview-6dc7c2be.png)
 
-![CRM interaction timeline and Copilot panel](../assets/user-guide/en/03-crm-records.png)
+![CRM interaction timeline and Copilot panel](../assets/user-guide/en/03-crm-records-73186278.png)
 
 *Figure 4-1. CRM records and interaction history.*
 
@@ -207,7 +207,7 @@ The Overview entry returns to the sales work overview. Its interaction section s
 - **Views:** Switch between table, cards, kanban, timeline, and calendar. Save named custom views. Kanban can support dragging cards between stages.
 - **Create:** Select the plus button to open a grouped form. Required fields are marked with an asterisk. Enter numeric values directly, such as `12.75`, and use the relationship pickers to link records. Create submits the form; Cancel closes it.
 
-![Current account creation form](../assets/user-guide/en/23-create-record.png)
+![Current account creation form](../assets/user-guide/en/23-create-record-f7f669e5.png)
 
 ### 4.3 Record details
 
@@ -243,7 +243,7 @@ Where available, open **Account menu → Unclaimed Messages**. Messages that cou
 
 Dashboards display business charts and let you ask the AI assistant to create or modify charts in natural language.
 
-![Current business dashboard and AI assistant](../assets/user-guide/en/04-dashboards.png)
+![Current business dashboard and AI assistant](../assets/user-guide/en/04-dashboards-68e85689.png)
 
 *Figure 5-1. Current dashboard and AI assistant, captured with personal scope selected.*
 
@@ -282,7 +282,7 @@ Each user has a personal agent profile. Open **Profile Settings / My Agent** fro
 
 Connect a supported platform to use the agent outside the web interface and deliver notifications. Incoming interactions can be associated with customer records.
 
-![Messaging-channel settings](../assets/user-guide/en/06-agent-channels.png)
+![Messaging-channel settings](../assets/user-guide/en/06-agent-channels-f075ec54.png)
 
 *Figure 6-1. Channel settings.*
 
@@ -311,7 +311,7 @@ Check the current Channels page and the destination platform for connection and 
 
 Skills package capabilities such as email drafting, research, and sales playbooks. The interface distinguishes **private skills** from **organization skills** shared with the team.
 
-![Current agent skill management](../assets/user-guide/en/13-agent-skills.png)
+![Current agent skill management](../assets/user-guide/en/13-agent-skills-c71c17da.png)
 
 *Figure 6-3. Current English skill-management interface.*
 
@@ -343,7 +343,7 @@ Configure provider API keys, base URLs, and API formats. Choose the default mode
 
 Scheduled tasks run recurring instructions, such as daily follow-up lists or weekly sales summaries, without requiring you to keep the web interface open. The runtime and delivery channel must be configured and running.
 
-![Current agent scheduled tasks](../assets/user-guide/en/14-agent-scheduling.png)
+![Current agent scheduled tasks](../assets/user-guide/en/14-agent-scheduling-856229c4.png)
 
 *Figure 6-4. Current English scheduled-task interface; delivery depends on configured channels.*
 
@@ -372,7 +372,7 @@ You can also request schedules in chat: “Send me today's follow-up accounts ev
 
 Tasks collect next actions from coaching or specialist agents. Filter pending, completed, or all tasks; mark a task complete, remove it through the available recoverable action, or open its linked CRM record. Due dates are displayed where configured. Access depends on your role and data scope.
 
-![Task list](../assets/user-guide/en/08-tasks.png)
+![Task list](../assets/user-guide/en/08-tasks-fc5b4f72.png)
 
 *Figure 7-1. Task list.*
 
@@ -384,7 +384,7 @@ Administrative entries appear in the account menu according to your permissions.
 
 Create or remove users, assign roles and departments, manage administrator permissions, reset passwords, and generate or rotate API keys. Inspect each user's agent status and apply the onboarding template where available.
 
-![User management](../assets/user-guide/en/09-admin-users.png)
+![User management](../assets/user-guide/en/09-admin-users-ac0ec079.png)
 
 *Figure 8-1. User management.*
 
@@ -402,7 +402,7 @@ Create, edit, clone, or remove roles. Use the module-by-operation permission mat
 - **Proposals:** Review field or option proposals generated by the agent, then approve or reject them.
 - **Change log:** Inspect who changed modules or fields, when, why, and the before-and-after values, subject to access permissions.
 
-![Current module and field builder](../assets/user-guide/en/10-schema-hub.png)
+![Current module and field builder](../assets/user-guide/en/10-schema-hub-e1ee4eb2.png)
 
 *Figure 8-2. Current English module and field builder.*
 
@@ -410,7 +410,7 @@ Create, edit, clone, or remove roles. Use the module-by-operation permission mat
 
 Configure defaults for new users: identity in `SOUL.md`, personality, skills, schedules, and models. New users inherit the configured template; existing users can receive it through user management where available. Select **Save Template** after editing.
 
-![Onboarding template configuration](../assets/user-guide/en/16-onboarding.png)
+![Onboarding template configuration](../assets/user-guide/en/16-onboarding-db20032e.png)
 
 *Figure 8-3. New-user template.*
 
@@ -420,7 +420,7 @@ Configure defaults for new users: identity in `SOUL.md`, personality, skills, sc
 
 **Export Audit** records metadata about dashboard drill-down CSV exports, including the actor, scope, and row or column counts. Filter by user and time where supported.
 
-![Usage statistics](../assets/user-guide/en/17-admin-usage.png)
+![Usage statistics](../assets/user-guide/en/17-admin-usage-7e8c0f50.png)
 
 *Figure 8-4. Usage summary and model/date details.*
 
@@ -432,13 +432,13 @@ Configure defaults for new users: identity in `SOUL.md`, personality, skills, sc
 - **Theme:** Open Theme from the account menu. Choose System, Light, or Dark; System follows operating-system appearance changes. Accent color is selected independently.
 - **Sign out:** End the current session using the account-menu action.
 
-![Current appearance and accent-color settings](../assets/user-guide/en/24-appearance.png)
+![Current appearance and accent-color settings](../assets/user-guide/en/24-appearance-119831bb.png)
 
 On mobile, record details use a single-column drawer. Creation forms fill the screen and keep their action buttons at the bottom.
 
-<img src="../assets/user-guide/en/25-mobile-detail.png" alt="Mobile account details in light mode" width="300" />
+<img src="../assets/user-guide/en/25-mobile-detail-f9352680.png" alt="Mobile account details in light mode" width="300" />
 
-<img src="../assets/user-guide/en/26-mobile-create-dark.png" alt="Mobile record creation in dark mode" width="300" />
+<img src="../assets/user-guide/en/26-mobile-create-dark-ff700329.png" alt="Mobile record creation in dark mode" width="300" />
 
 ## Frequently Asked Questions and Support
 

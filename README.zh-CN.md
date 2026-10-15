@@ -14,11 +14,11 @@ KaCRM 是基于 [Hermes Agent](https://github.com/NousResearch/hermes-agent) 的
 
 ## 产品架构
 
-![KaCRM 产品架构](assets/readme/architecture.png)
+![KaCRM 产品架构](assets/readme/architecture-ec447d52.png)
 
 *产品能力概览：渠道接入、Agent、客户资产、销售洞察与业务定制。具体可用能力取决于版本和部署配置。*
 
-![KaCRM 业务仪表盘与 AI 助手](assets/readme/dashboard.png)
+![KaCRM 业务仪表盘与 AI 助手](assets/readme/dashboard-6fe0bcca.png)
 
 *业务仪表盘：将销售指标、商机漏斗与 AI 助手放在同一页面。*
 
@@ -30,31 +30,31 @@ KaCRM 是基于 [Hermes Agent](https://github.com/NousResearch/hermes-agent) 的
 
 CRM 首页集中展示销售进展、优先跟进事项和 AI 动作；客户详情统一展示业务摘要、关联记录、互动时间线与 Copilot。
 
-![KaCRM 新版 CRM 首页](assets/user-guide/screens/22-crm-overview.png)
+![KaCRM 新版 CRM 首页](assets/user-guide/screens/22-crm-overview-f7cf28fc.png)
 
-![KaCRM 新版客户列表、详情与 Copilot](assets/user-guide/screens/03-crm-records.png)
+![KaCRM 新版客户列表、详情与 Copilot](assets/user-guide/screens/03-crm-records-d58a029a.png)
 
 新增记录采用分组表单，支持关系选择和小数金额；外观可跟随系统，也可固定为浅色或深色。
 
-![KaCRM 新版新增客户弹窗](assets/user-guide/screens/23-create-record.png)
+![KaCRM 新版新增客户弹窗](assets/user-guide/screens/23-create-record-7913f067.png)
 
 ### 配置适合团队的业务字段
 
 在模块管理中组织字段、调整布局和选项，并配置 AI 自动填充，让客户档案贴合团队的业务流程。
 
-![KaCRM 模块管理与字段配置](assets/readme/schema-builder.png)
+![KaCRM 模块管理与字段配置](assets/readme/schema-builder-435200fb.png)
 
 ### 为 Agent 配置业务技能
 
 将客户研究、会议准备、邮件起草与销售分析等能力组织为技能，按 Agent 启用或禁用。
 
-![KaCRM Agent 技能管理](assets/readme/agent-skills.png)
+![KaCRM Agent 技能管理](assets/readme/agent-skills-360a54df.png)
 
 ### 让重复工作按计划执行
 
 为 Agent 设置定时任务，查看调度、运行状态与下一次执行时间，管理每日提醒和周期总结。
 
-![KaCRM Agent 定时任务](assets/readme/agent-scheduling.png)
+![KaCRM Agent 定时任务](assets/readme/agent-scheduling-45260679.png)
 
 ## 为什么选择 KaCRM
 

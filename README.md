@@ -14,11 +14,11 @@ KaCRM is a conversational AI CRM powered by [Hermes Agent](https://github.com/No
 
 ## Product Architecture
 
-![KaCRM product architecture](assets/readme/en/architecture.png)
+![KaCRM product architecture](assets/readme/en/architecture-99ebbb9e.png)
 
 *Capability overview: channel integrations, agents, customer data, sales insights, and business customization. Availability depends on the version and deployment configuration.*
 
-![KaCRM business dashboard with an AI assistant](assets/readme/en/dashboard.png)
+![KaCRM business dashboard with an AI assistant](assets/readme/en/dashboard-68e85689.png)
 
 *Sales metrics, the opportunity funnel, and an AI assistant on one dashboard.*
 
@@ -30,31 +30,31 @@ These screenshots were captured from the current KaCRM interface with the Codex 
 
 The CRM overview brings sales progress, follow-up priorities, and AI activity together. Record details combine business summaries, related records, an interaction timeline, and Copilot.
 
-![Current KaCRM CRM overview](assets/user-guide/en/22-crm-overview.png)
+![Current KaCRM CRM overview](assets/user-guide/en/22-crm-overview-6dc7c2be.png)
 
-![Current KaCRM account list, details, and Copilot](assets/user-guide/en/03-crm-records.png)
+![Current KaCRM account list, details, and Copilot](assets/user-guide/en/03-crm-records-73186278.png)
 
 Grouped creation forms support relationship selection and decimal amounts. Appearance can follow the operating system or stay in light or dark mode.
 
-![Current KaCRM account creation drawer](assets/user-guide/en/23-create-record.png)
+![Current KaCRM account creation drawer](assets/user-guide/en/23-create-record-f7f669e5.png)
 
 ### Shape your customer records around your business
 
 Organize fields, layouts, and options in the module builder, and configure AI-assisted field filling to match your team's workflow.
 
-![KaCRM module builder and field configuration](assets/readme/en/schema-builder.png)
+![KaCRM module builder and field configuration](assets/readme/en/schema-builder-e1ee4eb2.png)
 
 ### Give agents the skills your team needs
 
 Organize customer research, meeting preparation, email drafting, and sales analysis as skills that can be enabled or disabled for each agent.
 
-![KaCRM agent skill management](assets/readme/en/agent-skills.png)
+![KaCRM agent skill management](assets/readme/en/agent-skills-c71c17da.png)
 
 ### Schedule recurring work
 
 Create agent tasks, inspect their schedules and execution status, and manage daily reminders and periodic summaries.
 
-![KaCRM agent scheduled tasks](assets/readme/en/agent-scheduling.png)
+![KaCRM agent scheduled tasks](assets/readme/en/agent-scheduling-55bb5004.png)
 
 ## Why KaCRM
 

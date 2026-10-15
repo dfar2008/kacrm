@@ -4,7 +4,7 @@
   "method": "Codex in-app browser; UI screenshots unretouched; architecture rendered from versioned HTML; native JPEG captures losslessly re-encoded as PNG without changing decoded pixels",
   "captures": [
     {
-      "file": "assets/user-guide/screens/04-dashboards.png",
+      "file": "assets/user-guide/screens/04-dashboards-6fe0bcca.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -17,7 +17,7 @@
       "sha256": "6fe0bccaca9ce9b2a14820ec46d63d0b29b167293382453008be7abed386d226"
     },
     {
-      "file": "assets/user-guide/screens/10-schema-hub.png",
+      "file": "assets/user-guide/screens/10-schema-hub-435200fb.png",
       "height": 1000,
       "locale": "zh-CN",
       "mode": "light",
@@ -30,7 +30,7 @@
       "sha256": "435200fbc24e3838cf1054ff52d33586768fc9cde4e5bf40469624c8af242380"
     },
     {
-      "file": "assets/user-guide/screens/13-agent-skills.png",
+      "file": "assets/user-guide/screens/13-agent-skills-360a54df.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -43,7 +43,7 @@
       "sha256": "360a54df8faeba9d1a282b7b9e2be55777814f45ed942265c6976eefd8cc3227"
     },
     {
-      "file": "assets/user-guide/screens/14-agent-scheduling.png",
+      "file": "assets/user-guide/screens/14-agent-scheduling-e5d13c0d.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -56,7 +56,7 @@
       "sha256": "e5d13c0d5c8e3cf508d2af9284013e4aa051c2d7be6c2253a3591aa4c2d9e69b"
     },
     {
-      "file": "assets/readme/agent-scheduling.png",
+      "file": "assets/readme/agent-scheduling-45260679.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -69,7 +69,7 @@
       "sha256": "45260679611084472e27bff861ecd91380ab690bc6a400790bc8a5ac67bdbece"
     },
     {
-      "file": "assets/user-guide/screens/06-agent-channels.png",
+      "file": "assets/user-guide/screens/06-agent-channels-2731eb9b.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -82,7 +82,7 @@
       "sha256": "2731eb9b713403ba3171f18264d2937955f2fcfcef8dc592814f3977d8caa78d"
     },
     {
-      "file": "assets/user-guide/screens/16-onboarding.png",
+      "file": "assets/user-guide/screens/16-onboarding-25af3372.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -95,7 +95,7 @@
       "sha256": "25af3372e560f1eb83d633fd71eb188a71c8c9fefdcbb8e4a8e3a5727d6a95a4"
     },
     {
-      "file": "assets/user-guide/screens/09-admin-users.png",
+      "file": "assets/user-guide/screens/09-admin-users-8d9484d2.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -108,7 +108,7 @@
       "sha256": "8d9484d272c189e321011dede5309be1f4eb9f70eb010795febff2e2667e242a"
     },
     {
-      "file": "assets/user-guide/screens/17-admin-usage.png",
+      "file": "assets/user-guide/screens/17-admin-usage-4660e08d.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -121,7 +121,7 @@
       "sha256": "4660e08d11dd1e4afb68180e51a9a6f83bea64a3fa30652dc8b7576ba2064894"
     },
     {
-      "file": "assets/user-guide/screens/08-tasks.png",
+      "file": "assets/user-guide/screens/08-tasks-10e50865.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -134,7 +134,7 @@
       "sha256": "10e508654916ee6e87541e80740f2777ee88dd65d5ac4e36198f3726ecc5e49e"
     },
     {
-      "file": "assets/user-guide/screens/19-setup-wizard.png",
+      "file": "assets/user-guide/screens/19-setup-wizard-ec058ceb.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -147,7 +147,7 @@
       "sha256": "ec058cebdf4510946ee02d5e722dcc51c96d8bc32eca61ed789e6bc90a1fbab1"
     },
     {
-      "file": "assets/user-guide/screens/20-setup-demo.png",
+      "file": "assets/user-guide/screens/20-setup-demo-2b62a610.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -160,7 +160,7 @@
       "sha256": "2b62a6109dae247b11e6a49b0a602f3b5427b924d0164073d9a9f38268f86f2b"
     },
     {
-      "file": "assets/user-guide/screens/03-crm-records.png",
+      "file": "assets/user-guide/screens/03-crm-records-d58a029a.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -173,7 +173,7 @@
       "sha256": "d58a029a042fa918f97a5d0e71ae8d2ecfcaee03ba37c5e6cb3bf960051d2721"
     },
     {
-      "file": "assets/user-guide/screens/21-crm-tour.png",
+      "file": "assets/user-guide/screens/21-crm-tour-b17d1ff6.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -186,7 +186,7 @@
       "sha256": "b17d1ff612cabc8707dd3cd156977f01b59467b92b8e1df7de59071ee87e3aa8"
     },
     {
-      "file": "assets/user-guide/screens/23-create-record.png",
+      "file": "assets/user-guide/screens/23-create-record-7913f067.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -199,7 +199,7 @@
       "sha256": "7913f067032e477134d9b93784709555495c7a14d35a53bb3cb684db983dc8c5"
     },
     {
-      "file": "assets/user-guide/screens/18-nav-menu.png",
+      "file": "assets/user-guide/screens/18-nav-menu-c5712719.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -212,7 +212,7 @@
       "sha256": "c57127193ad7ff2ba7b468492b58feefe3c27375e51d5e31aab68a643b090d68"
     },
     {
-      "file": "assets/user-guide/screens/24-appearance.png",
+      "file": "assets/user-guide/screens/24-appearance-28f6ba37.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -225,7 +225,7 @@
       "sha256": "28f6ba3788285a8f9643865e81130680523dfd21229b315ca6624500a1482995"
     },
     {
-      "file": "assets/user-guide/screens/02-chat-crm.png",
+      "file": "assets/user-guide/screens/02-chat-crm-da64663e.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -238,7 +238,7 @@
       "sha256": "da64663ed94f5e742e1a267ec7635a97c00d9a1bd7fdbef6963140a21f5f2516"
     },
     {
-      "file": "assets/user-guide/screens/01-login.png",
+      "file": "assets/user-guide/screens/01-login-b4b8bc9e.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -251,7 +251,7 @@
       "sha256": "b4b8bc9e2e6e9b6ebf5122dfed711a6824482aa4f3e30763758fe3881e1c44ba"
     },
     {
-      "file": "assets/user-guide/screens/22-crm-overview.png",
+      "file": "assets/user-guide/screens/22-crm-overview-f7cf28fc.png",
       "height": 720,
       "locale": "zh-CN",
       "mode": "light",
@@ -264,7 +264,7 @@
       "sha256": "f7cf28fc96d5e378e346c89c2931e52385c2824932c5cd5bbf602839eb1a2ae8"
     },
     {
-      "file": "assets/user-guide/en/22-crm-overview.png",
+      "file": "assets/user-guide/en/22-crm-overview-6dc7c2be.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -277,7 +277,7 @@
       "sha256": "6dc7c2be96a68cd9cb57f9d5cbc0f2ce3aa1d2b39ec4b8a6fa1a2d2a74580a3d"
     },
     {
-      "file": "assets/user-guide/en/01-login.png",
+      "file": "assets/user-guide/en/01-login-1e34a79a.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -290,7 +290,7 @@
       "sha256": "1e34a79a2cd1a2ef7920f93a38811a5a8962c11cfd64bcb74edb0820ac8fbe2e"
     },
     {
-      "file": "assets/user-guide/en/02-chat-crm.png",
+      "file": "assets/user-guide/en/02-chat-crm-d10abd90.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -303,7 +303,7 @@
       "sha256": "d10abd9099abf08539e9ecf8537cabdb933a69e3000a3475e1e1b0e2c57f0469"
     },
     {
-      "file": "assets/user-guide/en/03-crm-records.png",
+      "file": "assets/user-guide/en/03-crm-records-73186278.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -316,7 +316,7 @@
       "sha256": "73186278a38030ba55131c174f2f142041ed2a57c53ebe19f0b9275022e6b096"
     },
     {
-      "file": "assets/user-guide/en/21-crm-tour.png",
+      "file": "assets/user-guide/en/21-crm-tour-c82fbffa.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -329,7 +329,7 @@
       "sha256": "c82fbffadaf2309d985741b0588b59270e2b47317d7639b3e5acf83e8edfb787"
     },
     {
-      "file": "assets/user-guide/en/23-create-record.png",
+      "file": "assets/user-guide/en/23-create-record-f7f669e5.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -342,7 +342,7 @@
       "sha256": "f7f669e5f0cf0c10edb8d3b4064b736b7fec9899cedc36589c2735b832e35a4a"
     },
     {
-      "file": "assets/user-guide/en/18-nav-menu.png",
+      "file": "assets/user-guide/en/18-nav-menu-db6c9b3b.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -355,7 +355,7 @@
       "sha256": "db6c9b3bdf54ba4d8629fdfd256facbb4c9b05b3b082dcf0e400c166a90f39e2"
     },
     {
-      "file": "assets/user-guide/en/24-appearance.png",
+      "file": "assets/user-guide/en/24-appearance-119831bb.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -368,7 +368,7 @@
       "sha256": "119831bb8870f875f5e8973669a4f51beaf448a35509f9ebad0a64fbd1054cc2"
     },
     {
-      "file": "assets/user-guide/en/10-schema-hub.png",
+      "file": "assets/user-guide/en/10-schema-hub-e1ee4eb2.png",
       "height": 1000,
       "locale": "en-US",
       "mode": "light",
@@ -381,7 +381,7 @@
       "sha256": "e1ee4eb2d1f9d69543e836b69627fbeff6202176e03c419d7384b59ef7809d96"
     },
     {
-      "file": "assets/user-guide/en/13-agent-skills.png",
+      "file": "assets/user-guide/en/13-agent-skills-c71c17da.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -394,7 +394,7 @@
       "sha256": "c71c17da96af3c48b9ec2c826bf4366a44fc073e91ee838a68789d4b158aae3c"
     },
     {
-      "file": "assets/user-guide/en/14-agent-scheduling.png",
+      "file": "assets/user-guide/en/14-agent-scheduling-856229c4.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -407,7 +407,7 @@
       "sha256": "856229c43d139353c5da1a683fad038ee0803de674f162edba4c11dcc91e5732"
     },
     {
-      "file": "assets/readme/en/agent-scheduling.png",
+      "file": "assets/readme/en/agent-scheduling-55bb5004.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -420,7 +420,7 @@
       "sha256": "55bb50044d0846cca642c17c47e11af21ab6dd17321b726467eb4dbfe281781d"
     },
     {
-      "file": "assets/user-guide/en/06-agent-channels.png",
+      "file": "assets/user-guide/en/06-agent-channels-f075ec54.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -433,7 +433,7 @@
       "sha256": "f075ec54eb5e51c3f9e4d2f30637bb9a6d3034690f5492b563085cff1f793e70"
     },
     {
-      "file": "assets/user-guide/en/16-onboarding.png",
+      "file": "assets/user-guide/en/16-onboarding-db20032e.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -446,7 +446,7 @@
       "sha256": "db20032e0945298b8b77221ee7cd1906ec47b99b942d9878f640b9b4d27e867e"
     },
     {
-      "file": "assets/user-guide/en/09-admin-users.png",
+      "file": "assets/user-guide/en/09-admin-users-ac0ec079.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -459,7 +459,7 @@
       "sha256": "ac0ec079c73c9c8b83f26e4ac064bd7a221b6ff1bc43d62f5ff360e3e17f0064"
     },
     {
-      "file": "assets/user-guide/en/17-admin-usage.png",
+      "file": "assets/user-guide/en/17-admin-usage-7e8c0f50.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -472,7 +472,7 @@
       "sha256": "7e8c0f505afd7bdb95efb32e355c83dc87435828cffdbc68dd59112b4aa14d2d"
     },
     {
-      "file": "assets/user-guide/en/08-tasks.png",
+      "file": "assets/user-guide/en/08-tasks-fc5b4f72.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -485,7 +485,7 @@
       "sha256": "fc5b4f72eff1304b3ebb5526403b69ae72470830cc92f3fb1fddab1489ef3a4e"
     },
     {
-      "file": "assets/user-guide/en/19-setup-wizard.png",
+      "file": "assets/user-guide/en/19-setup-wizard-93ae581a.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -498,7 +498,7 @@
       "sha256": "93ae581a854732831287ac359b9266e11cfb0256c0806a08e0bb09d420b8ec80"
     },
     {
-      "file": "assets/user-guide/en/20-setup-demo.png",
+      "file": "assets/user-guide/en/20-setup-demo-f4507a36.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -511,7 +511,7 @@
       "sha256": "f4507a369954dbd9741d67f581b0b37c3b6fddc17a82977a55775ca7cc33d40c"
     },
     {
-      "file": "assets/user-guide/en/04-dashboards.png",
+      "file": "assets/user-guide/en/04-dashboards-68e85689.png",
       "height": 720,
       "locale": "en-US",
       "mode": "light",
@@ -524,7 +524,7 @@
       "sha256": "68e8568979bac20998ffa18bf4a2e5adf860bf7cbb22bb55381f3b52ffc4ca7c"
     },
     {
-      "file": "assets/user-guide/en/25-mobile-detail.png",
+      "file": "assets/user-guide/en/25-mobile-detail-f9352680.png",
       "height": 844,
       "locale": "en-US",
       "mode": "light",
@@ -537,7 +537,7 @@
       "sha256": "f9352680f447c602471df3b8d0b1e3e17d3efbfbd83ea68abc8f1ac00f187a78"
     },
     {
-      "file": "assets/user-guide/en/26-mobile-create-dark.png",
+      "file": "assets/user-guide/en/26-mobile-create-dark-ff700329.png",
       "height": 844,
       "locale": "en-US",
       "mode": "dark",
@@ -550,7 +550,7 @@
       "sha256": "ff700329aa2e43c671cc17d32502c4dc0b839e1132df9974bca061b3d9bae084"
     },
     {
-      "file": "assets/user-guide/screens/26-mobile-create-dark.png",
+      "file": "assets/user-guide/screens/26-mobile-create-dark-2b995bbb.png",
       "height": 844,
       "locale": "zh-CN",
       "mode": "dark",
@@ -563,7 +563,7 @@
       "sha256": "2b995bbb7d2094631103bd49644bf445901cda09c52f58395a6dc86065e7a1cc"
     },
     {
-      "file": "assets/user-guide/screens/25-mobile-detail.png",
+      "file": "assets/user-guide/screens/25-mobile-detail-965f0388.png",
       "height": 844,
       "locale": "zh-CN",
       "mode": "light",
@@ -576,7 +576,7 @@
       "sha256": "965f03885d6153be89979d113b6a6b15fa0bd5d2bfd5b3df03f6dbfda7854286"
     },
     {
-      "file": "assets/readme/architecture.png",
+      "file": "assets/readme/architecture-ec447d52.png",
       "height": 720,
       "locale": "zh-CN",
       "title": "",
@@ -588,7 +588,7 @@
       "sha256": "ec447d524bf226e91c0b6d60cf05c1c171f344ade0f92056fea709f1a439176b"
     },
     {
-      "file": "assets/readme/en/architecture.png",
+      "file": "assets/readme/en/architecture-99ebbb9e.png",
       "height": 720,
       "locale": "en",
       "title": "",
@@ -602,32 +602,33 @@
   ],
   "copies": [
     {
-      "file": "assets/readme/dashboard.png",
-      "source": "assets/user-guide/screens/04-dashboards.png"
+      "file": "assets/readme/dashboard-6fe0bcca.png",
+      "source": "assets/user-guide/screens/04-dashboards-6fe0bcca.png"
     },
     {
-      "file": "assets/readme/schema-builder.png",
-      "source": "assets/user-guide/screens/10-schema-hub.png"
+      "file": "assets/readme/schema-builder-435200fb.png",
+      "source": "assets/user-guide/screens/10-schema-hub-435200fb.png"
     },
     {
-      "file": "assets/readme/agent-skills.png",
-      "source": "assets/user-guide/screens/13-agent-skills.png"
+      "file": "assets/readme/agent-skills-360a54df.png",
+      "source": "assets/user-guide/screens/13-agent-skills-360a54df.png"
     },
     {
-      "file": "assets/readme/en/dashboard.png",
-      "source": "assets/user-guide/en/04-dashboards.png"
+      "file": "assets/readme/en/dashboard-68e85689.png",
+      "source": "assets/user-guide/en/04-dashboards-68e85689.png"
     },
     {
-      "file": "assets/readme/en/schema-builder.png",
-      "source": "assets/user-guide/en/10-schema-hub.png"
+      "file": "assets/readme/en/schema-builder-e1ee4eb2.png",
+      "source": "assets/user-guide/en/10-schema-hub-e1ee4eb2.png"
     },
     {
-      "file": "assets/readme/en/agent-skills.png",
-      "source": "assets/user-guide/en/13-agent-skills.png"
+      "file": "assets/readme/en/agent-skills-c71c17da.png",
+      "source": "assets/user-guide/en/13-agent-skills-c71c17da.png"
     },
     {
-      "file": "assets/user-guide/en/architecture.png",
-      "source": "assets/readme/en/architecture.png"
+      "file": "assets/user-guide/en/architecture-99ebbb9e.png",
+      "source": "assets/readme/en/architecture-99ebbb9e.png"
     }
-  ]
+  ],
+  "image_naming": "Filename suffix is the first 8 characters of the image SHA-256. New pixels get a new URL to avoid stale GitHub image caches."
 }

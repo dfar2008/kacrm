@@ -35,7 +35,7 @@ KaCRM 是一款**会进化的对话式 AI CRM**。传统 CRM 为「管理层填�
 | ④ 越用越懂你 | 复用话术画像和销售方法论，根据反馈请求更新字段与技能 |
 | ⑤ 它会自己上班 | 配置并运行定时任务后，可通过已连接的主渠道投递跟进清单 |
 
-![图 1-1　KaCRM 产品架构:触点层 → AI Agent 核心 → CRM 数据资产 → 洞察与教练](../assets/readme/architecture.png)
+![图 1-1　KaCRM 产品架构:触点层 → AI Agent 核心 → CRM 数据资产 → 洞察与教练](../assets/readme/architecture-ec447d52.png)
 
 图 1-1　KaCRM 产品架构:触点层 → AI Agent 核心 → CRM 数据资产 → 洞察与教练
 
@@ -47,7 +47,7 @@ KaCRM 是一款**会进化的对话式 AI CRM**。传统 CRM 为「管理层填�
 2. 输入管理员分配的**邮箱 / 用户名**与**密码**,点击「登录」。
 3. 首次登录后,系统自动为你创建专属的 AI 工作档案(Profile)。
 
-![图 2-1　登录页](../assets/user-guide/screens/01-login.png)
+![图 2-1　登录页](../assets/user-guide/screens/01-login-b4b8bc9e.png)
 
 图 2-1　登录页
 
@@ -59,7 +59,7 @@ KaCRM 是一款**会进化的对话式 AI CRM**。传统 CRM 为「管理层填�
 
 向导页顶部有**三个标签**:**「快速设置」**(默认,即下方三步)、**「对话演示」**、**「CRM 界面导览」**——先在「快速设置」配好,再随时点另两个标签看 KaCRM 怎么用。
 
-![图 2-2　首次设置向导「快速设置」标签:① 模型 ② 通道 ③ 快捷操作(顶部可切「对话演示 / CRM 界面导览」)](../assets/user-guide/screens/19-setup-wizard.png)
+![图 2-2　首次设置向导「快速设置」标签:① 模型 ② 通道 ③ 快捷操作(顶部可切「对话演示 / CRM 界面导览」)](../assets/user-guide/screens/19-setup-wizard-ec058ceb.png)
 
 图 2-2　首次设置向导「快速设置」标签:① 模型 ② 通道 ③ 快捷操作(顶部可切「对话演示 / CRM 界面导览」)
 
@@ -99,7 +99,7 @@ KaCRM 是一款**会进化的对话式 AI CRM**。传统 CRM 为「管理层填�
 
 演示顶部有 **8 个章节圆点**,点哪一步就跳到哪一步,也可随时「暂停 / 重播」;看完点「进入对话试试 →」即可亲手体验。
 
-![图 2-3　「对话演示」八步导览(图为第 3 步:AI 字段联网调研自动填,含置信度与来源)](../assets/user-guide/screens/20-setup-demo.png)
+![图 2-3　「对话演示」八步导览(图为第 3 步:AI 字段联网调研自动填,含置信度与来源)](../assets/user-guide/screens/20-setup-demo-2b62a610.png)
 
 图 2-3　「对话演示」八步导览(图为第 3 步:AI 字段联网调研自动填,含置信度与来源)
 
@@ -116,7 +116,7 @@ KaCRM 是一款**会进化的对话式 AI CRM**。传统 CRM 为「管理层填�
 | ⑦ 记录 Copilot | 每条记录自带 AI:自动摘要 + 建议提问,选好模型一句话驱动 CRM。 |
 | ⑧ 审批中心 | Agent 的关键动作先送审批,「批准 / 拒绝」一键拍板——AI 干活,人拍板。 |
 
-![图 2-4　新版客户列表与记录详情](../assets/user-guide/screens/21-crm-tour.png)
+![图 2-4　新版客户列表与记录详情](../assets/user-guide/screens/21-crm-tour-b17d1ff6.png)
 
 图 2-4　当前客户列表与详情实拍。界面导览录屏不随本仓库分发；以上图片展示当前页面，而非旧录屏截帧。
 
@@ -124,7 +124,7 @@ KaCRM 是一款**会进化的对话式 AI CRM**。传统 CRM 为「管理层填�
 
 登录后,界面**最左侧是一条导航栏**。它分两部分:上方三个**主模块图标**,底部一个**账号头像**——点头像会弹出**账号菜单**,系统的其余功能入口都在这里(菜单项按你的权限自动显示/隐藏)。
 
-![图 2-5　左侧导航栏(主模块)+ 点头像弹出的账号菜单(全部功能入口)](../assets/user-guide/screens/18-nav-menu.png)
+![图 2-5　左侧导航栏(主模块)+ 点头像弹出的账号菜单(全部功能入口)](../assets/user-guide/screens/18-nav-menu-c5712719.png)
 
 图 2-5　左侧导航栏(主模块)+ 点头像弹出的账号菜单(全部功能入口)
 
@@ -153,7 +153,7 @@ AI 会即时给出操作步骤。可以把它理解成**这份指南的"活版�
 
 「对话」是你与 AI 助手协作的主场。用自然语言告诉它要做什么,它会完成对应的 CRM 操作并把完整对话留档;首页还汇集了 AI 为你准备的「今日该做什么」。
 
-![图 3-1　对话工作台](../assets/user-guide/screens/02-chat-crm.png)
+![图 3-1　对话工作台](../assets/user-guide/screens/02-chat-crm-da64663e.png)
 
 图 3-1　对话工作台
 
@@ -190,9 +190,9 @@ AI 会即时给出操作步骤。可以把它理解成**这份指南的"活版�
 
 「今日概览」集中展示销售进展、优先跟进事项和 AI 动作。先在概览安排工作，再进入模块查看列表与记录详情。
 
-![新版 CRM 今日概览](../assets/user-guide/screens/22-crm-overview.png)
+![新版 CRM 今日概览](../assets/user-guide/screens/22-crm-overview-f7cf28fc.png)
 
-![图 4-1　CRM 记录 · 互动时间线 + Copilot 侧栏](../assets/user-guide/screens/03-crm-records.png)
+![图 4-1　CRM 记录 · 互动时间线 + Copilot 侧栏](../assets/user-guide/screens/03-crm-records-d58a029a.png)
 
 图 4-1　CRM 记录 · 互动时间线 + Copilot 侧栏
 
@@ -215,7 +215,7 @@ AI 会即时给出操作步骤。可以把它理解成**这份指南的"活版�
 - **列表视图**:除默认表格外,同一模块还能切**卡片 / 看板(Kanban,按状态列拖拽)/ 时间线 / 日历**视图;在列表上方视图栏切换,视图由「自定义视图」按名称保存。
 - **新建记录**:「+」按钮打开分组表单，必填字段带星号，支持文本、日期、小数金额、下拉、用户及关联选择。数字字段直接填写数值，例如 `12.75`；底部「创建」提交，「取消」关闭。
 
-![新版客户新增记录弹窗](../assets/user-guide/screens/23-create-record.png)
+![新版客户新增记录弹窗](../assets/user-guide/screens/23-create-record-7913f067.png)
 
 ### 4.3 记录详情
 
@@ -251,7 +251,7 @@ AI 会即时给出操作步骤。可以把它理解成**这份指南的"活版�
 
 看板提供实时业务图表,并支持用自然语言让 AI 自助生成 / 修改图表——无需学习复杂的报表配置。
 
-![图 5-1　数据看板 + AI 助手自助加图表](../assets/user-guide/screens/04-dashboards.png)
+![图 5-1　数据看板 + AI 助手自助加图表](../assets/user-guide/screens/04-dashboards-6fe0bcca.png)
 
 图 5-1　数据看板 + AI 助手自助加图表
 
@@ -290,7 +290,7 @@ AI 助手支持上传截图 / 表格作为参考;发送前可选择大模型。�
 
 把 Agent 连接到客户日常使用的平台,消息自动归入客户档案,并可主动推送通知。
 
-![图 6-1　渠道 & 平台](../assets/user-guide/screens/06-agent-channels.png)
+![图 6-1　渠道 & 平台](../assets/user-guide/screens/06-agent-channels-2731eb9b.png)
 
 图 6-1　渠道 & 平台
 
@@ -321,7 +321,7 @@ AI 助手支持上传截图 / 表格作为参考;发送前可选择大模型。�
 
 技能是 Agent 在对话中可调用的能力(写邮件、查资料、各类销售方法论等)。分两类:**🧠 私有技能**(Agent 自学、专属于你)与 **🏢 组织技能**(来自组织共享库)。
 
-![图 6-3　技能管理:开关 / 搜索 / 批量启用](../assets/user-guide/screens/13-agent-skills.png)
+![图 6-3　技能管理:开关 / 搜索 / 批量启用](../assets/user-guide/screens/13-agent-skills-360a54df.png)
 
 图 6-3　技能管理:开关 / 搜索 / 批量启用
 
@@ -353,7 +353,7 @@ AI 助手支持上传截图 / 表格作为参考;发送前可选择大模型。�
 
 定时任务可以周期性执行指令，如每日跟进清单或每周业绩总结。需要正确配置调度、保持 Agent 网关运行，并设置可用的结果投递渠道；不需要保持网页打开。
 
-![图 6-4　定时任务列表:调度 / 上次 · 下次运行 / 状态 / 操作](../assets/user-guide/screens/14-agent-scheduling.png)
+![图 6-4　定时任务列表:调度 / 上次 · 下次运行 / 状态 / 操作](../assets/user-guide/screens/14-agent-scheduling-e5d13c0d.png)
 
 图 6-4　定时任务列表:调度 / 上次 · 下次运行 / 状态 / 操作
 
@@ -381,7 +381,7 @@ AI 助手支持上传截图 / 表格作为参考;发送前可选择大模型。�
 
 「任务」汇总由 Coach / 专家 Agent 提出的下一步动作。可按 待办 / 已完成 / 全部 筛选,标记「✓ 完成」或撤销(软删除,不影响审计),点击任务可跳转关联的 CRM 记录;支持截止日期显示。访问取决于角色权限与数据范围。
 
-![图 7-1　任务列表(待办 / 已完成 / 全部)](../assets/user-guide/screens/08-tasks.png)
+![图 7-1　任务列表(待办 / 已完成 / 全部)](../assets/user-guide/screens/08-tasks-10e50865.png)
 
 图 7-1　任务列表(待办 / 已完成 / 全部)
 
@@ -393,7 +393,7 @@ AI 助手支持上传截图 / 表格作为参考;发送前可选择大模型。�
 
 创建 / 删除用户,分配角色与部门,管理管理员权限、重置密码、生成 / 重置 API Key;查看每个用户的 Agent 进程状态;可一键对用户应用「新用户模板」。
 
-![图 8-1　用户管理](../assets/user-guide/screens/09-admin-users.png)
+![图 8-1　用户管理](../assets/user-guide/screens/09-admin-users-8d9484d2.png)
 
 图 8-1　用户管理
 
@@ -411,7 +411,7 @@ AI 助手支持上传截图 / 表格作为参考;发送前可选择大模型。�
 - **字段提议**:AI 发现缺字段 / 缺选项时主动生成提议,管理员在此**批准 / 拒绝**,通过即入库。
 - **变更日志**:所有字段 / 模块的修改历史(谁、何时、改了什么、原因、前后差异),全员可查,透明可审计。
 
-![图 8-2　Schema Hub:字段管理 + AI 字段助手(说一句即可加字段)](../assets/user-guide/screens/10-schema-hub.png)
+![图 8-2　Schema Hub:字段管理 + AI 字段助手(说一句即可加字段)](../assets/user-guide/screens/10-schema-hub-435200fb.png)
 
 图 8-2　Schema Hub:字段管理 + AI 字段助手(说一句即可加字段)
 
@@ -419,7 +419,7 @@ AI 助手支持上传截图 / 表格作为参考;发送前可选择大模型。�
 
 为新增用户预设默认的身份(SOUL.md)、个性(Personality)、技能、定时任务与模型配置,新用户自动继承;已有用户可在「用户管理」手动应用。各标签页改完点右上「保存模板」生效。
 
-![图 8-3　新用户模板:预设身份 / 个性 / 技能 / 定时任务 / 模型](../assets/user-guide/screens/16-onboarding.png)
+![图 8-3　新用户模板:预设身份 / 个性 / 技能 / 定时任务 / 模型](../assets/user-guide/screens/16-onboarding-25af3372.png)
 
 图 8-3　新用户模板:预设身份 / 个性 / 技能 / 定时任务 / 模型
 
@@ -427,7 +427,7 @@ AI 助手支持上传截图 / 表格作为参考;发送前可选择大模型。�
 
 **用量统计**:按模型 / 日期统计 token 用量、会话数与估算成本(可选 7 / 30 / 90 / 180 天窗口),顶部为汇总指标卡,下方按模型、按日明细。**导出审计**:记录所有看板钻取 CSV 导出的元数据(操作人、范围、行列数等),可按人和时间查询。
 
-![图 8-4　用量统计:汇总指标卡 + 按模型 / 按日明细](../assets/user-guide/screens/17-admin-usage.png)
+![图 8-4　用量统计:汇总指标卡 + 按模型 / 按日明细](../assets/user-guide/screens/17-admin-usage-4660e08d.png)
 
 图 8-4　用量统计:汇总指标卡 + 按模型 / 按日明细
 
@@ -439,13 +439,13 @@ AI 助手支持上传截图 / 表格作为参考;发送前可选择大模型。�
 - **主题**:在账号菜单打开「主题」。外观可选「跟随系统」「浅色」「深色」；跟随系统会响应操作系统外观变化，强调色独立选择并保留。
 - **注销登录**:退出当前会话(需确认)。
 
-![新版外观与强调色设置](../assets/user-guide/screens/24-appearance.png)
+![新版外观与强调色设置](../assets/user-guide/screens/24-appearance-28f6ba37.png)
 
 手机端的详情抽屉采用单列字段，新增记录使用全屏表单，底部保留操作按钮。
 
-<img src="../assets/user-guide/screens/25-mobile-detail.png" alt="手机端浅色客户详情" width="300" />
+<img src="../assets/user-guide/screens/25-mobile-detail-965f0388.png" alt="手机端浅色客户详情" width="300" />
 
-<img src="../assets/user-guide/screens/26-mobile-create-dark.png" alt="手机端深色新增记录" width="300" />
+<img src="../assets/user-guide/screens/26-mobile-create-dark-2b995bbb.png" alt="手机端深色新增记录" width="300" />
 
 ## 常见问题与支持
 
