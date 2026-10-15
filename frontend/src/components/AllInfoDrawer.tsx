@@ -322,7 +322,13 @@ export function AllInfoDrawer({
           }}
           title={editable && !isEditing ? t("allinfo.btn.edit_title") : undefined}
           onClick={editable && !isEditing
-            ? () => { setEditingName(f.field_name); setEditingValue(editStart); }
+            ? (event) => {
+                // Relation editors render in a portal; retain the value row's
+                // height while its normal content is temporarily absent.
+                const height = event.currentTarget.closest<HTMLElement>(".info-row")?.getBoundingClientRect().height || 0;
+                setSavedRowHeights(prev => ({ ...prev, [f.field_name]: Math.max(prev[f.field_name] || 0, height) }));
+                setEditingName(f.field_name); setEditingValue(editStart);
+              }
             : undefined}
         >
           {isEditing ? (
@@ -1280,7 +1286,9 @@ export function RelationPicker({
     );
   }
 
-  return (
+  // Keep modal focus outside the scrolling field row. Focusing a fixed
+  // descendant otherwise scrolls the underlying mobile drawer to the top.
+  return createPortal(
     <>
       <div
         onClick={onCancel}
@@ -1349,7 +1357,8 @@ export function RelationPicker({
           })}
         </div>
       </div>
-    </>
+    </>,
+    document.body,
   );
 }
 

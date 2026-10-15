@@ -3072,3 +3072,6 @@ export const listModuleWorkflowRuns = (
     `/crm/modules/${encodeURIComponent(module)}/workflows/runs${tail ? `?${tail}` : ""}`,
   );
 };
+
+export const restorePayment = (recordId: number) =>
+  request<{ success: boolean; id: number }>("POST", `/crm/records/payments/${recordId}/restore`, {});

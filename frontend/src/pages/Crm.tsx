@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import "./crm.css";
+import { PaymentRestoreNotice } from "@/components/PaymentRestoreNotice";
 import { CrmIcon } from "@/components/CrmIcon";
 import { RecordList } from "@/components/RecordList";
 import { RecordDetail } from "@/components/RecordDetail";
@@ -60,6 +61,7 @@ function ModuleIcon({ name }: { name: string }) {
 export function CrmPage({ onUnauth: _onUnauth }: { onUnauth: () => void }) {
   const { path, navigate } = useRouter();
   const t = useT();
+  const [deletedPayment, setDeletedPayment] = useState<{ id: number; at: number } | null>(null);
   // Compact mode: at narrow viewports the 11+ tab strip can't fit the
   // labels horizontally without clipping. Hide the text and keep only
   // the SVG icon (with title tooltip) so the strip stays one-liner and
@@ -369,6 +371,9 @@ export function CrmPage({ onUnauth: _onUnauth }: { onUnauth: () => void }) {
           );
         })}
       </div>
+      {deletedPayment && <PaymentRestoreNotice record={deletedPayment}
+        onClose={() => setDeletedPayment(null)}
+        onRestored={(id) => { setDeletedPayment(null); setFeedMode(false); setModule("payments"); setRecordId(id); setRecordRefreshNonce(n => n + 1); }} />}
       {feedMode ? (
         <div style={{ gridArea: "feed", overflow: "hidden" }}>
           <DailyFeed onAskCopilot={(text) =>
@@ -417,6 +422,7 @@ export function CrmPage({ onUnauth: _onUnauth }: { onUnauth: () => void }) {
                 setCopilotPrefill({ text, nonce: Date.now() })
               }
               onDeleted={() => {
+                if (module === "payments" && recordId != null) setDeletedPayment({ id: recordId, at: Date.now() });
                 // After soft-delete: deselect (so detail panel shows
                 // the empty state) and bump the list nonce so the
                 // deleted row disappears from the left rail.

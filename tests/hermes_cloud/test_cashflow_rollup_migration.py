@@ -181,3 +181,22 @@ def test_restored_order_reflects_receipts_changed_while_it_was_deleted(cashflow)
     conn.execute(sa.text('UPDATE salesorders SET deleted=false WHERE salesorders_id=1'))
     assert row(conn, 'salesorders', 1)['payments_amount'] == Decimal('25.50')
     assert row(conn, 'salesorders', 1)['payment_status'] == 'received'
+
+
+def test_split_receivables_move_and_restore_keep_one_order_total(cashflow):
+    conn, _ = cashflow
+    conn.execute(sa.text('INSERT INTO salesorders(salesorders_id,final_amount) VALUES(1,25.50)'))
+    conn.execute(sa.text("INSERT INTO receivables(receivables_id,salesorders_id,dueamount,duedate) VALUES(1,1,10.25,'2099-01-01'),(2,1,15.25,'2099-01-01')"))
+    conn.execute(sa.text("INSERT INTO payments VALUES(1,1,6,'2026-10-15',false),(2,2,4.25,'2026-10-15',false)"))
+    conn.execute(sa.text('UPDATE payments SET receivables_id=2 WHERE payments_id=1'))
+    assert row(conn, 'receivables', 1)['actualamount'] == 0
+    assert row(conn, 'receivables', 2)['actualamount'] == Decimal('10.25')
+    assert row(conn, 'salesorders', 1)['payments_amount'] == Decimal('10.25')
+    conn.execute(sa.text('UPDATE payments SET receivables_id=1 WHERE payments_id=1'))
+    conn.execute(sa.text("INSERT INTO payments VALUES(3,1,4.25,'2026-10-15',false),(4,2,11,'2026-10-15',false)"))
+    for _ in range(2):
+        order = row(conn, 'salesorders', 1)
+        assert (order['receivables_amount'], order['payments_amount'], order['payment_status']) == (Decimal('25.50'), Decimal('25.50'), 'received')
+        conn.execute(sa.text('UPDATE payments SET deleted=true WHERE payments_id=4'))
+        assert row(conn, 'salesorders', 1)['payments_amount'] == Decimal('14.50')
+        conn.execute(sa.text('UPDATE payments SET deleted=false WHERE payments_id=4'))

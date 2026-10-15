@@ -2255,6 +2255,18 @@ def build_router() -> APIRouter:
             raise HTTPException(status_code=404, detail=str(e))
         return {"success": True}
 
+    @router.post("/records/{module_name}/{record_id}/restore")
+    def restore_payment_record(
+        module_name: str,
+        record_id: int,
+        user: dict = Depends(require_permission("module_name", "delete")),
+        db: DbWrapper = Depends(get_db),
+    ) -> dict:
+        if module_name != "payments":
+            raise HTTPException(400, "Recovery is currently supported for payments only")
+        from hermes_cloud.app.crm.payment_restore import restore_payment
+        return restore_payment(db, _resolve_module(db, "payments"), record_id, user)
+
     @router.post("/records/{module_name}/bulk_delete")
     def bulk_delete_records(
         module_name: str,

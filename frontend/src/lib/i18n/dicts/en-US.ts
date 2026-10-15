@@ -6,6 +6,12 @@ import type { Dict } from "./zh-CN";
  * error. Add a key to ``zh-CN.ts`` first, then translate here.
  */
 export const enUS: Dict = {
+  "timeline.sum.restore": "Restored the deleted payment",
+  "payment.deleted": "Payment deleted. Restore within 120 seconds.",
+  "payment.restore": "Restore payment",
+  "payment.restoring": "Restoring…",
+  "payment.restore_failed": "Could not restore. Please retry.",
+
   // Global / shell
   "common.loading": "Loading…",
   "common.save": "Save",

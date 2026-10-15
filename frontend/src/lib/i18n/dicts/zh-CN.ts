@@ -11,6 +11,12 @@
  * positional ones — positional break when word order differs per locale.
  */
 export const zhCN = {
+  "timeline.sum.restore": "恢复了已删除的回款",
+  "payment.deleted": "回款已删除，可在 120 秒内恢复",
+  "payment.restore": "恢复回款",
+  "payment.restoring": "恢复中…",
+  "payment.restore_failed": "恢复失败，请重试",
+
   // Global / shell
   "common.loading": "加载中…",
   "common.save": "保存",
