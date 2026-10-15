@@ -4,7 +4,7 @@
 
 Source updated: 2026-10-12. English edition: 2026-10-13. Adapted from the hermes-cloud deployment instructions for the current KaCRM codebase.
 
-Hermes Agent is pinned to **v0.21.6**, commit `818c13be1dc4fd28987e1e881a9408224afd4535`. The database migration head is **0116**. Deploy the pinned version with its seven patches rather than tracking upstream main. See the [v0.21.6 Upgrade Notes](2026-10-12-hermes-v0.21.6-upgrade.en.md) for historical changes and verification. Those test results belong to the source project's upgrade run and do not establish that every new deployment passes.
+Hermes Agent is pinned to **v0.21.6**, commit `818c13be1dc4fd28987e1e881a9408224afd4535`. The database migration head is **0117**. Deploy the pinned version with its seven patches rather than tracking upstream main. See the [v0.21.6 Upgrade Notes](2026-10-12-hermes-v0.21.6-upgrade.en.md) for historical changes and verification. Those test results belong to the source project's upgrade run and do not establish that every new deployment passes.
 
 This version supports source deployment only. Docker deployment is not supported.
 
@@ -117,7 +117,7 @@ set +a
 .venv/bin/python -c 'from hermes.crm.seed import seed; seed()'
 ```
 
-`current` and `heads` should agree; the repository head is `0116`. Run seed after migration to initialize the administrator, CRM modules, and metadata. Re-running seed is not a password-reset procedure for an existing administrator. Seed may print a new administrator API key; protect its logs as credentials.
+`current` and `heads` should agree; the repository head is `0117`. Run seed after migration to initialize the administrator, CRM modules, and metadata. Re-running seed is not a password-reset procedure for an existing administrator. Seed may print a new administrator API key; protect its logs as credentials.
 
 The patcher may reset and clean a dirty or incomplete submodule. Save personal changes before running it. A dirty submodule after patching is expected overlay state. Development startup permits patch replay by default. For a verified, pre-patched release directory, set `HERMES_CLOUD_SKIP_PATCHES=1` so runtime startup uses the prepared artifact without resetting source files.
 
@@ -126,6 +126,8 @@ The patcher may reset and clean a dirty or incomplete submodule. Save personal c
 Migration 0116 changes products.price from BIGINT to NUMERIC and its field metadata to currency. Existing integer prices are preserved, including the full BIGINT range. Back up the database and verify that the target is at 0115 before running `alembic upgrade 0116`. A five-second lock timeout prevents indefinite lock waits. Downgrade rejects fractional or out-of-range values to prevent data loss.
 
 Port 5173 is a local frontend preview that may proxy a remote API. Updating local code does not migrate the remote database. Deployment requires the real server's SSH account, key, and database environment; example addresses are placeholders.
+
+Migration 0117 also changes opportunity amounts and product reference prices from BIGINT to NUMERIC, preserving the opportunity dashboard view and its permissions. Back up the database before upgrading from 0116. Downgrade rejects amounts that cannot be represented exactly as BIGINT.
 
 ## 5. Start and Verify
 

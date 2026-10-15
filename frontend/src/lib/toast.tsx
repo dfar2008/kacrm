@@ -34,12 +34,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={{ show }}>
       {children}
-      <div style={{
+      <div role="status" aria-live="polite" style={{
         position: "fixed",
         bottom: 24, right: 24,
         display: "flex", flexDirection: "column", gap: 8,
         zIndex: 9999,
-        maxWidth: 360,
+        // Notifications have no actions and must not block the next save.
+        pointerEvents: "none",
+        maxWidth: "min(360px, calc(100vw - 48px))",
       }}>
         {toasts.map(t => {
           const palette =

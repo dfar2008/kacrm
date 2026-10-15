@@ -109,9 +109,12 @@ export function formatListFieldValue(
   t: T, field: CrmFieldMeta, record: CrmRecord,
 ): string {
   const fn = field.field_name;
-  // Unit prices must stay exact; older API display siblings round to integers.
+  // Unit prices and fractional amounts must stay exact; older API display
+  // siblings round them to integers before they reach this formatter.
   const price = record[fn];
-  if (["price", "cost_price", "reference_price"].includes(fn)
+  const exactPrice = ["price", "cost_price", "reference_price"].includes(fn);
+  const monetary = MONEY_FIELDS.has(fn) || ["currency", "money"].includes(field.field_type);
+  if ((exactPrice || (monetary && !Number.isInteger(Number(price))))
       && price !== null && price !== undefined && price !== ""
       && Number.isFinite(Number(price))) {
     return `¥${Number(price).toLocaleString("en-US", { maximumFractionDigits: 20 })}`;
