@@ -1,6 +1,6 @@
 services:
   kacrm:
-    image: ${KACRM_IMAGE:-kacrm:all-in-one-preview}
+    image: ${KACRM_IMAGE:-ghcr.io/dfar2008/kacrm:v0.1.1}
     restart: unless-stopped
     stop_grace_period: 120s
     ports:

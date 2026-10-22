@@ -83,6 +83,20 @@ CRM 首页集中展示销售进展、优先跟进事项和 AI 动作；客户详
 
 [KaCRM 使用指南](docs/user-guide.md) 包含首次设置、对话、CRM、看板、Agent、任务与系统管理的图文说明，可在 GitHub 直接阅读。Markdown 为主要维护版本；[HTML 打印版](docs/user-guide.html) 保留排版快照，克隆仓库后可在浏览器打开并打印为 PDF。
 
+## 单容器安装
+
+已提供 **linux/amd64** 镜像，一个容器内置 PostgreSQL/pgvector、Redis、Web 与后台任务。首次启动自动初始化数据库和管理员，登录后配置自己的模型 API key。
+
+```bash
+docker pull ghcr.io/dfar2008/kacrm:v0.1.1
+docker run -d --name kacrm --restart unless-stopped --stop-timeout 120 \
+  -p 127.0.0.1:8765:8765 -v kacrm-data:/var/lib/kacrm \
+  ghcr.io/dfar2008/kacrm:v0.1.1
+docker exec kacrm python -m deploy.container.kacrm_all_in_one credentials
+```
+
+访问 `http://127.0.0.1:8765/app/`。镜像不包含模型 API key；国内直连 GHCR 不保证稳定，可使用 [Release 离线安装包](https://github.com/dfar2008/kacrm/releases/tag/v0.1.1)。升级时保留数据卷，详见[容器部署说明](deploy/container/README.md)。
+
 ## 开始使用
 
 ### 环境要求
@@ -116,7 +130,7 @@ cd kacrm
 3. 应用 Hermes 补丁，执行 Alembic 迁移与初始化 seed。
 4. 安装前端依赖并构建界面。
 
-当前数据库迁移 head 为 **0118**。部署指南包含完整命令、配置示例和验证步骤；除源码部署外，现提供可本地构建的 **Preview 单容器镜像**与 Compose 示例，镜像不包含模型 API key 或运行数据。参见[容器说明](deploy/container/README.md)。
+当前数据库迁移 head 为 **0118**。部署指南包含完整命令、配置示例和验证步骤；除源码部署外，现提供公开的 **单容器镜像**与 Compose 示例，镜像不包含模型 API key 或运行数据。参见[容器说明](deploy/container/README.md)。
 
 ### 3. 启动 Web 界面
 

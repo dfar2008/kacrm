@@ -83,6 +83,20 @@ Sales work spans customer profiles, business documents, conversation history, an
 
 The illustrated [KaCRM User Guide](docs/user-guide.en.md) covers initial setup, chat, CRM, dashboards, agents, tasks, and administration, and can be read directly on GitHub. Markdown is the primary maintained version. The [Chinese HTML print edition](docs/user-guide.html) preserves a layout snapshot for browser printing or PDF export after cloning the repository.
 
+## Single-container installation
+
+The **linux/amd64** image includes PostgreSQL/pgvector, Redis, Web and background workers. First startup initializes the database and generates administrator credentials; configure your own model API key after signing in.
+
+```bash
+docker pull ghcr.io/dfar2008/kacrm:v0.1.1
+docker run -d --name kacrm --restart unless-stopped --stop-timeout 120 \
+  -p 127.0.0.1:8765:8765 -v kacrm-data:/var/lib/kacrm \
+  ghcr.io/dfar2008/kacrm:v0.1.1
+docker exec kacrm python -m deploy.container.kacrm_all_in_one credentials
+```
+
+Open `http://127.0.0.1:8765/app/`. No provider API keys are embedded. GHCR availability varies by network; [offline release assets](https://github.com/dfar2008/kacrm/releases/tag/v0.1.1) are also available. Preserve the data volume when upgrading. See the [container guide](deploy/container/README.md).
+
 ## Getting Started
 
 ### Requirements
@@ -116,7 +130,7 @@ Follow [sections 2–4 of the Deployment Guide](docs/deployment.en.md#2-clone-an
 3. Apply the Hermes patches, run Alembic migrations, and initialize the database with the seed command.
 4. Install frontend dependencies and build the interface.
 
-The current database migration head is **0118**. The Deployment Guide includes complete commands, configuration examples, and verification steps. Source deployment remains available. A locally buildable **Preview all-in-one image** and Compose example are now provided; model API keys and runtime data are not included in the image. See the [container instructions](deploy/container/README.md).
+The current database migration head is **0118**. The Deployment Guide includes complete commands, configuration examples, and verification steps. Source deployment remains available. A public **all-in-one image** and Compose example are now provided; model API keys and runtime data are not included in the image. See the [container instructions](deploy/container/README.md).
 
 ### 3. Start the web interface
 
