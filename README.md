@@ -85,17 +85,51 @@ The illustrated [KaCRM User Guide](docs/user-guide.en.md) covers initial setup, 
 
 ## Single-container installation
 
-The **linux/amd64** image includes PostgreSQL/pgvector, Redis, Web and background workers. First startup initializes the database and generates administrator credentials; configure your own model API key after signing in.
+Docker is the only prerequisite. One container includes KaCRM Web, Hermes, PostgreSQL 15/pgvector, Redis and background workers. First startup initializes the database and generates administrator credentials. No model API keys or customer data are embedded.
+
+### 1. Choose a registry
+
+Both public registries provide the same **v0.1.1 image for linux/amd64**, with no login required.
+
+| Registry | Image |
+| --- | --- |
+| Mainland China · Tencent Cloud Guangzhou | `ccr.ccs.tencentyun.com/kacrm/kacrm:v0.1.1` |
+| International · GitHub GHCR | `ghcr.io/dfar2008/kacrm:v0.1.1` |
+
+### 2. Pull and start
+
+GitHub GHCR:
 
 ```bash
 docker pull ghcr.io/dfar2008/kacrm:v0.1.1
 docker run -d --name kacrm --restart unless-stopped --stop-timeout 120 \
   -p 127.0.0.1:8765:8765 -v kacrm-data:/var/lib/kacrm \
   ghcr.io/dfar2008/kacrm:v0.1.1
+```
+
+Tencent Cloud (choose one registry; do not start both):
+
+```bash
+docker pull ccr.ccs.tencentyun.com/kacrm/kacrm:v0.1.1
+docker run -d --name kacrm --restart unless-stopped --stop-timeout 120 \
+  -p 127.0.0.1:8765:8765 -v kacrm-data:/var/lib/kacrm \
+  ccr.ccs.tencentyun.com/kacrm/kacrm:v0.1.1
+```
+
+### 3. Sign in and configure a model
+
+Initialization takes some time. Wait for `healthy`, then retrieve the generated administrator email and initial password:
+
+```bash
+docker inspect --format '{{.State.Health.Status}}' kacrm
 docker exec kacrm python -m deploy.container.kacrm_all_in_one credentials
 ```
 
-Open `http://127.0.0.1:8765/app/`. No provider API keys are embedded. For mainland China, replace the image in both commands with `ccr.ccs.tencentyun.com/kacrm/kacrm:v0.1.1` (public Tencent Cloud Guangzhou registry; no login required). GHCR availability varies by network; [offline release assets](https://github.com/dfar2008/kacrm/releases/tag/v0.1.1) are also available. Preserve the data volume when upgrading. See the [container guide](deploy/container/README.md).
+Open `http://127.0.0.1:8765/app/` and sign in. In **Models**, select your provider, enter your API key, required Base URL and model, test the connection, and set a default model. Feishu requires separate app and channel configuration. See the [user guide](docs/user-guide.en.md).
+
+Keep the `kacrm-data` volume when recreating or upgrading the container: it contains the database and user configuration. The commands bind only to localhost; use SSH forwarding or an HTTPS reverse proxy for a remote server. Both registries also offer `latest`; use `v0.1.1` to pin the version. ARM64 is not yet verified.
+
+See the [container guide](deploy/container/README.md) for Compose, logs, backups, upgrades and source builds, or use the [offline release assets](https://github.com/dfar2008/kacrm/releases/tag/v0.1.1).
 
 ## Getting Started
 

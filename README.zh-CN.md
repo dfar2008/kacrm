@@ -85,17 +85,51 @@ CRM 首页集中展示销售进展、优先跟进事项和 AI 动作；客户详
 
 ## 单容器安装
 
-已提供 **linux/amd64** 镜像，一个容器内置 PostgreSQL/pgvector、Redis、Web 与后台任务。首次启动自动初始化数据库和管理员，登录后配置自己的模型 API key。
+只需 Docker，一个容器内置 KaCRM Web、Hermes、PostgreSQL 15/pgvector、Redis 和后台任务，无需另外安装数据库或 Redis。首次启动自动初始化数据库并生成管理员账号。镜像不包含模型 API key 或客户数据，登录后配置自己的模型服务。
+
+### 1. 选择镜像仓库
+
+两个公开仓库提供相同的 **v0.1.1（linux/amd64）**，均可免登录拉取。国内用户可选择腾讯云广州仓库，海外用户可选择 GitHub GHCR。
+
+| 仓库 | 镜像地址 |
+| --- | --- |
+| 国内 · 腾讯云广州 | `ccr.ccs.tencentyun.com/kacrm/kacrm:v0.1.1` |
+| 海外 · GitHub GHCR | `ghcr.io/dfar2008/kacrm:v0.1.1` |
+
+### 2. 下载并启动
+
+国内仓库：
+
+```bash
+docker pull ccr.ccs.tencentyun.com/kacrm/kacrm:v0.1.1
+docker run -d --name kacrm --restart unless-stopped --stop-timeout 120 \
+  -p 127.0.0.1:8765:8765 -v kacrm-data:/var/lib/kacrm \
+  ccr.ccs.tencentyun.com/kacrm/kacrm:v0.1.1
+```
+
+海外仓库（二选一，不要重复启动）：
 
 ```bash
 docker pull ghcr.io/dfar2008/kacrm:v0.1.1
 docker run -d --name kacrm --restart unless-stopped --stop-timeout 120 \
   -p 127.0.0.1:8765:8765 -v kacrm-data:/var/lib/kacrm \
   ghcr.io/dfar2008/kacrm:v0.1.1
+```
+
+### 3. 登录并配置模型
+
+首次初始化需要一些时间。查看状态，待显示 `healthy` 后获取本次安装生成的管理员邮箱和初始密码：
+
+```bash
+docker inspect --format '{{.State.Health.Status}}' kacrm
 docker exec kacrm python -m deploy.container.kacrm_all_in_one credentials
 ```
 
-访问 `http://127.0.0.1:8765/app/`。镜像不包含模型 API key。国内可将上述两处镜像地址替换为 `ccr.ccs.tencentyun.com/kacrm/kacrm:v0.1.1`，腾讯云广州公开仓库无需登录。也可使用 [Release 离线安装包](https://github.com/dfar2008/kacrm/releases/tag/v0.1.1)。升级时保留数据卷，详见[容器部署说明](deploy/container/README.md)。
+打开 `http://127.0.0.1:8765/app/`，用上述账号登录，在「模型」中选择提供商，填写 API key、所需 Base URL 和模型，测试连接并设为默认，即可开始使用 AI。飞书接入需另行配置应用与渠道，拉取镜像不会自动绑定飞书。具体操作见[使用指南](docs/user-guide.md)。
+
+`kacrm-data` 数据卷保存数据库与用户配置，重建或升级容器时务必保留。命令默认只允许本机访问；远程部署请使用 SSH 转发或 HTTPS 反向代理。两个仓库均提供 `latest`，需要固定版本时建议使用 `v0.1.1`；ARM64 尚未验证。
+
+更多 Compose、日志、备份、升级及源码构建方法见[容器部署说明](deploy/container/README.md)，也可下载 [Release 离线安装包](https://github.com/dfar2008/kacrm/releases/tag/v0.1.1)。
 
 ## 开始使用
 
