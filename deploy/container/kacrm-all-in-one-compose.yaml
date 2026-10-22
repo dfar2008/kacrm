@@ -1,0 +1,11 @@
+services:
+  kacrm:
+    image: ${KACRM_IMAGE:-kacrm:all-in-one-preview}
+    restart: unless-stopped
+    stop_grace_period: 120s
+    ports:
+      - "127.0.0.1:8765:8765"
+    volumes:
+      - kacrm-data:/var/lib/kacrm
+volumes:
+  kacrm-data:

@@ -116,7 +116,7 @@ Follow [sections 2–4 of the Deployment Guide](docs/deployment.en.md#2-clone-an
 3. Apply the Hermes patches, run Alembic migrations, and initialize the database with the seed command.
 4. Install frontend dependencies and build the interface.
 
-The current database migration head is **0115**. The Deployment Guide includes complete commands, configuration examples, and verification steps. This version supports source deployment only; Docker deployment is not supported.
+The current database migration head is **0118**. The Deployment Guide includes complete commands, configuration examples, and verification steps. Source deployment remains available. A locally buildable **Preview all-in-one image** and Compose example are now provided; model API keys and runtime data are not included in the image. See the [container instructions](deploy/container/README.md).
 
 ### 3. Start the web interface
 

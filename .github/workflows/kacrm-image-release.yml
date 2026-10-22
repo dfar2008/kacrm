@@ -1,0 +1,65 @@
+name: Publish KaCRM image
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag (for example v0.1.1)
+        required: true
+permissions:
+  contents: write
+  packages: write
+concurrency:
+  group: kacrm-image-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+    steps:
+      - name: Validate version
+        run: '[[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]'
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          submodules: recursive
+          persist-credentials: false
+      - name: Image name
+        run: echo "KACRM_IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}:$RELEASE_TAG" >> "$GITHUB_ENV"
+      - name: Build clean application image
+        run: python3 scripts/build-kacrm-image.py --platform linux/amd64 --tag "$KACRM_IMAGE"
+      - name: Verify fresh installation and persistence
+        run: python3 scripts/test-kacrm-image.py --image "$KACRM_IMAGE" --report /tmp/kacrm-smoke.json
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push version and latest
+        run: |
+          docker push "$KACRM_IMAGE"
+          docker tag "$KACRM_IMAGE" "ghcr.io/${GITHUB_REPOSITORY,,}:latest"
+          docker push "ghcr.io/${GITHUB_REPOSITORY,,}:latest"
+      - name: Prepare offline assets
+        run: |
+          mkdir -p /tmp/kacrm-release
+          docker save "$KACRM_IMAGE" | gzip -1 > /tmp/kacrm-release/kacrm-linux-amd64.tar.gz
+          python3 scripts/build-kacrm-image.py --context-only /tmp/kacrm-release-context
+          tar -czf /tmp/kacrm-release/kacrm-image-sources.tar.gz -C /tmp/kacrm-release-context .
+          cp /tmp/kacrm-smoke.json /tmp/kacrm-release/
+          cp deploy/container/README.md /tmp/kacrm-release/kacrm-container-guide.md
+          cp deploy/container/kacrm-all-in-one-compose.yaml /tmp/kacrm-release/
+          cd /tmp/kacrm-release
+          sha256sum *.tar.gz > SHA256SUMS
+      - name: Draft release for public-pull verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --verify-tag --draft \
+              --title "KaCRM $RELEASE_TAG" --notes-file deploy/container/kacrm-release-notes.md
+          fi
+          gh release upload "$RELEASE_TAG" /tmp/kacrm-release/* --repo "$GITHUB_REPOSITORY" --clobber

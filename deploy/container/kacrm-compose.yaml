@@ -1,0 +1,74 @@
+# Run with --env-file pointing to your private runtime settings.
+x-kacrm: &kacrm
+  image: ${KACRM_IMAGE:-kacrm:application-preview}
+  restart: unless-stopped
+  stop_grace_period: 60s
+  environment: &runtime
+    HERMES_CRM_DATABASE_URL: postgresql+psycopg://kacrm:${KACRM_DB_PASSWORD:?Set KACRM_DB_PASSWORD}@postgres:5432/kacrm
+    ALEMBIC_DATABASE_URL: postgresql+psycopg://kacrm:${KACRM_DB_PASSWORD:?Set KACRM_DB_PASSWORD}@postgres:5432/kacrm
+    HERMES_CLOUD_ADMIN_EMAIL: ${KACRM_ADMIN_EMAIL:?Set KACRM_ADMIN_EMAIL}
+    HERMES_CLOUD_ADMIN_PASSWORD: ${KACRM_ADMIN_PASSWORD:?Set KACRM_ADMIN_PASSWORD}
+    HERMES_CLOUD_INTERNAL_KEY: ${KACRM_INTERNAL_KEY:?Set KACRM_INTERNAL_KEY}
+    HERMES_SESSION_SECRET: ${KACRM_SESSION_SECRET:?Set KACRM_SESSION_SECRET}
+    CELERY_BROKER_URL: redis://redis:6379/3
+    CELERY_RESULT_BACKEND: redis://redis:6379/3
+    CLOUD_INTERNAL_URL: http://app:8765
+  volumes:
+    - kacrm-state:/var/lib/kacrm
+  depends_on:
+    init:
+      condition: service_completed_successfully
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kacrm
+      POSTGRES_USER: kacrm
+      POSTGRES_PASSWORD: ${KACRM_DB_PASSWORD:?Set KACRM_DB_PASSWORD}
+    volumes:
+      - kacrm-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U kacrm -d kacrm]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  redis:
+    image: redis:7-bookworm
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  init:
+    <<: *kacrm
+    restart: "no"
+    command: [init]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+  app:
+    <<: *kacrm
+    command: [web]
+    ports:
+      - "127.0.0.1:${KACRM_PORT:-8765}:8765"
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/health', timeout=5)"]
+      interval: 15s
+      timeout: 6s
+      start_period: 60s
+      retries: 5
+  worker:
+    <<: *kacrm
+    command: [worker]
+  beat:
+    <<: *kacrm
+    command: [beat]
+
+volumes:
+  kacrm-state:
+  kacrm-postgres:

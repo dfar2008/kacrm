@@ -50,10 +50,17 @@ class ManualNoteAdapter(TouchpointAdapter):
 
         content: Dict[str, Any] = {}
         for key in ("summary", "body", "text", "title", "channel",
-                    "next_contact_date", "duration_sec"):
+                    "next_contact_date", "duration_sec", "progress"):
             v = payload.get(key)
             if v is not None and v != "":
                 content[key] = v
+        # NoteForm submits content/progress; keep the body as canonical text
+        # and expose its progress label to contact_stats via summary.
+        if not content.get("text") and isinstance(payload.get("content"), str):
+            if payload["content"]:
+                content["text"] = payload["content"]
+        if not content.get("summary") and content.get("progress"):
+            content["summary"] = content["progress"]
         # Preserve extra client-side metadata under a namespace.
         extras = payload.get("extra")
         if isinstance(extras, dict):

@@ -6,7 +6,7 @@ Source updated: 2026-10-15. English edition: 2026-10-15. Adapted from the hermes
 
 Hermes Agent is pinned to **v0.21.6**, commit `818c13be1dc4fd28987e1e881a9408224afd4535`. The database migration head is **0118**. Deploy the pinned version with its seven patches rather than tracking upstream main. See the [v0.21.6 Upgrade Notes](2026-10-12-hermes-v0.21.6-upgrade.en.md) for historical changes and verification. Those test results belong to the source project's upgrade run and do not establish that every new deployment passes.
 
-This version supports source deployment only. Docker deployment is not supported.
+This guide covers source deployment. A locally buildable **Preview all-in-one image** and a single-service Compose example with embedded PostgreSQL/Redis are also available; see the [container instructions](../deploy/container/README.md). Model API keys are not included. Container health and CRM checks do not validate live model calls or Feishu delivery.
 
 ## 1. Architecture and Requirements
 
