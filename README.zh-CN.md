@@ -95,7 +95,7 @@ docker run -d --name kacrm --restart unless-stopped --stop-timeout 120 \
 docker exec kacrm python -m deploy.container.kacrm_all_in_one credentials
 ```
 
-访问 `http://127.0.0.1:8765/app/`。镜像不包含模型 API key；国内直连 GHCR 不保证稳定，可使用 [Release 离线安装包](https://github.com/dfar2008/kacrm/releases/tag/v0.1.1)。升级时保留数据卷，详见[容器部署说明](deploy/container/README.md)。
+访问 `http://127.0.0.1:8765/app/`。镜像不包含模型 API key。国内可将上述两处镜像地址替换为 `ccr.ccs.tencentyun.com/kacrm/kacrm:v0.1.1`，腾讯云广州公开仓库无需登录。也可使用 [Release 离线安装包](https://github.com/dfar2008/kacrm/releases/tag/v0.1.1)。升级时保留数据卷，详见[容器部署说明](deploy/container/README.md)。
 
 ## 开始使用
 

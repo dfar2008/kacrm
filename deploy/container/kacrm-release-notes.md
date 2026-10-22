@@ -16,6 +16,6 @@ docker exec kacrm python -m deploy.container.kacrm_all_in_one credentials
 
 验证：首次初始化、管理员登录、客户创建与查询、手工跟进保存、重建容器数据保留；此前已在 Codex 浏览器复测创建、编辑和跟进流程。模型 API key 未提供，真实模型对话及飞书收发未测试。状态编辑后左侧客户列表标签需要刷新才同步，详情与保存值正常。
 
-国内网络能否访问 GHCR 取决于网络环境，未作多运营商实测，不承诺国内直连稳定；国内镜像仓库尚未配置。本次发布已确认包为 Public，且已用无登录凭据的 Docker 配置完成拉取，核对镜像配置摘要与 CI 测试结果一致。
+国内镜像：`ccr.ccs.tencentyun.com/kacrm/kacrm:v0.1.1`（腾讯云广州公开仓库）。将上面 pull/run 命令中的 GHCR 地址替换为该地址即可，无需登录。已完整匿名下载并校验清单、配置与全部 22 个镜像层摘要一致，通过首次安装、管理员登录、客户和跟进保存、重建容器数据保留测试。尚未做国内多运营商测速；个人版镜像仓库受免费配额限制，不提供 SLA。
 
 The single-container distribution includes PostgreSQL 15/pgvector, Redis, Web and background workers. No provider API keys or runtime data are embedded. Linux/amd64 only. Model calls and Feishu delivery need your own credentials and separate validation.

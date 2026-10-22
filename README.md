@@ -95,7 +95,7 @@ docker run -d --name kacrm --restart unless-stopped --stop-timeout 120 \
 docker exec kacrm python -m deploy.container.kacrm_all_in_one credentials
 ```
 
-Open `http://127.0.0.1:8765/app/`. No provider API keys are embedded. GHCR availability varies by network; [offline release assets](https://github.com/dfar2008/kacrm/releases/tag/v0.1.1) are also available. Preserve the data volume when upgrading. See the [container guide](deploy/container/README.md).
+Open `http://127.0.0.1:8765/app/`. No provider API keys are embedded. For mainland China, replace the image in both commands with `ccr.ccs.tencentyun.com/kacrm/kacrm:v0.1.1` (public Tencent Cloud Guangzhou registry; no login required). GHCR availability varies by network; [offline release assets](https://github.com/dfar2008/kacrm/releases/tag/v0.1.1) are also available. Preserve the data volume when upgrading. See the [container guide](deploy/container/README.md).
 
 ## Getting Started
 

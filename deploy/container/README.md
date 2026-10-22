@@ -12,7 +12,15 @@
 docker pull ghcr.io/dfar2008/kacrm:v0.1.1
 ```
 
-国内直连 GHCR 的可达性和速度取决于网络环境，未做国内多运营商实测；国内镜像仓库尚未配置。也可从 [v0.1.1 Release](https://github.com/dfar2008/kacrm/releases/tag/v0.1.1) 下载 `kacrm-linux-amd64.tar.gz` 和 `SHA256SUMS`，将包传到目标机器后离线导入：
+国内用户可使用腾讯云广州公开仓库，无需登录：
+
+```bash
+docker pull ccr.ccs.tencentyun.com/kacrm/kacrm:v0.1.1
+```
+
+下方 `docker run` 命令的镜像地址也可替换为该地址。腾讯云镜像与 GHCR v0.1.1 的清单及全部层摘要一致，已验证匿名完整下载和安装；尚未做国内多运营商测速。个人版仓库受平台免费配额限制，不提供 SLA。
+
+也可从 [v0.1.1 Release](https://github.com/dfar2008/kacrm/releases/tag/v0.1.1) 下载 `kacrm-linux-amd64.tar.gz` 和 `SHA256SUMS`，将包传到目标机器后离线导入：
 
 ```bash
 # 同目录含 SHA256SUMS 与镜像包时，仅校验该镜像包：
@@ -49,6 +57,12 @@ docker logs --tail 100 kacrm
 docker compose -f deploy/container/kacrm-all-in-one-compose.yaml -p kacrm up -d
 # 下载 Release 内单独的 Compose 文件时：
 # docker compose -f kacrm-all-in-one-compose.yaml -p kacrm up -d
+```
+
+国内镜像也可用于同一个 Compose 文件：
+
+```bash
+KACRM_IMAGE=ccr.ccs.tencentyun.com/kacrm/kacrm:v0.1.1 docker compose -f deploy/container/kacrm-all-in-one-compose.yaml -p kacrm up -d
 ```
 
 ## 数据持久化、升级和恢复
